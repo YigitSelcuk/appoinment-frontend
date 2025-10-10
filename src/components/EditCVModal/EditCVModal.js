@@ -3,14 +3,13 @@ import { Modal, Button, Form, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import { cvsService } from '../../services/cvsService';
 import './EditCVModal.css';
 
-const EditCVModal = ({ isOpen, onClose, cvId, onCVUpdated }) => {
+const EditCVModal = ({ show, onHide, cv, onCVUpdated }) => { 
   const [formData, setFormData] = useState({
     adi: '',
     soyadi: '',
     email: '',
     telefon: '',
     meslek: '',
-    yas: '',
     adres: '',
     durum: 'İŞ ARIYOR',
     notlar: '',
@@ -28,45 +27,43 @@ const EditCVModal = ({ isOpen, onClose, cvId, onCVUpdated }) => {
     'BEKLEMEDE',
     'YETİŞTİRİLDİ',
     'İŞLENMEDE',
-    'GÖLDAĞ',
     'DEĞERLENDİRİLİYOR',
     'YETİŞTİRİLECEK'
   ];
 
   useEffect(() => {
-    if (isOpen && cvId) {
+    if (show && cv) {
       fetchCVDetails();
     }
-  }, [isOpen, cvId]);
+  }, [show, cv]);
 
   const fetchCVDetails = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await cvsService.getCVById(cvId);
+      const response = await cvsService.getCVById(cv.id);
       if (response.success) {
-        const cv = response.data;
+        const cvData = response.data;
         setFormData({
-          adi: cv.adi || '',
-          soyadi: cv.soyadi || '',
-          email: cv.email || '',
-          telefon: cv.telefon || '',
-          meslek: cv.meslek || '',
-          yas: cv.yas || '',
-          adres: cv.adres || '',
-          durum: cv.durum || 'İŞ ARIYOR',
-          notlar: cv.notlar || '',
-          referans: cv.referans || []
+          adi: cvData.adi || '',
+          soyadi: cvData.soyadi || '',
+          email: cvData.email || '',
+          telefon: cvData.telefon || '',
+          meslek: cvData.meslek || '',
+          adres: cvData.adres || '',
+          durum: cvData.durum || 'İŞ ARIYOR',
+          notlar: cvData.notlar || '',
+          referans: cvData.referans || []
         });
         
         // Referans verilerini input formatına çevir
-        if (cv.referans) {
+        if (cvData.referans) {
           try {
             let referansListesi;
-            if (typeof cv.referans === 'object') {
-              referansListesi = cv.referans;
-            } else if (typeof cv.referans === 'string') {
-              referansListesi = JSON.parse(cv.referans);
+            if (typeof cvData.referans === 'object') {
+              referansListesi = cvData.referans;
+            } else if (typeof cvData.referans === 'string') {
+              referansListesi = JSON.parse(cvData.referans);
             }
             
             if (Array.isArray(referansListesi) && referansListesi.length > 0) {
@@ -129,7 +126,7 @@ const EditCVModal = ({ isOpen, onClose, cvId, onCVUpdated }) => {
         referans: validReferanslar.length > 0 ? JSON.stringify(validReferanslar) : null
       };
       
-      const response = await cvsService.updateCV(cvId, submitData);
+      const response = await cvsService.updateCV(cv.id, submitData);
       
       if (response.success) {
         onCVUpdated && onCVUpdated();
@@ -152,7 +149,6 @@ const EditCVModal = ({ isOpen, onClose, cvId, onCVUpdated }) => {
       email: '',
       telefon: '',
       meslek: '',
-      yas: '',
       adres: '',
       durum: 'İŞ ARIYOR',
       notlar: '',
@@ -160,14 +156,13 @@ const EditCVModal = ({ isOpen, onClose, cvId, onCVUpdated }) => {
     });
     setReferansInputs([{ isim: '', meslek: '', telefon: '' }]);
     setError(null);
-    onClose();
+    onHide();
   };
 
   return (
-    <Modal show={isOpen} onHide={handleClose} size="lg" className="edit-cv-modal">
+    <Modal show={show} onHide={handleClose} size="lg" className="edit-cv-modal">
       <Modal.Header closeButton>
         <Modal.Title>
-          <i className="fas fa-edit me-2"></i>
           CV Düzenle
         </Modal.Title>
       </Modal.Header>
@@ -260,23 +255,6 @@ const EditCVModal = ({ isOpen, onClose, cvId, onCVUpdated }) => {
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label>Yaş</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="yas"
-                    value={formData.yas}
-                    onChange={handleInputChange}
-                    min="16"
-                    max="100"
-                    placeholder="25"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Group>
                   <Form.Label>Durum</Form.Label>
                   <Form.Select
                     name="durum"
@@ -289,6 +267,9 @@ const EditCVModal = ({ isOpen, onClose, cvId, onCVUpdated }) => {
                   </Form.Select>
                 </Form.Group>
               </Col>
+            </Row>
+            
+            <Row className="mb-3">
               <Col md={6}>
                 <Form.Group>
                   <Form.Label>Adres</Form.Label>
@@ -297,9 +278,11 @@ const EditCVModal = ({ isOpen, onClose, cvId, onCVUpdated }) => {
                     name="adres"
                     value={formData.adres}
                     onChange={handleInputChange}
-                    placeholder="Adres bilgisi"
+                    placeholder="Adresini giriniz"
                   />
                 </Form.Group>
+              </Col>
+              <Col md={6}>
               </Col>
             </Row>
             

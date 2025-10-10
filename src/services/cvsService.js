@@ -5,9 +5,11 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api
 // Tüm CV'leri getir
 export const getCVs = async (params = {}) => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axios.get(`${API_BASE_URL}/cvs`, {
       params,
-      withCredentials: true
+      withCredentials: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
   } catch (error) {
@@ -186,6 +188,24 @@ export const getProfileImageUrlDirect = (filename) => {
   return `${API_BASE_URL}/cvs/profile-image/${filename}`;
 };
 
+// CV durumunu güncelle
+export const updateCVStatus = async (id, durum) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/cvs/${id}/status`, {
+      durum
+    }, {
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('CV durum güncelleme hatası:', error);
+    throw error.response?.data || error.message;
+  }
+};
+
 // Default export
 const cvsService = {
   getCVs,
@@ -195,7 +215,8 @@ const cvsService = {
   deleteCV,
   getCVStatuses,
   downloadCVFile,
-  getProfileImageUrl
+  getProfileImageUrl,
+  updateCVStatus
 };
 
 export { cvsService };

@@ -1,519 +1,294 @@
-/* ViewCVModal - Professional Formal Design (ViewTaskModal Style) */
+/* ViewCVModal - Sade ve Modern Tasarım */
 .view-cv-modal {
-  --primary-color: #1e40af;
-  --secondary-color: #3b82f6;
-  --accent-color: #60a5fa;
+  --primary-color: #2563eb;
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
   --border-color: #e5e7eb;
-  --background-primary: #ffffff;
-  --background-secondary: #f9fafb;
-  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-heavy: 0 20px 25px rgba(0, 0, 0, 0.1);
-  z-index: 1055;
+  --background-white: #ffffff;
+  --background-gray: #f9fafb;
+  --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --radius: 8px;
 }
 
 .view-cv-modal .modal-dialog {
-  max-width: 900px;
+  max-width: 800px;
   margin: 2rem auto;
-  padding: 0;
 }
 
 .view-cv-modal .modal-content {
   border: none;
-  border-radius: 12px;
-  box-shadow: var(--shadow-heavy), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  background: var(--background-primary);
-  overflow: hidden;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  background: var(--background-white);
 }
 
-/* Modal Header - Simple Form Style */
+/* Modal Header */
 .view-cv-modal .modal-header {
-  background: #3C02AA;
-  color: white;
-  padding: 1.25rem 2rem;
-  border: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  background: #4E0DCC;
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.5rem 2rem;
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .view-cv-modal .modal-title {
   font-size: 1.25rem;
   font-weight: 600;
+  color: var(--background-white);
   margin: 0;
-  color: white;
 }
 
-.view-cv-modal .close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
+.view-cv-modal .btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
   cursor: pointer;
-}
-
-/* Modal Body - Professional Layout */
-.view-cv-modal .modal-body {
   padding: 0;
-  background: var(--background-secondary);
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-/* Content Container */
-.view-cv-modal .unified-info-card {
-  background: var(--background-primary);
-  margin: 0;
-  border-radius: 0;
-}
-
-/* Info Sections - Professional Design */
-.view-cv-modal .info-section {
-  padding: 2rem;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--background-primary);
-}
-
-.view-cv-modal .info-section:last-child {
-  border-bottom: none;
-}
-
-/* Section Header - Clean Professional */
-.view-cv-modal .section-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid var(--accent-color);
-}
-
-.view-cv-modal .section-icon {
-  width: 2rem;
-  height: 2rem;
-  background: var(--secondary-color);
-  border-radius: 6px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 0.875rem;
 }
 
-.view-cv-modal .section-title {
+.view-cv-modal .btn-close:hover {
+  color: var(--text-primary);
+}
+
+/* Modal Body */
+.view-cv-modal .modal-body {
+  padding: 2rem;
+}
+
+/* Info Section */
+.info-section {
+  margin-bottom: 2rem;
+}
+
+.info-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* Profile Section - Special */
-.view-cv-modal .profile-section {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-}
-
-.view-cv-modal .profile-image-container {
-  flex-shrink: 0;
-}
-
-.view-cv-modal .profile-image {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid var(--secondary-color);
-  box-shadow: var(--shadow-medium);
-}
-
-.view-cv-modal .profile-info {
-  flex: 1;
-}
-
-.view-cv-modal .profile-name {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
-}
-
-.view-cv-modal .profile-profession {
-  font-size: 1.25rem;
-  color: var(--secondary-color);
-  font-weight: 600;
   margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-color);
 }
 
-.view-cv-modal .profile-status {
-  display: inline-block;
-}
-
-/* Grid Layout - Professional */
-.view-cv-modal .info-grid-row {
+/* Info Grid */
+.info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
-  margin-top: 1rem;
 }
 
-.view-cv-modal .info-item {
-  background: var(--background-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 1.25rem;
-  transition: all 0.2s ease;
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.view-cv-modal .info-item:hover {
-  border-color: var(--secondary-color);
-  box-shadow: var(--shadow-medium);
-}
-
-.view-cv-modal .info-item.full-width {
-  grid-column: 1 / -1;
-}
-
-.view-cv-modal .item-header {
-  margin-bottom: 0.5rem;
-}
-
-.view-cv-modal .item-label {
-  font-size: 0.75rem;
-  font-weight: 600;
+.info-label {
+  font-size: 0.875rem;
+  font-weight: 500;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.25rem;
-  display: block;
+  letter-spacing: 0.025em;
 }
 
-.view-cv-modal .item-value {
-  font-size: 0.875rem;
+.info-value {
+  font-size: 1rem;
   color: var(--text-primary);
-  font-weight: 500;
-  line-height: 1.4;
-  display: flex;
+  font-weight: 400;
+  word-break: break-word;
+}
+
+.info-value.empty {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-/* Special Value Types */
-.view-cv-modal .item-value.profession {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0.375rem 0.75rem;
+  background: var(--primary-color);
   color: white;
-  font-weight: 600;
-  border: none;
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  width: fit-content;
 }
 
-.view-cv-modal .item-value.profession:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-}
-
-.view-cv-modal .item-value.email {
-  color: var(--secondary-color);
+/* File Link */
+.file-link {
+  color: var(--primary-color);
   text-decoration: none;
-}
-
-.view-cv-modal .item-value.email:hover {
-  text-decoration: underline;
-}
-
-.view-cv-modal .item-value.date {
-  font-family: 'Courier New', monospace;
-  background: var(--background-secondary);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
-}
-
-/* Status Badges */
-.view-cv-modal .status-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border: none;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.5rem 0;
+  transition: color 0.2s ease;
 }
 
-/* Status Badge Colors - Her durum için özel renk */
-.view-cv-modal .status-badge.status-is-ariyor {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
+.file-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
 }
 
-.view-cv-modal .status-badge.status-is-bulundu {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-}
-
-.view-cv-modal .status-badge.status-beklemede {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-  color: white;
-}
-
-.view-cv-modal .status-badge.status-yetistirildi {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
-}
-
-.view-cv-modal .status-badge.status-islenmede {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  color: white;
-}
-
-.view-cv-modal .status-badge.status-goldag {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-}
-
-.view-cv-modal .status-badge.status-degerlendiriliyor {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-  color: white;
-}
-
-.view-cv-modal .status-badge.status-yetistirilecek {
-  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-  color: white;
-}
-
-.view-cv-modal .status-badge.status-default {
-  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-  color: white;
-}
-
-/* Referanslar - Enhanced */
-.view-cv-modal .referans-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.view-cv-modal .referans-item {
-  background: var(--background-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 1.25rem;
-  transition: all 0.2s ease;
-}
-
-.view-cv-modal .referans-item:hover {
-  border-color: var(--secondary-color);
-  box-shadow: var(--shadow-medium);
-}
-
-.view-cv-modal .referans-item strong {
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  display: block;
-}
-
-.view-cv-modal .referans-item .text-muted {
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  color: var(--text-secondary);
-}
-
-/* Notes Container - Enhanced */
-.view-cv-modal .notes-container,
-.view-cv-modal .notes-content {
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1.25rem;
-  margin-top: 0.75rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.view-cv-modal .notes-content {
-  color: #1e293b;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 500;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-/* Modal Footer - Professional */
-.view-cv-modal .modal-footer {
-  background: var(--background-primary);
-  border-top: 1px solid var(--border-color);
-  padding: 1.5rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.view-cv-modal .footer-info {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.view-cv-modal .close-button {
-  background: var(--secondary-color) !important;
-  border: none !important;
-  color: white !important;
-  padding: 0.75rem 1.5rem !important;
-  border-radius: 6px !important;
-  font-weight: 600 !important;
-  font-size: 0.875rem !important;
-  transition: all 0.2s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.5rem !important;
-}
-
-.view-cv-modal .close-button:hover {
-  background: var(--primary-color) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: var(--shadow-medium) !important;
-}
-
-/* Scrollbar - Professional */
-.view-cv-modal .modal-body::-webkit-scrollbar {
-  width: 6px;
-}
-
-.view-cv-modal .modal-body::-webkit-scrollbar-track {
-  background: var(--background-secondary);
-  border-radius: 3px;
-}
-
-.view-cv-modal .modal-body::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
-}
-
-.view-cv-modal .modal-body::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary-color);
-}
-
-/* Badge stilleri */
-.view-cv-modal .badge {
-  font-size: 0.8rem;
-  padding: 6px 12px;
-  font-weight: 500;
-  border-radius: 4px;
+/* Profile Image */
+.profile-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-color);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .view-cv-modal .modal-dialog {
-    max-width: 95%;
-    margin: 0.5rem;
+    margin: 10px;
+    max-width: calc(100% - 20px);
   }
   
-  .view-cv-modal .modal-header {
-    padding: 1.5rem;
+  .modal-header {
+    padding: 15px;
   }
   
-  .view-cv-modal .modal-body {
-    padding: 1.5rem;
-    max-height: 60vh;
+  .modal-title {
+    font-size: 1.1rem;
   }
   
-  .view-cv-modal .modal-footer {
-    padding: 1rem 1.5rem;
+  .modal-body {
+    padding: 15px;
   }
   
-  .view-cv-modal .info-grid-row {
+  .info-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 12px;
   }
   
-  .view-cv-modal .header-left {
+  .info-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 4px;
   }
   
-  .view-cv-modal .cv-meta {
-    width: 100%;
-    justify-content: flex-start;
+  .info-label {
+    font-size: 0.85rem;
   }
   
-  .view-cv-modal .profile-section {
-    flex-direction: column;
-    text-align: center;
-    gap: 1.5rem;
+  .info-value {
+    font-size: 0.9rem;
   }
   
-  .view-cv-modal .profile-name {
-    font-size: 1.5rem;
+  .section-title {
+    font-size: 1rem;
   }
   
-  .view-cv-modal .info-section {
-    padding: 1rem;
-  }
-  
-  .view-cv-modal .referans-list {
-    grid-template-columns: 1fr;
+  .profile-image {
+    width: 60px;
+    height: 60px;
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 480px) {
   .view-cv-modal .modal-dialog {
-    margin: 1vh auto;
-    height: 98vh;
+    margin: 5px;
+    max-width: calc(100% - 10px);
+  }
+  
+  .modal-header {
+    padding: 12px;
+  }
+  
+  .modal-body {
+    padding: 12px;
+  }
+  
+  .info-section {
+    margin-bottom: 20px;
+  }
+  
+  .section-title {
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+  }
+  
+  .info-label {
+    font-size: 0.8rem;
+  }
+  
+  .info-value {
+    font-size: 0.85rem;
+  }
+}
+
+/* Notes Section */
+.notes-section {
+  background: var(--background-gray);
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+}
+
+.notes-content {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+/* Loading and Error States */
+.loading-container,
+.error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .view-cv-modal .modal-dialog {
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
   }
 
-  .view-cv-modal .modal-header {
-    padding: 15px 20px;
+  .view-cv-modal .modal-header,
+  .view-cv-modal .modal-body {
+    padding: 1.5rem;
   }
 
-  .view-cv-modal .unified-info-card {
-    margin: 10px 15px;
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
-  .view-cv-modal .info-section {
-    padding: 10px 15px;
+  .view-cv-modal .modal-title {
+    font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .view-cv-modal .modal-header,
+  .view-cv-modal .modal-body {
+    padding: 1rem;
   }
 
-  .view-cv-modal .footer-content {
-    flex-direction: column;
-    gap: 10px;
-    text-align: center;
-  }
-
-  .view-cv-modal .modal-footer {
-    padding: 12px 15px;
-  }
-
-  .view-cv-modal .close-button {
-    width: 100% !important;
-    justify-content: center !important;
-  }
-
-  .view-cv-modal .profile-image {
-    width: 100px;
-    height: 100px;
+  .info-section {
+    margin-bottom: 1.5rem;
   }
 }

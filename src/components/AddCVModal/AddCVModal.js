@@ -3,17 +3,16 @@ import { Modal, Button } from 'react-bootstrap';
 import { contactsService } from '../../services/contactsService';
 import { cvsService, getProfileImageUrl } from '../../services/cvsService';
 import { useSimpleToast } from '../../contexts/SimpleToastContext';
-import { iller, getIlceler, getMahalleler } from '../../data/turkiyeData';
+import { ilceler, getMahalleler } from '../../data/istanbulData';
 import "./AddCVModal.css";
 
-const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
+const AddCVModal = ({ show, onHide, onSubmit }) => {
   const { showError, showSuccess } = useSimpleToast();
   const [isDragOver, setIsDragOver] = useState(false);
   const [formData, setFormData] = useState({
     tc_kimlik_no: "",
     adi: "",
     soyadi: "",
-    il: "SEÇİNİZ",
     ilce: "SEÇİNİZ",
     mahalle: "SEÇİNİZ",
     adres: "",
@@ -21,50 +20,25 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
     meslek: "",
     telefon: "",
     email: "",
-    referans_kisi: "",
-    referans_telefon: "",
-    referans_meslek: "",
     referans_listesi: [],
-    is_yonlendirildi: "SEÇİNİZ",
-    durum: "SEÇİNİZ",
+    durum: "İŞ ARIYOR",
     notlar: ""
   });
 
   const [files, setFiles] = useState({
-    yakupOzGecmis: null,
-    yakupOzGecmis2: null,
+    cvFiles: [], // Birden fazla CV dosyası için array
     profilResmi: null
   });
 
   const [profileImagePreview, setProfileImagePreview] = useState(null);
   
-  // İlçe ve mahalle listeleri için state
-  const [ilceler, setIlceler] = useState([]);
+  // Mahalle listesi için state
   const [mahalleler, setMahalleler] = useState([]);
-
-  // İl değiştiğinde ilçeleri güncelle
-  useEffect(() => {
-    if (formData.il && formData.il !== "SEÇİNİZ") {
-      const ilceList = getIlceler(formData.il);
-      setIlceler(ilceList);
-      
-      // İl değiştiğinde ilçe ve mahalleyi sıfırla
-      setFormData(prev => ({
-        ...prev,
-        ilce: "SEÇİNİZ",
-        mahalle: "SEÇİNİZ"
-      }));
-      setMahalleler([]);
-    } else {
-      setIlceler([]);
-      setMahalleler([]);
-    }
-  }, [formData.il]);
 
   // İlçe değiştiğinde mahalleleri güncelle
   useEffect(() => {
-    if (formData.il && formData.il !== "SEÇİNİZ" && formData.ilce && formData.ilce !== "SEÇİNİZ") {
-      const mahalleList = getMahalleler(formData.il, formData.ilce);
+    if (formData.ilce && formData.ilce !== "SEÇİNİZ") {
+      const mahalleList = getMahalleler(formData.ilce);
       setMahalleler(mahalleList);
       
       // İlçe değiştiğinde mahalleyi sıfırla
@@ -75,7 +49,7 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
     } else {
       setMahalleler([]);
     }
-  }, [formData.il, formData.ilce]);
+  }, [formData.ilce]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -183,19 +157,35 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
   };
 
   const handleFileChange = (e, fileType) => {
-    const file = e.target.files[0];
-    setFiles(prev => ({
-      ...prev,
-      [fileType]: file
-    }));
-    
-    // Profil resmi için önizleme oluştur
-    if (fileType === 'profilResmi' && file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfileImagePreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
+    if (fileType === 'cvFiles') {
+      const selectedFiles = Array.from(e.target.files);
+      // Word ve PDF dosyalarını filtrele
+      const validFiles = selectedFiles.filter(file => {
+        const fileExtension = file.name.toLowerCase();
+        return fileExtension.endsWith('.pdf') || 
+               fileExtension.endsWith('.doc') || 
+               fileExtension.endsWith('.docx');
+      });
+      
+      setFiles(prev => ({
+        ...prev,
+        cvFiles: [...prev.cvFiles, ...validFiles]
+      }));
+    } else {
+      const file = e.target.files[0];
+      setFiles(prev => ({
+        ...prev,
+        [fileType]: file
+      }));
+      
+      // Profil resmi için önizleme oluştur
+      if (fileType === 'profilResmi' && file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setProfileImagePreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -212,12 +202,20 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragOver(false);
-    const droppedFiles = e.dataTransfer.files;
-    if (droppedFiles.length > 0) {
-      const file = droppedFiles[0];
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    
+    // Word ve PDF dosyalarını filtrele
+    const validFiles = droppedFiles.filter(file => {
+      const fileExtension = file.name.toLowerCase();
+      return fileExtension.endsWith('.pdf') || 
+             fileExtension.endsWith('.doc') || 
+             fileExtension.endsWith('.docx');
+    });
+    
+    if (validFiles.length > 0) {
       setFiles(prev => ({
         ...prev,
-        yakupOzGecmis: file
+        cvFiles: [...prev.cvFiles, ...validFiles]
       }));
     }
   };
@@ -256,11 +254,7 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
     submitData.append('meslek', formData.meslek.trim());
     submitData.append('telefon', formData.telefon);
     submitData.append('email', formData.email);
-    submitData.append('referans_kisi', formData.referans_kisi);
-    submitData.append('referans_telefon', formData.referans_telefon);
-    submitData.append('referans_meslek', formData.referans_meslek);
-    submitData.append('is_yonlendirildi', formData.is_yonlendirildi === 'SEÇİNİZ' ? 'SEÇİNİZ' : formData.is_yonlendirildi);
-    submitData.append('durum', formData.durum === 'SEÇİNİZ' ? 'İŞ ARIYOR' : formData.durum);
+    submitData.append('durum', formData.durum);
     submitData.append('notlar', formData.notlar);
     
     // Referans listesini JSON string olarak ekle
@@ -268,9 +262,12 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
       submitData.append('referans', JSON.stringify(formData.referans_listesi));
     }
     
-    // CV dosyasını ekle
-    if (files.yakupOzGecmis) {
-      submitData.append('cv_dosyasi', files.yakupOzGecmis);
+    // CV dosyalarını ekle
+    if (files.cvFiles && files.cvFiles.length > 0) {
+      // Tüm CV dosyalarını aynı field name ile gönder
+      files.cvFiles.forEach((file) => {
+        submitData.append('cv_dosyasi', file);
+      });
     }
     
     // Profil resmini ekle
@@ -305,17 +302,12 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
       meslek: "",
       telefon: "",
       email: "",
-      referans_kisi: "",
-      referans_telefon: "",
-      referans_meslek: "",
       referans_listesi: [],
-      is_yonlendirildi: "SEÇİNİZ",
-      durum: "SEÇİNİZ",
+      durum: "İŞ ARIYOR",
       notlar: ""
     });
     setFiles({
-      yakupOzGecmis: null,
-      yakupOzGecmis2: null,
+      cvFiles: [], // Birden fazla CV dosyası için array
       profilResmi: null
     });
     setProfileImagePreview(null);
@@ -323,11 +315,11 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleClose = () => {
     resetForm();
-    onClose();
+    onHide();
   };
 
   return (
-    <Modal show={isOpen} onHide={handleClose} size="lg" className="add-cv-modal">
+    <Modal show={show} onHide={handleClose} size="lg" className="add-cv-modal">
       <Modal.Header closeButton>
         <Modal.Title>
           CV EKLE
@@ -392,7 +384,7 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
                     value={formData.tc_kimlik_no}
                     onChange={handleInputChange}
                     className="tc-input"
-                    placeholder="24324324323"
+                    placeholder="11111111111"
                   />
                   <button type="button" className="info-button" onClick={handleGetContactInfo}>
                     BİLGİLERİ GETİR
@@ -411,7 +403,7 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
                       value={formData.adi}
                       onChange={handleInputChange}
                       className="name-input"
-                      placeholder="ÖMER"
+                      placeholder="Ad"
                       required
                     />
                     <input
@@ -420,7 +412,7 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
                       value={formData.soyadi}
                       onChange={handleInputChange}
                       className="name-input"
-                      placeholder="GÖK"
+                      placeholder="Soyad"
                       required
                     />
                   </div>
@@ -430,15 +422,15 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
 
             {/* Adres Bölümü */}
             <div className="address-section">
-              <div className="address-field">
+              <div className="address-field small-field">
                 <span className="address-label">İLÇE</span>
                 <select
                   name="ilce"
                   value={formData.ilce}
                   onChange={handleInputChange}
-                  className="address-select"
+                  className="address-select small-select"
                 >
-                  <option value="">İLÇE SEÇİNİZ</option>
+                  <option value="SEÇİNİZ">İLÇE SEÇİNİZ</option>
                   {ilceler.map((ilce, index) => (
                     <option key={index} value={ilce}>
                       {ilce}
@@ -446,13 +438,13 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
                   ))}
                 </select>
               </div>
-              <div className="address-field">
+              <div className="address-field small-field">
                 <span className="address-label">MAHALLE</span>
                 <select
                   name="mahalle"
                   value={formData.mahalle}
                   onChange={handleInputChange}
-                  className="address-select"
+                  className="address-select small-select"
                 >
                   <option value="SEÇİNİZ">MAHALLE SEÇİNİZ</option>
                   {mahalleler.map((mahalle, index) => (
@@ -462,14 +454,14 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
                   ))}
                 </select>
               </div>
-              <div className="address-field">
+              <div className="address-field large-field">
                 <span className="address-label">ADRES</span>
                 <input
                   type="text"
                   name="adres"
                   value={formData.adres}
                   onChange={handleInputChange}
-                  className="address-input"
+                  className="address-input large-input"
                 />
               </div>
             </div>
@@ -521,6 +513,7 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
                       value={formData.telefon}
                       onChange={handleInputChange}
                       className="field-input"
+                      placeholder="Telefon numarasını giriniz"
                     />
                   </div>
                 </div>
@@ -534,84 +527,109 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
                     value={formData.email}
                     onChange={handleInputChange}
                     className="field-input"
-                    placeholder="E M A İ L   A D R E S İ N İ Z"
+                    placeholder="Email adresinizi giriniz"
                   />
                 </div>
               </div>
 
               {/* Referans ve Yönlendirme Bölümü */}
               <div className="referans-yonlendirme-container">
-                {/* Referans Kişi */}
-                <div className="referans-container">
-                  <span className="field-label">REFERANS KİŞİ</span>
-                  <div className="referans-input-section">
-                    <div className="referans-input-row">
-                      <input
-                        type="text"
-                        name="referans_kisi"
-                        value={formData.referans_kisi}
-                        onChange={handleInputChange}
-                        className="referans-input"
-                        placeholder="Ad Soyad"
-                      />
-                      <input
-                        type="text"
-                        name="referans_telefon"
-                        value={formData.referans_telefon}
-                        onChange={handleInputChange}
-                        className="referans-input"
-                        placeholder="Telefon"
-                      />
-                      <input
-                        type="text"
-                        name="referans_meslek"
-                        value={formData.referans_meslek}
-                        onChange={handleInputChange}
-                        className="referans-input"
-                        placeholder="Meslek"
-                      />
-                      <button type="button" className="orange-icon-btn" onClick={handleAddReferans}>+</button>
-                    </div>
+                {/* Üst Satır: Referans Kişi Ad/Soyad ve Yönlendir */}
+                <div className="referans-yonlendirme-top-row">
+                  <div className="referans-name-container">
+                    <span className="field-label">REFERANS KİŞİ</span>
+                    <input
+                      type="text"
+                      name="referans_kisi"
+                      value={formData.referans_kisi}
+                      onChange={handleInputChange}
+                      className="referans-name-input"
+                      placeholder="Ad Soyad"
+                    />
                   </div>
-                  {/* Referans Kişi Listesi */}
-                  {formData.referans_listesi && formData.referans_listesi.length > 0 && (
-                    <div className="referans-list">
-                      {formData.referans_listesi.map((referans, index) => (
-                        <div key={index} className="referans-item">
-                          <div className="referans-info">
-                            <span className="referans-name">{referans.isim}</span>
-                            <span className="referans-phone">{referans.telefon}</span>
-                            <span className="referans-job">{referans.meslek}</span>
-                          </div>
-                          <button 
-                            type="button" 
-                            className="remove-referans-btn"
-                            onClick={() => handleRemoveReferans(index)}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* İş Yönlendirildi */}
-                <div className="yonlendirme-container">
-                  <span className="field-label">İŞ YÖNLENDİRİLDİ</span>
-                  <div className="yonlendirme-input-row">
+                  
+                  <div className="yonlendirme-container">
+                    <span className="field-label">DURUM</span>
                     <select
-                      name="is_yonlendirildi"
-                      value={formData.is_yonlendirildi || "SEÇİNİZ"}
+                      name="durum"
+                      value={formData.durum}
                       onChange={handleInputChange}
                       className="field-select"
                     >
-                      <option value="SEÇİNİZ">SEÇİNİZ</option>
-                      <option value="EVET">EVET</option>
-                      <option value="HAYIR">HAYIR</option>
+                      <option value="İŞ ARIYOR">İŞ ARIYOR</option>
+                      <option value="YÖNLENDİRİLDİ">YÖNLENDİRİLDİ</option>
+                      <option value="İŞE YERLEŞTİRİLDİ">İŞE YERLEŞTİRİLDİ</option>
+                      <option value="BEKLEMEDE">BEKLEMEDE</option>
+                      <option value="İŞ BULUNDU">İŞ BULUNDU</option>
                     </select>
                   </div>
                 </div>
+
+                {/* Alt Satır: Referans Kişi Detayları (sadece referans kişi girildiğinde görünür) */}
+                {formData.referans_kisi && formData.referans_kisi.trim() !== "" && (
+                  <div className="referans-details-row">
+                    <div className="referans-name-display">
+                      <span className="referans-name-text">{formData.referans_kisi}</span>
+                    </div>
+                    <input
+                      type="text"
+                      name="referans_telefon"
+                      value={formData.referans_telefon}
+                      onChange={handleInputChange}
+                      className="referans-input"
+                      placeholder="Telefon"
+                    />
+                    <input
+                      type="text"
+                      name="referans_meslek"
+                      value={formData.referans_meslek}
+                      onChange={handleInputChange}
+                      className="referans-input"
+                      placeholder="Meslek"
+                    />
+                    <button type="button" className="orange-icon-btn" onClick={handleAddReferans}>+</button>
+                  </div>
+                )}
+
+                {/* Referans Kişi Listesi */}
+                {formData.referans_listesi && formData.referans_listesi.length > 0 && (
+                  <div className="referans-list">
+                    {formData.referans_listesi.map((referans, index) => (
+                      <div key={index} className="referans-item">
+                        <div className="referans-info">
+                          <input 
+                            type="text" 
+                            value={referans.isim} 
+                            readOnly 
+                            className="referans-name-input"
+                            placeholder="Ad Soyad"
+                          />
+                          <input 
+                            type="text" 
+                            value={referans.telefon} 
+                            readOnly 
+                            className="referans-phone-input"
+                            placeholder="Telefon"
+                          />
+                          <input 
+                            type="text" 
+                            value={referans.meslek} 
+                            readOnly 
+                            className="referans-job-input"
+                            placeholder="Meslek"
+                          />
+                        </div>
+                        <button 
+                          type="button" 
+                          className="remove-referans-btn"
+                          onClick={() => handleRemoveReferans(index)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
          
@@ -628,47 +646,45 @@ const AddCVModal = ({ isOpen, onClose, onSubmit }) => {
                  <div className="file-upload-placeholder">
                    <div className="file-icon-large">📄</div>
                    <span className="file-upload-text">
-                      {isDragOver ? 'DOSYAYI BURAYA BIRAK' : 'CV YÜKLE VEYA SÜRÜKLE BIRAK'}
+                      {isDragOver ? 'DOSYALARI BURAYA BIRAK' : 'CV DOSYALARI YÜKLE VEYA SÜRÜKLE BIRAK'}
                     </span>
+                    
                  </div>
                  <input
                    id="cv-file-input"
                    type="file"
                    accept=".pdf,.doc,.docx"
-                   onChange={(e) => handleFileChange(e, 'yakupOzGecmis')}
+                   multiple
+                   onChange={(e) => handleFileChange(e, 'cvFiles')}
                    style={{ display: 'none' }}
                  />
                </div>
-
-                <div className="file-buttons-row">
-                  <button 
-                    type="button" 
-                    className="file-button"
-                    onClick={() => document.getElementById('cv-file-input').click()}
-                  >
-                    DOSYA SEÇ
-                  </button>
-                </div>
-
                 {/* Yüklenen Dosyalar Listesi */}
-                 {files.yakupOzGecmis && (
+                 {files.cvFiles && files.cvFiles.length > 0 && (
                    <div className="uploaded-files-list">
-                     <div className="file-icon-item" title={files.yakupOzGecmis.name}>
-                       <div className="file-icon-wrapper">
-                         <div className="file-icon-display">
-                           {files.yakupOzGecmis.type === 'application/pdf' ? '📄' : '📝'}
+                     {files.cvFiles.map((file, index) => (
+                       <div key={index} className="file-icon-item" title={file.name}>
+                         <div className="file-icon-wrapper">
+                           <div className="file-icon-display">
+                             {file.type === 'application/pdf' ? '📄' : '📝'}
+                           </div>
+                           <button 
+                             type="button" 
+                             className="remove-icon-btn"
+                             onClick={() => setFiles(prev => ({ 
+                               ...prev, 
+                               cvFiles: prev.cvFiles.filter((_, i) => i !== index) 
+                             }))}
+                             title="Dosyayı Kaldır"
+                           >
+                             ✕
+                           </button>
                          </div>
-                         <button 
-                           type="button" 
-                           className="remove-icon-btn"
-                           onClick={() => setFiles(prev => ({ ...prev, yakupOzGecmis: null }))}
-                           title="Dosyayı Kaldır"
-                         >
-                           ✕
-                         </button>
+                         <span className="file-icon-name">
+                           {file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name}
+                         </span>
                        </div>
-                       <span className="file-icon-name">{files.yakupOzGecmis.name.length > 15 ? files.yakupOzGecmis.name.substring(0, 15) + '...' : files.yakupOzGecmis.name}</span>
-                     </div>
+                     ))}
                    </div>
                  )}
               </div>

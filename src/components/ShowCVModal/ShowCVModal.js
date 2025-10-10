@@ -4,77 +4,102 @@ import { cvsService, getProfileImageUrl } from '../../services/cvsService';
 import { useSimpleToast } from '../../contexts/SimpleToastContext';
 import './ShowCVModal.css';
 
-const ShowCVModal = ({ isOpen, onClose, cvId }) => {
+const ShowCVModal = ({ show, onHide, cv }) => {
   const { showError } = useSimpleToast();
-  const [cv, setCv] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [fileUrl, setFileUrl] = useState(null);
+  const [fileUrls, setFileUrls] = useState([]);
   const [fileLoading, setFileLoading] = useState(false);
+  const [selectedFileIndex, setSelectedFileIndex] = useState(0);
+  const [profileImageUrl, setProfileImageUrl] = useState(null);
 
   useEffect(() => {
-    if (isOpen && cvId) {
-      fetchCVDetails();
+    if (show && cv) {
+      loadCVFiles();
+      loadProfileImage();
     }
-  }, [isOpen, cvId]);
+  }, [show, cv]);
 
-  const fetchCVDetails = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await cvsService.getCVById(cvId);
-      if (response.success) {
-        setCv(response.data);
-        // CV dosyası varsa dosyayı da yükle
-        if (response.data.cv_dosyasi) {
-          await loadCVFile(response.data.cv_dosyasi);
-        }
-      } else {
-        setError('CV bilgileri yüklenemedi.');
-      }
-    } catch (error) {
-      console.error('CV detayları yüklenirken hata:', error);
-      setError('CV bilgileri yüklenirken bir hata oluştu.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadCVFile = async (filename) => {
+  const loadCVFiles = async () => {
+    if (!cv || !cv.cv_dosyasi) return;
+    
     try {
       setFileLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/cvs/download/${filename}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      setError(null);
+      
+      let dosyaListesi = [];
+      try {
+        if (typeof cv.cv_dosyasi === 'string') {
+          dosyaListesi = JSON.parse(cv.cv_dosyasi);
+        } else if (Array.isArray(cv.cv_dosyasi)) {
+          dosyaListesi = cv.cv_dosyasi;
+        } else {
+          dosyaListesi = [cv.cv_dosyasi];
         }
-      });
-
-      if (!response.ok) {
-        throw new Error('Dosya yüklenemedi');
+      } catch (e) {
+        console.error('CV dosyası parse hatası:', e);
+        dosyaListesi = [cv.cv_dosyasi];
       }
+      
+      const urls = [];
+      for (const filename of dosyaListesi) {
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/cvs/download/${filename}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      setFileUrl(url);
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            urls.push({ filename, url, blob });
+          } else {
+            urls.push({ filename, url: null, error: 'Dosya yüklenemedi' });
+          }
+        } catch (error) {
+          console.error(`${filename} dosyası yükleme hatası:`, error);
+          urls.push({ filename, url: null, error: error.message });
+        }
+      }
+      
+      setFileUrls(urls);
+      setSelectedFileIndex(0);
     } catch (error) {
-      console.error('CV dosyası yükleme hatası:', error);
-      setError('CV dosyası yüklenirken bir hata oluştu.');
+      console.error('CV dosyaları yükleme hatası:', error);
+      setError('CV dosyaları yüklenirken bir hata oluştu.');
     } finally {
       setFileLoading(false);
     }
   };
 
-  const handleClose = () => {
-    setCv(null);
-    setError(null);
-    setFileUrl(null);
-    setFileLoading(false);
-    // Blob URL'i temizle
-    if (fileUrl) {
-      URL.revokeObjectURL(fileUrl);
+  const loadProfileImage = async () => {
+    if (cv && cv.profil_resmi) {
+      try {
+        const imageUrl = await getProfileImageUrl(cv.profil_resmi);
+        setProfileImageUrl(imageUrl);
+      } catch (error) {
+        console.error('Profil resmi yüklenirken hata:', error);
+      }
     }
-    onClose();
+  };
+
+  const handleClose = () => {
+    setError(null);
+    setFileUrls([]);
+    setFileLoading(false);
+    setSelectedFileIndex(0);
+    setProfileImageUrl(null);
+    
+    // Blob URL'lerini temizle
+    fileUrls.forEach(file => {
+      if (file.url) {
+        URL.revokeObjectURL(file.url);
+      }
+    });
+    
+    onHide();
   };
 
   const formatDate = (dateString) => {
@@ -110,11 +135,27 @@ const ShowCVModal = ({ isOpen, onClose, cvId }) => {
   };
 
   const handleDownloadPDF = async () => {
-    if (fileUrl && cv && cv.cv_dosyasi) {
+    const currentFileUrl = fileUrls[selectedFileIndex]?.url;
+    if (currentFileUrl && cv && cv.cv_dosyasi) {
       try {
+        let dosyaAdi = '';
+        try {
+          // JSON array ise seçili dosyayı al
+          if (typeof cv.cv_dosyasi === 'string') {
+            const dosyaListesi = JSON.parse(cv.cv_dosyasi);
+            dosyaAdi = Array.isArray(dosyaListesi) ? dosyaListesi[selectedFileIndex] || dosyaListesi[0] : cv.cv_dosyasi;
+          } else if (Array.isArray(cv.cv_dosyasi)) {
+            dosyaAdi = cv.cv_dosyasi[selectedFileIndex] || cv.cv_dosyasi[0];
+          } else {
+            dosyaAdi = cv.cv_dosyasi;
+          }
+        } catch (e) {
+          dosyaAdi = cv.cv_dosyasi;
+        }
+        
         const link = document.createElement('a');
-        link.href = fileUrl;
-        link.download = cv.cv_dosyasi;
+        link.href = currentFileUrl;
+        link.download = dosyaAdi;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -129,19 +170,25 @@ const ShowCVModal = ({ isOpen, onClose, cvId }) => {
     }
   };
 
-  const handleOpenCVFile = () => {
-    if (fileUrl) {
-      // Dosyayı yeni sekmede aç
-      window.open(fileUrl, '_blank');
-    } else if (cv && cv.cv_dosyasi) {
-      showError('Dosya henüz yüklenmedi, lütfen bekleyin.');
+  const handleOpenCVFile = (index = selectedFileIndex) => {
+    const file = fileUrls[index];
+    if (file && file.url) {
+      window.open(file.url, '_blank');
+    } else if (file && file.error) {
+      showError(`Dosya hatası: ${file.error}`);
     } else {
-      showError('Bu CV için dosya bulunamadı.');
+      showError('Dosya henüz yüklenmedi, lütfen bekleyin.');
     }
   };
 
+  const handleFileSelect = (index) => {
+    setSelectedFileIndex(index);
+  };
+
+  if (!cv) return null;
+
   return (
-    <Modal show={isOpen} onHide={handleClose} size="lg" className="show-cv-modal">
+    <Modal show={show} onHide={handleClose} size="lg" className="show-cv-modal">
       <Modal.Header closeButton>
         <Modal.Title>
           CV Görüntüle
@@ -161,20 +208,38 @@ const ShowCVModal = ({ isOpen, onClose, cvId }) => {
           </Alert>
         ) : cv ? (
           cv.cv_dosyasi ? (
-            // CV dosyası varsa direkt dosyayı göster
+            // CV dosyası varsa birden fazla dosyayı göster
             <div className="cv-file-viewer">
-              <div className="text-center mb-3">
-              </div>
-              
+              {/* Dosya Seçici */}
+              {fileUrls.length > 1 && (
+                <div className="file-selector mb-3">
+                  <div className="d-flex align-items-center mb-2">
+                    <i className="fas fa-files me-2"></i>
+                    <span className="fw-bold">CV Dosyaları ({fileUrls.length} adet)</span>
+                  </div>
+                  <div className="file-tabs">
+                    {fileUrls.map((fileData, index) => (
+                      <button
+                        key={index}
+                        className={`file-tab ${selectedFileIndex === index ? 'active' : ''}`}
+                        onClick={() => handleFileSelect(index)}
+                      >
+                        <i className="fas fa-file-alt me-1"></i>
+                        Dosya {index + 1}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="cv-file-preview">
                  {fileLoading ? (
                    <div className="text-center py-5">
                      <Spinner animation="border" variant="primary" />
                      <div className="mt-2">CV dosyası yükleniyor...</div>
                    </div>
-                 ) : fileUrl ? (
+                 ) : fileUrls[selectedFileIndex]?.url ? (
                    <iframe 
-                     src={fileUrl}
+                     src={fileUrls[selectedFileIndex].url}
                      style={{
                        width: '100%',
                        height: '800px',

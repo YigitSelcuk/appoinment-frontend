@@ -1,10 +1,20 @@
-import React from "react";
-import Calendar from "../../components/Calendar/Calendar";
-import RequestsTable from "../../components/RequestsTable/RequestsTable";
-import FloatingChat from "../../components/FloatingChat/FloatingChat";
-import "./Requests.css";
+import React, { useEffect } from 'react';
+import Calendar from '../../components/Calendar/Calendar';
+import RequestsTable from '../../components/RequestsTable/RequestsTable';
+import FloatingChat from '../../components/FloatingChat/FloatingChat';
+import './Requests.css';
 
 const Requests = () => {
+  useEffect(() => {
+    // Requests sayfasında body'ye class ekle
+    document.body.classList.add('requests-page');
+    
+    // Component unmount olduğunda class'ı kaldır
+    return () => {
+      document.body.classList.remove('requests-page');
+    };
+  }, []);
+
   return (
     <div className="requests-page">
       <div className="requests-container">
@@ -13,7 +23,7 @@ const Requests = () => {
           <Calendar />
         </div>
         
-        {/* Orta Panel - Requests Tablosu */}
+        {/* Orta Panel - Talepler Tablosu */}
         <div className="requests-content">
           <RequestsTable />
         </div>
@@ -27,4 +37,4 @@ const Requests = () => {
   );
 };
 
-export default Requests; 
+export default Requests;

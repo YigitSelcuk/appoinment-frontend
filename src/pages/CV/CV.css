@@ -5,47 +5,6 @@
   overflow: hidden;
 }
 
-.cv-container {
-  display: flex;
-  width: 100%;
-  height: calc(100vh - 80px);
-  min-height: 800px;
-  gap: 12px;
-  padding: 8px 5px 8px 20px;
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
-  box-sizing: border-box;
-}
-
-/* Sol Panel - Calendar */
-.left-panel {
-  width: 320px;
-  min-width: 320px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  z-index: 1;
-}
-
-/* Orta Panel - CV Table */
-.cv-content {
-  flex: 1;
-  width: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  background-color: transparent;
-  padding: 0;
-  position: relative;
-  z-index: 1;
-  margin-right: 70px !important;
-  border-radius: 10px;
-}
-
 /* Sağ Panel - FloatingChat */
 .right-panel {
   width: 100px;
@@ -55,7 +14,7 @@
   height: 100%;
   overflow: hidden;
   position: absolute;
-  right: 5px;
+  right: 0px;
   top: 8px;
   z-index: 10;
 }
@@ -70,148 +29,213 @@
   z-index: 1 !important;
 }
 
-/* Responsive Tasarım */
+.cv-container {
+  display: flex;
+  height: calc(100vh - 80px); /* Navbar yüksekliği çıkarıldı */
+  min-height: 800px;
+  gap: 12px;
+  padding: 8px 5px 8px 20px;
+  position: relative;
+  overflow: visible;
+  z-index: 1;
+}
 
-/* Desktop Large (1400px+) */
-@media (min-width: 1400px) {
+/* Sol Panel - Calendar */
+.left-panel {
+  width: 320px; /* Normal boyut */
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 96px); /* Navbar ve padding için ayarlama */
+  min-height: 800px;
+  overflow: hidden;
+}
+
+/* Orta Panel - CV Table */
+.cv-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 96px); /* Calendar ile aynı yükseklik */
+  overflow: visible; /* Pagination'ın görünmesi için visible yap */
+  min-width: 0; /* Flexbox shrinking için */
+  background-color: transparent;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+  margin-right: 70px !important; /* FloatingChat için minimal alan */
+}
+
+.page-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  margin-bottom: 1rem;
+}
+
+.page-title {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.page-title svg {
+  color: #28a745;
+}
+
+.page-header p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+}
+
+/* Modern Responsive Design */
+
+/* Tablet ve büyük ekranlar için düzenlemeler */
+@media (max-width: 1200px) {
   .cv-container {
-    padding: 8px 5px 8px 20px;
+    padding: 16px;
     gap: 16px;
   }
   
   .left-panel {
-    width: 350px;
-    min-width: 350px;
+    min-width: 280px;
   }
   
   .cv-content {
-    margin-right: 108px;
+    min-width: 400px;
+  }
+  
+  .right-panel {
+    min-width: 280px;
   }
 }
 
-/* Desktop Medium (1200px - 1399px) */
-@media (max-width: 1399px) and (min-width: 1200px) {
-  .cv-container {
-    padding: 8px 5px 8px 20px;
-    gap: 14px;
+/* 990px'de calendar düzeni */
+@media (max-width: 990px) {
+  .cv-page .left-panel {
+    height: 100% !important;
+    min-height: 100% !important;
+    overflow: hidden !important;
+    position: relative !important;
+    z-index: 2 !important;
   }
   
-  .left-panel {
-    width: 330px;
-    min-width: 330px;
+  .cv-page .left-panel .calendar-widget {
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 2 !important;
   }
   
-  .cv-content {
-    margin-right: 106px;
+  .cv-page .calendar-grid {
+    flex: 0 0 auto !important;
+    min-height: 300px !important;
+  }
+  
+  .cv-page .today-section {
+    flex: 1 !important;
+    min-height: 300px !important;
+    overflow-y: auto !important;
+  }
+  
+  /* CV content'in calendar'a müdahale etmemesi için */
+  .cv-page .cv-content {
+    z-index: 1 !important;
+    position: relative !important;
+  }
+  
+  .cv-page .cvs-table-container {
+    z-index: 1 !important;
+    position: relative !important;
   }
 }
 
-/* Desktop Small (992px - 1199px) */
-@media (max-width: 1199px) and (min-width: 992px) {
-  .cv-container {
-    padding: 8px 5px 8px 15px;
-    gap: 12px;
-  }
-  
-  .left-panel {
-    width: 300px;
-    min-width: 300px;
-  }
-  
-  .cv-content {
-    margin-right: 104px;
-  }
-}
-
-/* Tablet (768px - 991px) */
-@media (max-width: 991px) and (min-width: 768px) {
+/* Tablet Portrait */
+@media (max-width: 1024px) {
   .cv-container {
     flex-direction: column;
-    padding: 8px 10px;
-    gap: 8px;
+    padding: 12px;
+    gap: 12px;
     height: auto;
     min-height: calc(100vh - 80px);
   }
   
-  .left-panel {
+  .cv-page .left-panel {
     width: 100%;
-    min-width: auto;
-    height: 400px;
-    min-height: 400px;
+    min-width: unset;
+    height: 100% !important;
+    min-height: 900px !important;
     order: 1;
+  }
+  
+  .cv-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .cv-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .cv-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
   }
   
   .cv-content {
     width: 100%;
-    margin-right: 0;
-    height: auto;
-    min-height: 600px;
-    flex: none;
-    order: 2;
-  }
-  
-  .right-panel {
-    position: fixed;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 80px;
-    height: 300px;
-    z-index: 1000;
-  }
-}
-
-/* Mobile (max 767px) */
-@media (max-width: 767px) {
-  .cv-container {
-    flex-direction: column;
-    padding: 5px;
-    gap: 8px;
-    height: auto;
-    min-height: calc(100vh - 70px);
-  }
-  
-  .left-panel {
-    width: 100%;
-    min-width: auto;
-    height: 350px;
-    min-height: 350px;
-    order: 1;
-  }
-  
-  .cv-content {
-    width: 100%;
-    margin-right: 0;
+    min-width: unset;
     height: auto;
     min-height: 500px;
-    flex: none;
     order: 2;
   }
   
   .right-panel {
-    position: fixed;
-    right: 5px;
-    bottom: 20px;
-    width: 60px;
-    height: 200px;
-    z-index: 1000;
-  }
-  
-  .cv-page .floating-chat {
-    width: 60px !important;
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    min-height: 300px;
+    order: 3;
   }
 }
 
-/* Small Mobile (max 480px) */
-@media (max-width: 480px) {
+/* Tablet ve Mobile geçiş */
+@media (max-width: 768px) {
   .cv-container {
-    padding: 3px;
-    gap: 5px;
+    padding: 8px;
+    gap: 8px;
   }
   
-  .left-panel {
-    height: 300px;
+  .cv-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .cv-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .cv-page .calendar-grid {
+    flex: 1;
     min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .cv-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
   }
   
   .cv-content {
@@ -219,55 +243,123 @@
   }
   
   .right-panel {
-    width: 50px;
-    height: 150px;
-    right: 3px;
-    bottom: 15px;
+    min-height: 250px;
+  }
+}
+
+/* Mobile Landscape */
+@media (max-width: 640px) {
+  .cv-container {
+    padding: 6px;
+    gap: 6px;
   }
   
-  .cv-page .floating-chat {
-    width: 50px !important;
+  .cv-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .cv-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .cv-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .cv-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .cv-content {
+    min-height: 400px;
+  }
+  
+  .right-panel {
+    min-height: 220px;
   }
 }
 
-/* Hover ve Transition Efektleri */
-.left-panel:hover,
-.cv-content:hover {
-  transition: all 0.3s ease;
+/* Mobile Portrait */
+@media (max-width: 480px) {
+  .cv-container {
+    padding: 4px;
+    gap: 4px;
+  }
+  
+  .cv-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+    border-radius: 8px;
+  }
+  
+  .cv-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .cv-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .cv-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .cv-content {
+    min-height: 350px;
+    border-radius: 8px;
+  }
+  
+  .right-panel {
+    min-height: 200px;
+    border-radius: 8px;
+  }
 }
 
-/* Z-index Hiyerarşisi */
-.cv-container {
-  z-index: 1;
+/* Very Small Mobile */
+@media (max-width: 360px) {
+  .cv-container {
+    padding: 2px;
+    gap: 2px;
+  }
+  
+  .cv-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .cv-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .cv-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .cv-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .cv-content {
+    min-height: 320px;
+  }
+  
+  .right-panel {
+    min-height: 180px;
+  }
 }
-
-.left-panel {
-  z-index: 2;
-}
-
-.cv-content {
-  z-index: 3;
-}
-
-.right-panel {
-  z-index: 10;
-}
-
-/* Scroll Optimization */
-.cv-container * {
-  box-sizing: border-box;
-}
-
-.cv-content > * {
-  flex-shrink: 0;
-}
-
-/* Performance Optimizations */
-.cv-page {
-  will-change: transform;
-  backface-visibility: hidden;
-}
-
-.cv-container {
-  contain: layout style paint;
-} 

@@ -17,7 +17,6 @@ import ExcelImportModal from "../ExcelImportModal/ExcelImportModal";
 import * as XLSX from 'xlsx';
 import "./ContactsTable.css";
 
-// Debounce hook
 const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -38,10 +37,8 @@ const ContactsTable = () => {
   const navigate = useNavigate();
   const { showSuccess, showError, showWarning } = useSimpleToast();
   
-  // Refs
   const tableWrapperRef = useRef(null);
   
-  // State tanımlamaları
   const [contacts, setContacts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [contactsPerPage] = useState(14);
@@ -56,12 +53,10 @@ const ContactsTable = () => {
   const [allCategories, setAllCategories] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Scrollbar state'leri
   const [scrollbarVisible, setScrollbarVisible] = useState(false);
   const [scrollbarLeft, setScrollbarLeft] = useState(0);
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
-  // Modal state'leri
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -71,9 +66,7 @@ const ContactsTable = () => {
   const [showExcelImportModal, setShowExcelImportModal] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const [bulkSMSLoading, setBulkSMSLoading] = useState(false);
-  // Portal menüye geçildi, açık dropdown state'i gereksiz
 
-  // API'den kişileri getir
   const fetchContacts = async () => {
     try {
       setLoading(true);
@@ -98,7 +91,6 @@ const ContactsTable = () => {
     }
   };
 
-  // Kategorileri getir
   const fetchCategories = async () => {
     try {
       const response = await contactsService.getCategories();
@@ -111,7 +103,6 @@ const ContactsTable = () => {
     }
   };
 
-  // Tüm kategorileri ve alt kategorileri getir (messaging modal için)
   const fetchAllCategories = async () => {
     try {
       const response = await fetchAllCategoriesForDropdown();
@@ -124,7 +115,6 @@ const ContactsTable = () => {
     }
   };
 
-  // Component mount edildiğinde kategorileri yükle
   useEffect(() => {
     fetchCategories();
     fetchAllCategories();

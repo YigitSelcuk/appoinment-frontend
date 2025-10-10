@@ -3,42 +3,23 @@ import { Modal, Button, Alert, Spinner } from 'react-bootstrap';
 import { cvsService } from '../../services/cvsService';
 import './DeleteCVModal.css';
 
-const DeleteCVModal = ({ isOpen, onClose, cvId, onCVDeleted }) => {
-  const [cv, setCv] = useState(null);
+const DeleteCVModal = ({ show, onHide, cv, onCVDeleted }) => {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (isOpen && cvId) {
-      fetchCVDetails();
-    }
-  }, [isOpen, cvId]);
-
-  const fetchCVDetails = async () => {
-    try {
-      setLoading(true);
+    if (show && cv) {
       setError(null);
-      const response = await cvsService.getCVById(cvId);
-      if (response.success) {
-        setCv(response.data);
-      } else {
-        setError('CV bilgileri yüklenemedi.');
-      }
-    } catch (error) {
-      console.error('CV detayları yüklenirken hata:', error);
-      setError('CV bilgileri yüklenirken bir hata oluştu.');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [show, cv]);
 
   const handleDelete = async () => {
     try {
       setDeleting(true);
       setError(null);
       
-      const response = await cvsService.deleteCV(cvId);
+      const response = await cvsService.deleteCV(cv.id);
       
       if (response.success) {
         onCVDeleted && onCVDeleted();
@@ -55,13 +36,12 @@ const DeleteCVModal = ({ isOpen, onClose, cvId, onCVDeleted }) => {
   };
 
   const handleClose = () => {
-    setCv(null);
     setError(null);
-    onClose();
+    onHide();
   };
 
   return (
-    <Modal show={isOpen} onHide={handleClose} size="sm" className="delete-cv-modal" centered>
+    <Modal show={show} onHide={handleClose} size="sm" className="delete-cv-modal" centered>
       <Modal.Body className="text-center">
         {loading ? (
           <div className="py-4">
@@ -84,7 +64,6 @@ const DeleteCVModal = ({ isOpen, onClose, cvId, onCVDeleted }) => {
             <div className="mb-4">
               <strong>{cv.adi} {cv.soyadi}</strong>
               <div className="text-muted">{cv.meslek}</div>
-              <div className="text-muted">{cv.email}</div>
             </div>
             
             <div className="d-flex gap-2 justify-content-center">

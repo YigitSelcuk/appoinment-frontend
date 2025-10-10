@@ -1,17 +1,22 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Table, Button, Form, Row, Col, Pagination, Modal } from "react-bootstrap";
+import { createPortal } from 'react-dom';
 import { useNavigate } from "react-router-dom";
-import { cvsService } from "../../services/cvsService";
 import { useSimpleToast } from "../../contexts/SimpleToastContext";
+import { cvsService } from "../../services/cvsService";
+import { fetchAllCategoriesForDropdown } from "../../services/categoriesService";
+import { smsService } from "../../services/smsService";
+import { ilceler, getMahalleler } from "../../data/istanbulData";
 import AddCVModal from "../AddCVModal/AddCVModal";
 import ViewCVModal from "../ViewCVModal/ViewCVModal";
 import EditCVModal from "../EditCVModal/EditCVModal";
-import ShowCVModal from "../ShowCVModal/ShowCVModal";
 import DeleteCVModal from "../DeleteCVModal/DeleteCVModal";
+import ShowCVModal from "../ShowCVModal/ShowCVModal";
+import ExcelImportModal from "../ExcelImportModal/ExcelImportModal";
+import * as XLSX from 'xlsx';
 import "./CVTable.css";
 
-// Debounce hookasa
+// Debounce hook
 const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -28,12 +33,17 @@ const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
-const CVTable = ({ filters, onFilterChange, onRefresh }) => {
+const CVTable = () => {
   const navigate = useNavigate();
-  const { showError } = useSimpleToast();
+  const { showSuccess, showError, showWarning } = useSimpleToast();
+  
+  // Refs
+  const tableWrapperRef = useRef(null);
+  
+  // State tanımlamaları
   const [cvs, setCvs] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [cvsPerPage] = useState(10);
+  const [cvsPerPage] = useState(14);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [selectedCvs, setSelectedCvs] = useState([]);
@@ -41,14 +51,27 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // Scrollbar state'leri
+  const [scrollbarVisible, setScrollbarVisible] = useState(false);
+  const [scrollbarLeft, setScrollbarLeft] = useState(0);
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  // Modal state'leri
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showCVModal, setShowCVModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedCvId, setSelectedCvId] = useState(null);
+  const [showCVModal, setShowCVModal] = useState(false);
+  const [showExcelImportModal, setShowExcelImportModal] = useState(false);
+  const [selectedCV, setSelectedCV] = useState(null);
+  const [bulkSMSLoading, setBulkSMSLoading] = useState(false);
+  // Portal menüye geçildi, açık dropdown state'i gereksiz
+
   // API'den CV'leri getir
-  const fetchCVs = async () => {
+  const fetchCvs = async () => {
     try {
       setLoading(true);
       const params = {
@@ -65,23 +88,262 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
         setTotalRecords(response.pagination.total);
       }
     } catch (error) {
-      console.error("CV'ler yüklenirken hata:", error);
+      showError("CV'ler yüklenirken hata oluştu");
       setCvs([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Kategorileri getir
+  const fetchCategories = async () => {
+    try {
+      const response = await cvsService.getCategories();
+      if (response.success) {
+        setCategories(["TÜMÜ", ...response.data]);
+      }
+    } catch (error) {
+      showError("Kategoriler yüklenirken hata oluştu");
+      setCategories(["TÜMÜ"]);
+    }
+  };
+
+  // Tüm kategorileri ve alt kategorileri getir (messaging modal için)
+  const fetchAllCategories = async () => {
+    try {
+      const response = await fetchAllCategoriesForDropdown();
+      if (response.success) {
+        setAllCategories(response.data);
+      }
+    } catch (error) {
+      showError("Tüm kategoriler yüklenirken hata oluştu");
+      setAllCategories([]);
+    }
+  };
+
+  // Component mount edildiğinde kategorileri yükle
+  useEffect(() => {
+    fetchCategories();
+    fetchAllCategories();
+  }, []);
+
   // Sayfa veya debounced arama terimi değiştiğinde CV'leri yükle
   useEffect(() => {
-    fetchCVs();
-  }, [currentPage, debouncedSearchTerm, onRefresh]);
+    fetchCvs();
+  }, [currentPage, debouncedSearchTerm]);
+
+  // Özel scrollbar logic'i
+  useEffect(() => {
+    const updateScrollbar = () => {
+      if (!tableWrapperRef.current) return;
+
+      const wrapper = tableWrapperRef.current;
+      const table = wrapper.querySelector('.cvs-table');
+      
+      if (!table) return;
+
+      const wrapperWidth = wrapper.clientWidth;
+      const tableWidth = table.scrollWidth;
+      const scrollLeft = wrapper.scrollLeft;
+      const maxScroll = tableWidth - wrapperWidth;
+
+      console.log('Scrollbar Debug:', {
+        wrapperWidth,
+        tableWidth,
+        scrollLeft,
+        maxScroll,
+        shouldShow: tableWidth > wrapperWidth
+      });
+
+      // Scrollbar görünürlüğü
+      const shouldShow = tableWidth > wrapperWidth;
+      setScrollbarVisible(shouldShow);
+
+      if (shouldShow) {
+        // Scrollbar genişliği (wrapper genişliğinin oranı)
+        const thumbWidth = Math.max(30, (wrapperWidth / tableWidth) * wrapperWidth);
+        setScrollbarWidth(thumbWidth);
+
+        // Scrollbar pozisyonu - Bu kısım çok önemli!
+        const thumbLeft = maxScroll > 0 ? (scrollLeft / maxScroll) * (wrapperWidth - thumbWidth) : 0;
+        console.log('Updating thumb position:', {
+          scrollLeft,
+          maxScroll,
+          thumbLeft,
+          thumbWidth,
+          wrapperWidth
+        });
+        setScrollbarLeft(thumbLeft);
+      }
+    };
+
+    // Scroll event listener'ı ekle
+    const handleScroll = () => {
+      updateScrollbar();
+    };
+
+    const wrapper = tableWrapperRef.current;
+    if (wrapper) {
+      wrapper.addEventListener('scroll', handleScroll, { passive: true });
+      window.addEventListener('resize', updateScrollbar);
+      
+      // İlk yükleme - biraz gecikme ile
+      setTimeout(updateScrollbar, 100);
+      
+      // Tablo içeriği değiştiğinde de güncelle
+      const observer = new MutationObserver(() => {
+        setTimeout(updateScrollbar, 50);
+      });
+      observer.observe(wrapper, { childList: true, subtree: true });
+
+      return () => {
+        wrapper.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('resize', updateScrollbar);
+        observer.disconnect();
+      };
+    }
+  }, [cvs]);
+
+  // Scrollbar thumb drag işlemleri
+  const handleScrollbarMouseDown = (e) => {
+    console.log('Scrollbar mousedown triggered');
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const startX = e.clientX;
+    const startLeft = scrollbarLeft;
+    const wrapper = tableWrapperRef.current;
+    
+    if (!wrapper) {
+      console.log('No wrapper found');
+      return;
+    }
+
+    const wrapperWidth = wrapper.clientWidth;
+    const table = wrapper.querySelector('.cvs-table');
+    
+    if (!table) {
+      console.log('No table found');
+      return;
+    }
+    
+    const maxScroll = table.scrollWidth - wrapperWidth;
+    const maxThumbLeft = wrapperWidth - scrollbarWidth;
+
+    console.log('Drag values:', {
+      startX,
+      startLeft,
+      wrapperWidth,
+      maxScroll,
+      maxThumbLeft,
+      scrollbarWidth
+    });
+
+    const handleMouseMove = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const deltaX = e.clientX - startX;
+      const newThumbLeft = Math.max(0, Math.min(maxThumbLeft, startLeft + deltaX));
+      
+      console.log('Mouse move:', {
+        deltaX,
+        newThumbLeft,
+        clientX: e.clientX
+      });
+      
+      if (maxThumbLeft > 0) {
+        const scrollRatio = newThumbLeft / maxThumbLeft;
+        const newScrollLeft = scrollRatio * maxScroll;
+        console.log('Setting scroll to:', newScrollLeft);
+        
+        // Scroll işlemini zorla yap
+        wrapper.scrollLeft = newScrollLeft;
+        
+        // Eğer scroll çalışmıyorsa, table'ı transform ile kaydır
+        const table = wrapper.querySelector('.cvs-table');
+        if (table && wrapper.scrollLeft !== newScrollLeft) {
+          console.log('Fallback: Using transform');
+          table.style.transform = `translateX(-${newScrollLeft}px)`;
+          
+          // Transform kullanıldığında scrollbar pozisyonunu manuel güncelle
+          const wrapperWidth = wrapper.clientWidth;
+          const maxThumbLeft = wrapperWidth - scrollbarWidth;
+          const newThumbLeft = maxThumbLeft > 0 ? (newScrollLeft / maxScroll) * maxThumbLeft : 0;
+          console.log('Manual thumb update:', newThumbLeft);
+          setScrollbarLeft(newThumbLeft);
+        } else if (table) {
+          // Normal scroll çalışıyorsa transform'u temizle
+          table.style.transform = '';
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      console.log('Mouse up');
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Scrollbar track click işlemi
+  const handleScrollbarTrackClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const wrapper = tableWrapperRef.current;
+    if (!wrapper) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const wrapperWidth = wrapper.clientWidth;
+    const table = wrapper.querySelector('.cvs-table');
+    
+    if (!table) return;
+    
+    const maxScroll = table.scrollWidth - wrapperWidth;
+    const maxThumbLeft = wrapperWidth - scrollbarWidth;
+    
+    if (maxThumbLeft > 0) {
+      const targetThumbLeft = Math.max(0, Math.min(maxThumbLeft, clickX - scrollbarWidth / 2));
+      const scrollRatio = targetThumbLeft / maxThumbLeft;
+      const newScrollLeft = scrollRatio * maxScroll;
+      
+      console.log('Track click - Setting scroll to:', newScrollLeft);
+      wrapper.scrollLeft = newScrollLeft;
+      
+      // Eğer scroll çalışmıyorsa, table'ı transform ile kaydır
+       if (wrapper.scrollLeft !== newScrollLeft) {
+         console.log('Track click - Fallback: Using transform');
+         table.style.transform = `translateX(-${newScrollLeft}px)`;
+         
+         // Transform kullanıldığında scrollbar pozisyonunu manuel güncelle
+         const maxThumbLeft = wrapperWidth - scrollbarWidth;
+         const newThumbLeft = maxThumbLeft > 0 ? (newScrollLeft / maxScroll) * maxThumbLeft : 0;
+         console.log('Track click - Manual thumb update:', newThumbLeft);
+         setScrollbarLeft(newThumbLeft);
+       } else {
+         // Normal scroll çalışıyorsa transform'u temizle
+         table.style.transform = '';
+       }
+    }
+  };
 
   // Arama terimi değiştiğinde sayfa numarasını sıfırla
   const handleSearchChange = (value) => {
     setSearchTerm(value);
-    setCurrentPage(1);
+    setCurrentPage(1); // Arama değiştiğinde hemen ilk sayfaya dön
   };
+
+  // Mevcut sayfa kontakları (API'den gelen veriler zaten sayfalanmış)
+  const currentCvs = cvs;
 
   // Modal işlemleri
   const handleShowAddModal = () => {
@@ -94,22 +356,237 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
 
   const handleCVAdded = async (formData) => {
     try {
-      setLoading(true);
-      const response = await cvsService.createCV(formData);
-      if (response.success) {
-        // Modal'ı kapat
-        setShowAddModal(false);
-        // Listeyi yenile
-        fetchCVs();
-        // Başarı mesajı göster (eğer toast context varsa)
-        console.log('CV başarıyla eklendi');
+      // Eğer formData varsa (yeni CV ekleme), createCV kullan
+      if (formData) {
+        const response = await cvsService.createCV(formData);
+        if (response.success) {
+          showSuccess('CV başarıyla eklendi!');
+          setShowAddModal(false);
+          fetchCvs(); // Yeni CV eklendikten sonra listeyi yenile
+        } else {
+          showError(response.message || 'CV eklenirken bir hata oluştu');
+        }
+      } else {
+        // formData yoksa (CV güncelleme), sadece listeyi yenile
+        showSuccess('CV başarıyla güncellendi!');
+        fetchCvs();
       }
     } catch (error) {
-      console.error('CV eklenirken hata:', error);
-      showError('CV eklenirken bir hata oluştu: ' + error.message);
+      console.error('CV ekleme hatası:', error);
+      showError('CV eklenirken bir hata oluştu');
+    }
+  };
+
+  // Durum değiştirme fonksiyonu
+  const handleStatusChange = async (cvId, newStatus) => {
+    try {
+      console.log('Frontend - handleStatusChange çağrıldı:', { cvId, newStatus });
+      
+      const response = await cvsService.updateCVStatus(cvId, newStatus);
+      
+      console.log('Frontend - API response:', response);
+
+      if (response.success) {
+        // CV listesini güncelle
+        setCvs(prevCvs => 
+          prevCvs.map(cv => 
+            cv.id === cvId ? { ...cv, durum: newStatus } : cv
+          )
+        );
+        showSuccess('CV durumu başarıyla güncellendi');
+      } else {
+        showError(response.message || 'Durum güncellenirken bir hata oluştu');
+      }
+    } catch (error) {
+      console.error('Durum güncellenirken hata:', error);
+      showError('Durum güncellenirken bir hata oluştu');
+    }
+  };
+
+  // Durum badge renkleri
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'İŞ ARIYOR':
+        return 'status-is-ariyor';
+      case 'YÖNLENDİRİLDİ':
+        return 'status-yonlendirildi';
+      case 'İŞE YERLEŞTİRİLDİ':
+        return 'status-ise-yerlestirildi';
+      case 'BEKLEMEDE':
+        return 'status-beklemede';
+      case 'İŞ BULUNDU':
+        return 'status-is-bulundu';
+      default:
+        return 'status-default';
+    }
+  };
+
+  // Durum seçenekleri
+  const statusOptions = [
+    'İŞ ARIYOR',
+    'YÖNLENDİRİLDİ',
+    'İŞE YERLEŞTİRİLDİ',
+    'BEKLEMEDE',
+    'İŞ BULUNDU'
+  ];
+
+  // Modal işlem fonksiyonları
+  const handleViewCV = (cv) => {
+    setSelectedCV(cv);
+    setShowViewModal(true);
+  };
+
+  const handleEditCV = (cv) => {
+    setSelectedCV(cv);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteCV = (cv) => {
+    setSelectedCV(cv);
+    setShowDeleteModal(true);
+  };
+
+  const handleShowCV = (cv) => {
+    setSelectedCV(cv);
+    setShowCVModal(true);
+  };
+
+  const handleWhatsAppMessage = (cv) => {
+    const phones = [];
+    if (cv.phone1) phones.push(cv.phone1);
+    if (cv.phone2) phones.push(cv.phone2);
+
+    if (phones.length === 0) {
+      showWarning("Bu kişinin kayıtlı telefon numarası bulunmamaktadır.");
+      return;
+    }
+
+    if (phones.length === 1) {
+      // Tek numara varsa direkt WhatsApp'a yönlendir
+      openWhatsApp(phones[0]);
+    } else {
+      // Birden fazla numara varsa modal aç
+      setSelectedCV(cv);
+      setShowCVModal(true);
+    }
+  };
+
+  const openWhatsApp = (phoneNumber) => {
+    const cleanPhone = phoneNumber.replace(/\D/g, ''); // Sadece rakamları al
+    const whatsappUrl = `https://wa.me/90${cleanPhone}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handlePhoneSelect = (phoneNumber) => {
+    openWhatsApp(phoneNumber);
+  };
+
+  // Excel export fonksiyonu
+  const handleExportToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      // Tüm kişileri al (sayfalama olmadan)
+       const response = await cvsService.getCVs({
+         limit: 10000, // Çok büyük bir sayı ile tüm kayıtları al
+         ...(debouncedSearchTerm && { search: debouncedSearchTerm })
+       });
+
+      if (!response.success || !response.data) {
+        showError('Veriler alınırken bir hata oluştu.');
+        return;
+      }
+
+      // Excel için veri formatını hazırla
+      const excelData = response.data.map((contact, index) => ({
+        'SIRA': index + 1,
+        'ADI': contact.name || '',
+        'SOYADI': contact.surname || '',
+        'TC KİMLİK': contact.tc_number || '',
+        'KATEGORİ': contact.category_name || '',
+        'TELEFON 1': contact.phone1 || '',
+        'TELEFON 2': contact.phone2 || '',
+        'ÜNVAN': contact.title || '',
+        'MAHALLE': contact.neighborhood || '',
+        'İLÇE': contact.district || '',
+        'ADRES': contact.address || '',
+        'E-POSTA': contact.email || '',
+        'DOĞUM TARİHİ': contact.birth_date || '',
+        'CİNSİYET': contact.gender === 'male' ? 'Erkek' : contact.gender === 'female' ? 'Kadın' : '',
+        'NOTLAR': contact.notes || '',
+        'OLUŞTURMA TARİHİ': contact.created_at ? new Date(contact.created_at).toLocaleDateString('tr-TR') : ''
+      }));
+
+      // Excel workbook oluştur
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Kişiler');
+
+      // Sütun genişliklerini ayarla
+      const columnWidths = [
+        { wch: 8 },  // SIRA
+        { wch: 15 }, // ADI
+        { wch: 15 }, // SOYADI
+        { wch: 15 }, // TC KİMLİK
+        { wch: 20 }, // KATEGORİ
+        { wch: 15 }, // TELEFON 1
+        { wch: 15 }, // TELEFON 2
+        { wch: 20 }, // ÜNVAN
+        { wch: 20 }, // MAHALLE
+        { wch: 15 }, // İLÇE
+        { wch: 30 }, // ADRES
+        { wch: 25 }, // E-POSTA
+        { wch: 15 }, // DOĞUM TARİHİ
+        { wch: 10 }, // CİNSİYET
+        { wch: 30 }, // NOTLAR
+        { wch: 18 }  // OLUŞTURMA TARİHİ
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Dosya adını oluştur
+      const fileName = `Telefon_Rehberi_${new Date().toLocaleDateString('tr-TR').replace(/\./g, '_')}.xlsx`;
+      
+      // Excel dosyasını indir
+      XLSX.writeFile(workbook, fileName);
+      
+      showSuccess(`${response.data.length} kişi başarıyla Excel dosyasına aktarıldı.`);
+      
+    } catch (error) {
+      showError('Excel dosyası oluşturulurken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Dropdown state kaldırıldı (portal menü kullanılıyor)
+
+
+
+  const handleContactUpdated = () => {
+    fetchCvs(); // CV güncellendikten sonra listeyi yenile
+  };
+
+  const handleContactDeleted = () => {
+    fetchCvs(); // CV silindikten sonra listeyi yenile
+  };
+
+  const closeAllModals = () => {
+    setShowAddModal(false);
+    setShowViewModal(false);
+    setShowEditModal(false);
+    setShowDeleteModal(false);
+    setShowCVModal(false);
+    setShowExcelImportModal(false);
+    setSelectedCV(null);
+  };
+
+  // Excel import modal fonksiyonları
+  const handleShowExcelImportModal = () => {
+    setShowExcelImportModal(true);
+  };
+
+  const handleExcelImportComplete = () => {
+    fetchCvs(); // Yeni veriler eklendikten sonra listeyi yenile
   };
 
 
@@ -124,7 +601,7 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
     const isChecked = e.target.checked;
     setSelectAll(isChecked);
     if (isChecked) {
-      setSelectedCvs(cvs.map((cv) => cv.id));
+      setSelectedCvs(currentCvs.map((cv) => cv.id));
     } else {
       setSelectedCvs([]);
     }
@@ -144,154 +621,14 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
   useEffect(() => {
     if (selectedCvs.length === 0) {
       setSelectAll(false);
-    } else if (selectedCvs.length === cvs.length) {
+    } else if (selectedCvs.length === currentCvs.length) {
       setSelectAll(true);
     } else {
       setSelectAll(false);
     }
-  }, [selectedCvs, cvs]);
+  }, [selectedCvs, currentCvs]);
 
-  // Durum badge renkleri
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'İŞ ARIYOR':
-        return 'status-is-ariyor';
-      case 'İŞ BULUNDU':
-        return 'status-is-bulundu';
-      case 'BEKLEMEDE':
-        return 'status-beklemede';
-      case 'YETİŞTİRİLDİ':
-        return 'status-yetistirildi';
-      case 'İŞLENMEDE':
-        return 'status-islenmede';
-      case 'GÖLDAĞ':
-        return 'status-goldag';
-      case 'DEĞERLENDİRİLİYOR':
-        return 'status-degerlendiriliyor';
-      case 'YETİŞTİRİLECEK':
-        return 'status-yetistirilecek';
-      default:
-        return 'status-default';
-    }
-  };
 
-  // Referans badge renkleri
-  const getReferansBadgeClass = (referans) => {
-    switch (referans) {
-      case 'AHMET YILMAZ':
-        return 'referans-ahmet';
-      case 'MEHMET CAN':
-        return 'referans-mehmet';
-      case 'AYHAN YİĞİT':
-        return 'referans-ayhan';
-      case 'MURAT YILDIRIM':
-        return 'referans-murat';
-      case 'YAŞAR KARA':
-        return 'referans-yasar';
-      case 'ENGİN ÖZDEMİR':
-        return 'referans-engin';
-      case 'ZEYNEP GÜLER':
-        return 'referans-zeynep';
-      case 'ELİF KARAHAN':
-        return 'referans-elif';
-      case 'BERKAY YILDIZ':
-        return 'referans-berkay';
-      case 'İREM KOCAMAN':
-        return 'referans-irem';
-      case 'ONUR ŞAHİN':
-        return 'referans-onur';
-      case 'CEREN AYDIN':
-        return 'referans-ceren';
-      default:
-        return 'referans-default';
-    }
-  };
-
-  // Durum değiştirme fonksiyonu
-  const handleStatusChange = async (cvId, newStatus) => {
-    try {
-      const response = await cvsService.updateCV(cvId, { durum: newStatus });
-      if (response.success) {
-        // CV listesini güncelle
-        setCvs(prevCvs => 
-          prevCvs.map(cv => 
-            cv.id === cvId ? { ...cv, durum: newStatus } : cv
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Durum güncellenirken hata:', error);
-    }
-  };
-
-  // CV görüntüleme fonksiyonu
-  const handleViewCV = (cvId) => {
-    setSelectedCvId(cvId);
-    setShowViewModal(true);
-  };
-
-  // CV düzenleme fonksiyonu
-  const handleEditCV = (cvId) => {
-    setSelectedCvId(cvId);
-    setShowEditModal(true);
-  };
-
-  // CV göster fonksiyonu
-  const handleShowCV = (cvId) => {
-    setSelectedCvId(cvId);
-    setShowCVModal(true);
-  };
-
-  // CV silme fonksiyonu
-  const handleDeleteCV = (cvId) => {
-    setSelectedCvId(cvId);
-    setShowDeleteModal(true);
-  };
-
-  // Modal kapatma fonksiyonları
-  const handleCloseViewModal = () => {
-    setShowViewModal(false);
-    setSelectedCvId(null);
-  };
-
-  const handleCloseEditModal = () => {
-    setShowEditModal(false);
-    setSelectedCvId(null);
-  };
-
-  const handleCloseCVModal = () => {
-    setShowCVModal(false);
-    setSelectedCvId(null);
-  };
-
-  const handleCloseDeleteModal = () => {
-    setShowDeleteModal(false);
-    setSelectedCvId(null);
-  };
-
-  // CV güncelleme callback
-  const handleCVUpdated = () => {
-    fetchCVs();
-  };
-
-  // CV silme callback
-  const handleCVDeleted = () => {
-    fetchCVs();
-    // Seçili CV'lerden de kaldır
-    setSelectedCvs(prev => prev.filter(id => id !== selectedCvId));
-  };
-
-  // Durum seçenekleri
-  const statusOptions = [
-    'İŞ ARIYOR',
-    'İŞ BULUNDU',
-    'BEKLEMEDE',
-    'YETİŞTİRİLDİ',
-    'İŞLENMEDE',
-    'GÖLDAĞ',
-    'DEĞERLENDİRİLİYOR',
-    'YETİŞTİRİLECEK'
-  ];
 
   return (
     <div className="cvs-table-container">
@@ -299,47 +636,48 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
       <div className="header-bar">
         <div className="header-left">
           <div className="header-icon">
-           <svg width="28" height="31" viewBox="0 0 28 31" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fillRule="evenodd" clipRule="evenodd" d="M0.166016 3.16634C0.166016 2.34859 0.490866 1.56433 1.0691 0.986095C1.64734 0.407858 2.4316 0.0830078 3.24935 0.0830078H21.7493C22.5671 0.0830078 23.3514 0.407858 23.9296 0.986095C24.5078 1.56433 24.8327 2.34859 24.8327 3.16634V12.4163H21.7493V3.16634H3.24935V27.833H10.9577V30.9163H3.24935C2.4316 30.9163 1.64734 30.5915 1.0691 30.0133C0.490866 29.435 0.166016 28.6508 0.166016 27.833V3.16634ZM6.33268 9.33301C6.33268 8.92413 6.49511 8.532 6.78423 8.24289C7.07334 7.95377 7.46547 7.79134 7.87435 7.79134H17.1243C17.5332 7.79134 17.9254 7.95377 18.2145 8.24289C18.5036 8.532 18.666 8.92413 18.666 9.33301C18.666 9.74188 18.5036 10.134 18.2145 10.4231C17.9254 10.7122 17.5332 10.8747 17.1243 10.8747H7.87435C7.46547 10.8747 7.07334 10.7122 6.78423 10.4231C6.49511 10.134 6.33268 9.74188 6.33268 9.33301ZM6.33268 15.4997C6.33268 15.0908 6.49511 14.6987 6.78423 14.4096C7.07334 14.1204 7.46547 13.958 7.87435 13.958H9.41602C9.82489 13.958 10.217 14.1204 10.5061 14.4096C10.7953 14.6987 10.9577 15.0908 10.9577 15.4997C10.9577 15.9086 10.7953 16.3007 10.5061 16.5898C10.217 16.8789 9.82489 17.0413 9.41602 17.0413H7.87435C7.46547 17.0413 7.07334 16.8789 6.78423 16.5898C6.49511 16.3007 6.33268 15.9086 6.33268 15.4997ZM20.2077 18.583C18.9811 18.583 17.8047 19.0703 16.9373 19.9376C16.07 20.805 15.5827 21.9814 15.5827 23.208C15.5827 24.4346 16.07 25.611 16.9373 26.4784C17.8047 27.3457 18.9811 27.833 20.2077 27.833C21.4343 27.833 22.6107 27.3457 23.4781 26.4784C24.3454 25.611 24.8327 24.4346 24.8327 23.208C24.8327 21.9814 24.3454 20.805 23.4781 19.9376C22.6107 19.0703 21.4343 18.583 20.2077 18.583ZM12.4993 23.208C12.4993 21.1636 13.3115 19.203 14.7571 17.7574C16.2027 16.3118 18.1633 15.4997 20.2077 15.4997C22.2521 15.4997 24.2127 16.3118 25.6583 17.7574C27.1039 19.203 27.916 21.1636 27.916 23.208C27.916 25.2524 27.1039 27.213 25.6583 28.6586C24.2127 30.1042 22.2521 30.9163 20.2077 30.9163C18.1633 30.9163 16.2027 30.1042 14.7571 28.6586C13.3115 27.213 12.4993 25.2524 12.4993 23.208ZM20.2077 19.3538C20.6166 19.3538 21.0087 19.5163 21.2978 19.8054C21.5869 20.0945 21.7493 20.4866 21.7493 20.8955V21.6663C22.1582 21.6663 22.5504 21.8288 22.8395 22.1179C23.1286 22.407 23.291 22.7991 23.291 23.208C23.291 23.6169 23.1286 24.009 22.8395 24.2981C22.5504 24.5873 22.1582 24.7497 21.7493 24.7497H20.2077C19.7988 24.7497 19.4067 24.5873 19.1176 24.2981C18.8284 24.009 18.666 23.6169 18.666 23.208V20.8955C18.666 20.4866 18.8284 20.0945 19.1176 19.8054C19.4067 19.5163 19.7988 19.3538 20.2077 19.3538Z" fill="#3C02AA"/>
-</svg>
-
+           <img style={{width: '35px', height: '35px'}} src="/assets/images/cv.png" alt="contact" />
           </div>
           <h2 className="header-title">CV BANK</h2>
         </div>
-        
+
         {/* Arama Kutusu - Ortada */}
         <div className="header-center">
           <div className="search-container">
             <Form.Control
               type="text"
-              placeholder="Ad, soyad, meslek veya email ile ara..."
+              placeholder="Ad, soyad, telefon veya kategori ile ara..."
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="search-input"
             />
-          
           </div>
         </div>
-        
+
         <div className="header-right">
           <button
             className="header-btn"
             onClick={handleShowAddModal}
-            title="CV Ekle"
+            title="Cv Ekle"
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fillRule="evenodd" clipRule="evenodd" d="M0 10C0 4.477 4.477 0 10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20C4.477 20 0 15.523 0 10ZM10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2Z" fill="#12B423"/>
-<path fillRule="evenodd" clipRule="evenodd" d="M11 5C11 4.73478 10.8946 4.48043 10.7071 4.29289C10.5196 4.10536 10.2652 4 10 4C9.73478 4 9.48043 4.10536 9.29289 4.29289C9.10536 4.48043 9 4.73478 9 5V9H5C4.73478 9 4.48043 9.10536 4.29289 9.29289C4.10536 9.48043 4 9.73478 4 10C4 10.2652 4.10536 10.5196 4.29289 10.7071C4.48043 10.8946 4.73478 11 5 11H9V15C9 15.2652 9.10536 15.5196 9.29289 15.7071C9.48043 15.8946 9.73478 16 10 16C10.2652 16 10.5196 15.8946 10.7071 15.7071C10.8946 15.5196 11 15.2652 11 15V11H15C15.2652 11 15.5196 10.8946 15.7071 10.7071C15.8946 10.5196 16 10.2652 16 10C16 9.73478 15.8946 9.48043 15.7071 9.29289C15.5196 9.10536 15.2652 9 15 9H11V5Z" fill="#12B423"/>
+            <svg width="40" height="40" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M0 10C0 4.477 4.477 0 10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20C4.477 20 0 15.523 0 10ZM10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2Z" fill="#12B423"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M11 5C11 4.73478 10.8946 4.48043 10.7071 4.29289C10.5196 4.10536 10.2652 4 10 4C9.73478 4 9.48043 4.10536 9.29289 4.29289C9.10536 4.48043 9 4.73478 9 5V9H5C4.73478 9 4.48043 9.10536 4.29289 9.29289C4.10536 9.48043 4 9.73478 4 10C4 10.2652 4.10536 10.5196 4.29289 10.7071C4.48043 10.8946 4.73478 11 5 11H9V15C9 15.2652 9.10536 15.5196 9.29289 15.7071C9.48043 15.8946 9.73478 16 10 16C10.2652 16 10.5196 15.8946 10.7071 15.7071C10.8946 15.5196 11 15.2652 11 15V11H15C15.2652 11 15.5196 10.8946 15.7071 10.7071C15.8946 10.5196 16 10.2652 16 10C16 9.73478 15.8946 9.48043 15.7071 9.29289C15.5196 9.10536 15.2652 9 15 9H11V5Z" fill="#12B423"/>
 </svg>
+
 
           </button>
 
-    
+
+
+
         </div>
       </div>
 
+
+
       {/* Tablo */}
-      <div className="table-wrapper">
+      <div className="table-wrapper" ref={tableWrapperRef}>
         <Table className="cvs-table">
           <thead>
             <tr>
@@ -352,7 +690,6 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
                 />
               </th>
               <th>SIRA</th>
-              <th>KAYIT</th>
               <th>ADI</th>
               <th>SOYADI</th>
               <th>MESLEK</th>
@@ -365,7 +702,7 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="11" className="text-center py-4">
+                <td colSpan="9" className="text-center py-4">
                   <div className="d-flex justify-content-center align-items-center">
                     <div className="spinner-border text-primary" role="status">
                       <span className="visually-hidden">Yükleniyor...</span>
@@ -374,9 +711,9 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
                   </div>
                 </td>
               </tr>
-            ) : cvs.length === 0 ? (
+            ) : currentCvs.length === 0 ? (
               <tr>
-                <td colSpan="11" className="text-center py-4">
+                <td colSpan="9" className="text-center py-4">
                   <div className="text-muted">
                     <i className="fas fa-search me-2"></i>
                     Herhangi bir kayıt bulunamadı
@@ -384,7 +721,7 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
                 </td>
               </tr>
             ) : (
-              cvs.map((cv, index) => (
+              currentCvs.map((cv, index) => (
                 <tr key={cv.id}>
                   <td>
                     <Form.Check
@@ -395,29 +732,18 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
                     />
                   </td>
                   <td>{(currentPage - 1) * cvsPerPage + index + 1}</td>
-                  <td>
-                    {(() => {
-                      if (!cv.kayit_tarihi) return '-';
-                      const date = new Date(cv.kayit_tarihi);
-                      return !isNaN(date.getTime()) ? date.toLocaleDateString('tr-TR') : '-';
-                    })()}
-                  </td>
                   <td>{cv.adi}</td>
                   <td>{cv.soyadi}</td>
-                  <td>{cv.meslek}</td>
+                  <td>{cv.meslek || "-"}</td>
                   <td>
                     {(() => {
-                      // Önce referans JSON verisini kontrol et
                       if (cv.referans) {
                         try {
                           let referansListesi;
                           
-                          // Eğer zaten bir object ise (MySQL JSON tipinden geliyorsa)
                           if (typeof cv.referans === 'object') {
                             referansListesi = cv.referans;
-                          } 
-                          // Eğer string ise parse et
-                          else if (typeof cv.referans === 'string') {
+                          } else if (typeof cv.referans === 'string') {
                             referansListesi = JSON.parse(cv.referans);
                           }
                           
@@ -429,41 +755,41 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
                         }
                       }
                       
-                      // JSON verisi yoksa eski referans_kisi alanını göster
                       return cv.referans_kisi || '-';
-                    })()} 
+                    })()}
                   </td>
-                  <td>{cv.email}</td>
-               
+                  <td>{cv.email || "-"}</td>
                   <td>
                     <Form.Select
                       size="sm"
                       value={cv.durum}
                       onChange={(e) => handleStatusChange(cv.id, e.target.value)}
-                      className={`status-select ${getStatusBadgeClass(cv.durum)}`}
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
+                      className={`status-dropdown ${getStatusBadgeClass(cv.durum)}`}
+                      style={{ 
+                        fontSize: '12px', 
+                        padding: '4px 8px',
+                        minWidth: '50px',
+                        minHeight: '40px',
                         border: 'none',
-                        borderRadius: '12px',
-                        padding: '4px 8px'
+                        borderRadius: '20px',
+                        fontWeight: '500',
+                        color: 'white',
+                        textAlign: 'center'
                       }}
                     >
-                      {statusOptions.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
+                      <option value="İŞ ARIYOR">İŞ ARIYOR</option>
+                      <option value="YÖNLENDİRİLDİ">YÖNLENDİRİLDİ</option>
+                      <option value="İŞE YERLEŞTİRİLDİ">İŞE YERLEŞTİRİLDİ</option>
+                      <option value="BEKLEMEDE">BEKLEMEDE</option>
+                      <option value="İŞ BULUNDU">İŞ BULUNDU</option>
                     </Form.Select>
                   </td>
                   <td>
                     <CVActionMenu
-                      onView={() => handleViewCV(cv.id)}
-                      onEdit={() => handleEditCV(cv.id)}
-                      onShowCV={() => handleShowCV(cv.id)}
-                      onDelete={() => handleDeleteCV(cv.id)}
+                      onView={() => handleViewCV(cv)}
+                      onEdit={() => handleEditCV(cv)}
+                      onShowCV={() => handleShowCV(cv)}
+                      onDelete={() => handleDeleteCV(cv)}
                     />
                   </td>
                 </tr>
@@ -473,111 +799,170 @@ const CVTable = ({ filters, onFilterChange, onRefresh }) => {
         </Table>
       </div>
 
+      {/* Özel Yatay Scrollbar */}
+      {scrollbarVisible && (
+        <div className="custom-scrollbar-container">
+          <div 
+            className="custom-scrollbar-track" 
+            onClick={handleScrollbarTrackClick}
+          >
+            <div
+              className="custom-scrollbar-thumb"
+              style={{
+                width: `${scrollbarWidth}px`,
+                left: `${scrollbarLeft}px`
+              }}
+              onMouseDown={handleScrollbarMouseDown}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Alt Bilgi ve Sayfalama */}
       <div className="table-footer">
         <div className="total-records">
-          TOPLAM {(totalRecords || 0).toLocaleString("tr-TR")} CV BULUNMAKTADIR
+          TOPLAM {(totalRecords || 0).toLocaleString("tr-TR")} KİŞİ BULUNMAKTADIR
         </div>
         <div className="pagination-wrapper">
           <Pagination className="custom-pagination">
-            <Pagination.First 
+            <Pagination.First
               disabled={currentPage === 1}
               onClick={() => handlePageChange(1)}
-            />
-            <Pagination.Prev 
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M9 2L4 6L9 10"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M2 2V10"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </Pagination.First>
+            <Pagination.Prev
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
-            />
-            
+            >
+              <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
+                <path
+                  d="M6 2L2 6L6 10"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Pagination.Prev>
+
             {/* Sayfa numaraları */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNumber;
-              if (totalPages <= 5) {
-                pageNumber = i + 1;
-              } else if (currentPage <= 3) {
-                pageNumber = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNumber = totalPages - 4 + i;
-              } else {
-                pageNumber = currentPage - 2 + i;
+              const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+              if (pageNum <= totalPages) {
+                return (
+                  <Pagination.Item
+                    key={pageNum}
+                    active={pageNum === currentPage}
+                    onClick={() => handlePageChange(pageNum)}
+                  >
+                    {pageNum}
+                  </Pagination.Item>
+                );
               }
-              
-              return (
-                <Pagination.Item
-                  key={pageNumber}
-                  active={pageNumber === currentPage}
-                  onClick={() => handlePageChange(pageNumber)}
-                >
-                  {pageNumber}
-                </Pagination.Item>
-              );
+              return null;
             })}
-            
-            <Pagination.Next 
+
+            <Pagination.Next
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
-            />
-            <Pagination.Last 
+            >
+              <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
+                <path
+                  d="M2 2L6 6L2 10"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Pagination.Next>
+            <Pagination.Last
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(totalPages)}
-            />
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M3 2L8 6L3 10"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M10 2V10"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </Pagination.Last>
           </Pagination>
         </div>
       </div>
 
-      {/* Add CV Modal */}
-      {showAddModal && (
-        <AddCVModal
-          isOpen={showAddModal}
-          onClose={handleCloseAddModal}
-          onSubmit={handleCVAdded}
-        />
-      )}
+      {/* CV Ekleme Modal */}
+      <AddCVModal
+        show={showAddModal}
+        onHide={handleCloseAddModal}
+        onSubmit={handleCVAdded}
+      />
 
-      {/* View CV Modal */}
-      {showViewModal && (
-        <ViewCVModal
-          isOpen={showViewModal}
-          onClose={handleCloseViewModal}
-          cvId={selectedCvId}
-        />
-      )}
+      {/* CV Görüntüleme Modal */}
+      <ViewCVModal
+        show={showViewModal}
+        onHide={closeAllModals}
+        cv={selectedCV}
+      />
 
-      {/* Edit CV Modal */}
-      {showEditModal && (
-        <EditCVModal
-          isOpen={showEditModal}
-          onClose={handleCloseEditModal}
-          cvId={selectedCvId}
-          onCVUpdated={handleCVUpdated}
-        />
-      )}
+      {/* CV Düzenleme Modal */}
+      <EditCVModal
+        show={showEditModal}
+        onHide={closeAllModals}
+        cv={selectedCV}
+        onCVUpdated={handleCVAdded}
+      />
 
-      {/* Show CV Modal */}
-      {showCVModal && (
-        <ShowCVModal
-          isOpen={showCVModal}
-          onClose={handleCloseCVModal}
-          cvId={selectedCvId}
-        />
-      )}
+      {/* CV Silme Modal */}
+      <DeleteCVModal
+        show={showDeleteModal}
+        onHide={closeAllModals}
+        cv={selectedCV}
+        onCVDeleted={handleCVAdded}
+      />
 
-      {/* Delete CV Modal */}
-      {showDeleteModal && (
-        <DeleteCVModal
-          isOpen={showDeleteModal}
-          onClose={handleCloseDeleteModal}
-          cvId={selectedCvId}
-          onCVDeleted={handleCVDeleted}
-        />
-      )}
+      {/* CV Gösterme Modal */}
+      <ShowCVModal
+        show={showCVModal}
+        onHide={closeAllModals}
+        cv={selectedCV}
+      />
+
+      {/* Excel Import Modal */}
+      <ExcelImportModal
+        show={showExcelImportModal}
+        onHide={closeAllModals}
+        onImportComplete={handleExcelImportComplete}
+      />
     </div>
   );
 };
 
-export default CVTable;
-
-// Portal tabanlı aksiyon menüsü (Users/Requests ile aynı yaklaşım)
+// Portal tabanlı CV aksiyon menüsü
 const CVActionMenu = ({ onView, onEdit, onShowCV, onDelete }) => {
   const [open, setOpen] = useState(false);
   const btnRef = React.useRef(null);
@@ -606,8 +991,8 @@ const CVActionMenu = ({ onView, onEdit, onShowCV, onDelete }) => {
     <div className="dropdown-item" onClick={() => { setOpen(false); onClick && onClick(); }} style={{ cursor: 'pointer', display:'flex', alignItems:'center', gap:8 }}>
       <span style={{ width:14, height:14, display:'inline-flex' }}>
         {icon === 'view' && <svg width="14" height="14" viewBox="0 0 24 24" fill={color}><path d="M12 6a9.77 9.77 0 0 0-9 6 9.77 9.77 0 0 0 18 0 9.77 9.77 0 0 0-9-6Zm0 10a4 4 0 1 1 4-4 4.005 4.005 0 0 1-4 4Z"/></svg>}
+        {icon === 'cv' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M4 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H4zm0 1h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M5 5h6v1H5V5zm0 2h6v1H5V7zm0 2h4v1H5V9z"/></svg>}
         {icon === 'edit' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M2 10.667V13.333H4.66667L11.7333 6.26667L9.06667 3.6L2 10.667ZM13.2667 4.73333C13.5333 4.46667 13.5333 4.06667 13.2667 3.8L11.8667 2.4C11.6 2.13333 11.2 2.13333 10.9333 2.4L9.8 3.53333L12.4667 6.2L13.2667 5.4V4.73333Z"/></svg>}
-        {icon === 'show' && <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3z" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M5 6h6M5 8h6M5 10h4" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
         {icon === 'delete' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M6 2.66667H10C10.3667 2.66667 10.6667 2.96667 10.6667 3.33333V4H5.33333V3.33333C5.33333 2.96667 5.63333 2.66667 6 2.66667ZM4 4.66667V12.6667C4 13.4 4.6 14 5.33333 14H10.6667C11.4 14 12 13.4 12 12.6667V4.66667H4Z"/></svg>}
       </span>
       {label}
@@ -617,9 +1002,9 @@ const CVActionMenu = ({ onView, onEdit, onShowCV, onDelete }) => {
   const menu = (
     <div ref={menuRef} className="user-actions-menu" style={{ position:'fixed', top:pos.top, left:pos.left, zIndex:2147483647, minWidth:220, background:'#fff', border:'1px solid #e5e7eb', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,.12)'}}>
       <Item icon="view" color="#4E0DCC" label="Görüntüle" onClick={onView} />
-      <Item icon="edit" color="#3B82F6" label="Düzenle" onClick={onEdit} />
-      <Item icon="show" color="#10B981" label="CV Göster" onClick={onShowCV} />
+      <Item icon="cv" color="#F66700" label="CV Göster" onClick={onShowCV} />
       <div style={{height:1, background:'#f1f3f5', margin:'6px 0'}} />
+      <Item icon="edit" color="#3B82F6" label="Düzenle" onClick={onEdit} />
       <Item icon="delete" color="#dc3545" label="Sil" onClick={onDelete} />
     </div>
   );
@@ -637,3 +1022,5 @@ const CVActionMenu = ({ onView, onEdit, onShowCV, onDelete }) => {
     </>
   );
 };
+
+export default CVTable;
