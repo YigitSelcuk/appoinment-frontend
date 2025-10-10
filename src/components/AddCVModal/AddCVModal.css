@@ -1,0 +1,1130 @@
+/* Bootstrap Modal Overrides */
+.add-cv-modal {
+  z-index: 1055;
+}
+
+.add-cv-modal .modal-dialog {
+  max-width: 900px;
+  width: 95%;
+  margin: 1rem auto;
+  height: calc(100vh - 2rem);
+  min-height: 650px;
+  max-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.add-cv-modal .modal-content {
+  background-color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.3rem;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5);
+  outline: 0;
+  height: 100%;
+  max-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Modal footer stilleri */
+.add-cv-modal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 1rem 1rem;
+  border-top: 1px solid #dee2e6;
+  background: #f8f9fa;
+  flex-shrink: 0;
+}
+
+.add-cv-modal .modal-header {
+  background: #3C02AA;
+  color: white;
+  border-bottom: 1px solid #dee2e6;
+  padding: 1rem 1rem;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.add-cv-modal .modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+}
+
+.add-cv-modal .btn-close {
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+
+.add-cv-modal .btn-close:hover {
+  opacity: 1;
+}
+
+
+
+.add-cv-modal .modal-body {
+  position: relative;
+  flex: 1 1 auto;
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 150px);
+}
+
+/* Form Content */
+.add-cv-modal .form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 25px;
+}
+
+/* Üst Bölüm - Profil ve TC */
+.top-section {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* Profil Resmi */
+.profile-image-container {
+  flex-shrink: 0;
+}
+
+.profile-image-placeholder {
+  width: 120px;
+  height: 150px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.profile-icon {
+  font-size: 32px;
+  opacity: 0.7;
+}
+
+.profile-text {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profile-image-placeholder:hover {
+  border-color: #6D28D9;
+  background: #f8fafc;
+}
+
+.remove-profile-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.remove-profile-btn:hover {
+  background: rgba(220, 38, 38, 1);
+}
+
+.profile-image-placeholder {
+  position: relative;
+}
+
+/* TC Bilgi Bölümü */
+.tc-info-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tc-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  min-width: 100px;
+}
+
+.tc-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  flex: 1;
+}
+
+.tc-input:focus {
+  outline: none;
+  border-color: #6D28D9;
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+}
+
+.info-button {
+  background: #f97316;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.info-button:hover {
+  background: #ea580c;
+}
+
+.name-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.name-group {
+  display: flex;
+  gap: 120px;
+}
+
+.name-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.name-inputs {
+  display: flex;
+  gap: 12px;
+}
+
+.name-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  flex: 1;
+}
+
+.name-input:focus {
+  outline: none;
+  border-color: #6D28D9;
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+}
+
+/* Adres Bölümü */
+.address-section {
+  display: flex;
+  gap: 12px;
+}
+
+.address-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.address-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.address-select,
+.address-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1f2937;
+  flex: 1;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.address-select {
+  background: white;
+}
+
+.address-input:focus {
+  outline: none;
+  border-color: #6D28D9;
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+}
+
+/* Form Alanları Bölümü */
+.form-fields-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Ortak Field Stilleri */
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.field-label-sub {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.field-select,
+.field-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1f2937;
+  background: white;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.field-select.small {
+  min-width: 150px;
+}
+
+.field-input:focus,
+.field-select:focus {
+  outline: none;
+  border-color: #6D28D9;
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+}
+
+.orange-icon-btn {
+  background: #f97316;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  height: fit-content;
+  min-width: 40px;
+}
+
+.orange-icon-btn:hover {
+  background: #ea580c;
+}
+
+/* Meslek Bölümü */
+.meslek-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.meslek-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meslek-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.meslek-input-row .field-select {
+  flex: 1;
+}
+
+/* Talep Edilen İş ve Meslek Bölümü */
+.is-meslek-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.is-meslek-fields {
+  display: flex;
+  gap: 16px;
+}
+
+.talep-field,
+.meslek-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.talep-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.talep-input-row .field-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.talep-input-row .field-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.meslek-field .field-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.meslek-field .field-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Referans Input Bölümü */
+.referans-input-section {
+  margin-top: 8px;
+}
+
+.referans-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.referans-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 0;
+}
+
+.referans-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Referans Listesi Stilleri */
+.referans-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.referans-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 14px;
+}
+
+.referans-info {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex: 1;
+}
+
+.referans-name {
+  color: #333;
+  font-weight: 600;
+  min-width: 120px;
+}
+
+.referans-phone {
+  color: #666;
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.referans-job {
+  color: #666;
+  font-style: italic;
+  flex: 1;
+}
+
+.remove-referans-btn {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.remove-referans-btn:hover {
+  background-color: #dc3545;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Telefon ve Email Yan Yana Bölümü */
+.telefon-email-section {
+  display: flex;
+  gap: 16px;
+}
+
+.telefon-container,
+.email-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Telefon Bölümü */
+.telefon-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.telefon-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+}
+
+.phone-icon {
+  color: #f97316;
+  font-size: 14px;
+}
+
+.telefon-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.telefon-input-row .field-select,
+.telefon-input-row .field-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Email Bölümü */
+.email-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.email-container .field-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Referans Bölümü */
+.referans-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.referans-labels {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.referans-labels .field-label {
+  min-width: 120px;
+}
+
+.referans-labels .field-label-sub {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  min-width: 80px;
+}
+
+.referans-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.referans-input-row .field-select {
+  flex: 1;
+}
+
+/* Referans ekle ve yönlendirme yan yana */
+.referans-yonlendirme-container {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.referans-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yonlendirme-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yonlendirme-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.yonlendirme-input-row .field-select {
+  flex: 1;
+}
+
+/* REFERANS EKLE butonu */
+.purple-add-btn {
+  background: #6D28D9;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.purple-add-btn:hover {
+  background: #5B21B6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(109, 40, 217, 0.3);
+}
+
+/* Responsive - Küçük ekranlarda dikey dizilim */
+@media (max-width: 768px) {
+  .referans-yonlendirme-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .purple-add-btn {
+    min-width: 100px;
+    font-size: 11px;
+    padding: 8px 12px;
+  }
+}
+
+/* Durum Bölümü */
+.durum-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.durum-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+
+.durum-person,
+.durum-label-text,
+.durum-phone,
+.durum-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.durum-phone {
+  color: #6b7280;
+  font-weight: normal;
+}
+
+.remove-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.remove-btn:hover {
+  background: #dc2626;
+}
+
+/* Dosya Yükleme Bölümü */
+.file-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.file-upload-area {
+  width: 100%;
+}
+
+.file-upload-placeholder {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  background: #f9fafb;
+  width: 100%;
+}
+
+.file-icon-large {
+  font-size: 48px;
+  margin-bottom: 12px;
+  color: #6b7280;
+}
+
+.file-upload-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.file-buttons-row {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.file-upload-btn {
+  background: #6D28D9;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  min-width: 180px;
+  justify-content: center;
+}
+
+.file-upload-btn:hover {
+  background: #5B21B6;
+  transform: translateY(-1px);
+}
+
+.file-btn-icon {
+  font-size: 16px;
+}
+
+/* Dosya Yükleme Butonları */
+.file-button {
+  background: #6D28D9;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.file-button:hover {
+  background: #5B21B6;
+  transform: translateY(-1px);
+}
+
+.file-button.remove-file {
+  background: #dc2626;
+}
+
+.file-button.remove-file:hover {
+  background: #b91c1c;
+}
+
+/* Yüklenen Dosyalar Listesi */
+.uploaded-files-list {
+  margin-top: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 10px;
+}
+
+.file-icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+}
+
+.file-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-icon-display {
+  font-size: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background-color: #f0f0ff;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.file-icon-item:hover .file-icon-display {
+  border-color: #3C02AA;
+  background-color: #f8f8ff;
+  transform: scale(1.05);
+}
+
+.file-icon-name {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #333;
+  font-weight: 500;
+  max-width: 80px;
+  word-wrap: break-word;
+  line-height: 1.2;
+}
+
+.remove-icon-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.remove-icon-btn:hover {
+  background-color: #c82333;
+  transform: scale(1.1);
+}
+
+.file-upload-area {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-upload-area.drag-over {
+  border-color: #3C02AA;
+  background-color: #f0f0ff;
+  transform: scale(1.02);
+}
+
+.file-upload-area:hover {
+  background: #f8f9fa;
+  border-color: #6D28D9;
+}
+
+.file-upload-area:hover .file-upload-text {
+  color: #6D28D9;
+}
+
+/* Not Editörü Bölümü */
+.notes-editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.notes-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.notes-editor {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 2px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.toolbar-button {
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.toolbar-button:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.toolbar-button.italic {
+  font-style: italic;
+}
+
+.editor-textarea {
+  border: none;
+  padding: 16px;
+  font-size: 14px;
+  color: #374151;
+  resize: vertical;
+  min-height: 100px;
+  width: 100%;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.editor-textarea:focus {
+  outline: none;
+}
+
+.editor-textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Modal Footer */
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+  gap: 12px;
+}
+
+.submit-button {
+  background: #6D28D9;
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.submit-button:hover {
+  background: #5B21B6;
+}
+
+.cancel-button {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.cancel-button:hover {
+  background: #059669;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .add-cv-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .form-content {
+    flex-direction: column;
+  }
+  
+  .top-section {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .tc-info-section {
+    width: 100%;
+  }
+  
+  .address-labels {
+    gap: 80px;
+  }
+  
+  .is-meslek-labels {
+    gap: 70px;
+  }
+  
+  .telefon-email-section {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .name-info-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .name-group {
+    justify-content: flex-start;
+    gap: 120px;
+  }
+  
+  .file-buttons-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .add-cv-modal {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  
+  .address-labels {
+    gap: 40px;
+  }
+  
+  .is-meslek-labels {
+    gap: 30px;
+  }
+  
+  .name-group {
+    gap: 80px;
+  }
+}

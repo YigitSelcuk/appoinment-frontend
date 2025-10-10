@@ -1,0 +1,187 @@
+/* ExcelImportModal Styles */
+.excel-drop-zone {
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.excel-drop-zone:hover {
+  border-color: #007bff;
+  background: #e3f2fd;
+}
+
+.excel-drop-zone.active {
+  border-color: #28a745;
+  background: #e8f5e8;
+  transform: scale(1.02);
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.drop-zone-content svg {
+  color: #6c757d;
+  margin-bottom: 16px;
+}
+
+.excel-drop-zone:hover .drop-zone-content svg {
+  color: #007bff;
+}
+
+.excel-drop-zone.active .drop-zone-content svg {
+  color: #28a745;
+}
+
+.drop-zone-content h5 {
+  color: #495057;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.drop-zone-content p {
+  margin-bottom: 4px;
+}
+
+.selected-file {
+  animation: fadeIn 0.3s ease;
+}
+
+.import-progress {
+  text-align: center;
+  padding: 20px;
+}
+
+.import-progress h5 {
+  color: #495057;
+  margin-bottom: 20px;
+}
+
+.import-results {
+  animation: fadeIn 0.5s ease;
+}
+
+.import-results h5 {
+  margin-bottom: 16px;
+}
+
+.import-results h6 {
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.import-results ul {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-left: 20px;
+}
+
+.import-results li {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Progress bar özelleştirme */
+.progress {
+  height: 8px;
+  border-radius: 4px;
+  background-color: #e9ecef;
+}
+
+.progress-bar {
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Modal özelleştirme */
+.modal-lg {
+  max-width: 600px;
+}
+
+.modal-header {
+  border-bottom: 1px solid #dee2e6;
+  padding: 20px 24px;
+}
+
+.modal-title {
+  font-weight: 600;
+  color: #495057;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+  padding: 16px 24px;
+}
+
+/* Alert özelleştirme */
+.alert {
+  border-radius: 8px;
+  border: none;
+}
+
+.alert-info {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.alert-success {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .excel-drop-zone {
+    padding: 30px 15px;
+    min-height: 150px;
+  }
+  
+  .drop-zone-content h5 {
+    font-size: 18px;
+  }
+  
+  .modal-lg {
+    max-width: 95%;
+    margin: 10px auto;
+  }
+  
+  .modal-body {
+    padding: 16px;
+  }
+}

@@ -1,0 +1,229 @@
+/* EditTaskModal - Professional Formal Design */
+.edit-task-modal {
+  --primary-color: #1e40af;
+  --secondary-color: #3b82f6;
+  --accent-color: #60a5fa;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --background-primary: #ffffff;
+  --background-secondary: #f9fafb;
+  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-heavy: 0 20px 25px rgba(0, 0, 0, 0.1);
+}
+
+.edit-task-modal .modal-dialog {
+  max-width: 700px;
+  margin: 2rem auto;
+  width: 100%;
+  padding: 0;
+}
+
+.edit-task-modal .modal-content {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-heavy);
+  background: var(--background-primary);
+}
+
+.edit-task-modal .modal-header {
+  background: #3C02AA;
+  color: white;
+  padding: 1.25rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: none;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.edit-task-modal .modal-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+}
+
+.edit-task-modal .btn-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 1;
+  font-size: 1.2rem;
+}
+
+.edit-task-modal .modal-body {
+  padding: 2rem;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--background-secondary);
+}
+
+.edit-task-modal .form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: block;
+}
+
+.edit-task-modal .form-control,
+.edit-task-modal .form-select {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  font-size: 0.875rem;
+  width: 100%;
+  background: var(--background-primary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.edit-task-modal .form-control:focus,
+.edit-task-modal .form-select:focus {
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+  background: var(--background-primary);
+}
+
+.edit-task-modal .form-control::placeholder {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.edit-task-modal textarea.form-control {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+.edit-task-modal .alert {
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+}
+
+.edit-task-modal .alert-danger {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.edit-task-modal .modal-footer {
+  background: var(--background-primary);
+  border-top: 1px solid var(--border-color);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.edit-task-modal .btn-secondary {
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.edit-task-modal .btn-secondary:hover {
+  background: var(--secondary-color);
+  border-color: var(--secondary-color);
+  color: white;
+  box-shadow: var(--shadow-medium);
+}
+
+.edit-task-modal .btn-primary {
+  background: var(--secondary-color);
+  border: 1px solid var(--secondary-color);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.edit-task-modal .btn-primary:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-medium);
+}
+
+.edit-task-modal .btn-primary:disabled {
+  background: var(--secondary-color);
+  border-color: var(--secondary-color);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Date picker */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+/* Scrollbar Styling */
+.edit-task-modal .modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.edit-task-modal .modal-body::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+  border-radius: 3px;
+}
+
+.edit-task-modal .modal-body::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.edit-task-modal .modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .edit-task-modal .modal-dialog {
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
+  }
+  
+  .edit-task-modal .modal-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .edit-task-modal .modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+  }
+  
+  .edit-task-modal .modal-footer {
+    padding: 1rem 1.5rem;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .edit-task-modal .btn-secondary,
+  .edit-task-modal .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+}

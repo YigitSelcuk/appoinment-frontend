@@ -1,0 +1,131 @@
+.atalepler-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.atalepler-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.atalepler-header svg {
+  width: 16px;
+  height: 16px;
+}
+
+.atalepler-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8B5CF6;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.atalepler-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.data-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.data-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+.data-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #8B5CF6;
+}
+
+.total-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid #E5E7EB;
+  margin-top: 1px;
+}
+
+.total-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.total-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #8B5CF6;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 10px;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #4E0DCC;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container span {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .atalepler-container {
+    height: 180px;
+    padding: 16px;
+  }
+  
+  .chart-bars {
+    gap: 8px;
+  }
+  
+  .bar-wrapper {
+    height: 60px;
+    width: 16px;
+  }
+  
+  .total-value {
+    font-size: 20px;
+  }
+}

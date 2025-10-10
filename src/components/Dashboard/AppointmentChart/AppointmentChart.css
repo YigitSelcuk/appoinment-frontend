@@ -1,0 +1,151 @@
+.appointment-chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  height: 300px;
+}
+
+.chart-header {
+  margin-bottom: 20px;
+}
+
+.chart-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chart-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.chart-total {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.total-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FF9500;
+}
+
+.total-icon {
+  font-size: 20px;
+}
+
+.chart-container {
+  height: calc(100% - 60px);
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  height: 180px;
+  padding: 0 10px;
+  margin-bottom: 15px;
+}
+
+.chart-bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 40px;
+}
+
+.chart-bar-wrapper {
+  height: 140px;
+  display: flex;
+  align-items: end;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.chart-bar {
+  width: 20px;
+  background: #10B981;
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  margin: 0 auto;
+  min-height: 10px;
+  transition: all 0.3s ease;
+}
+
+.chart-bar:hover {
+  opacity: 0.8;
+  transform: scaleY(1.05);
+}
+
+.bar-value {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+.chart-day {
+  font-size: 10px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .appointment-chart-card {
+    height: 250px;
+  }
+  
+  .chart-bars {
+    height: 140px;
+  }
+  
+  .chart-bar-wrapper {
+    height: 100px;
+  }
+  
+  .chart-bar {
+    width: 16px;
+  }
+}

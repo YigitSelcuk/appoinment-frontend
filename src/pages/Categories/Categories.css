@@ -1,0 +1,211 @@
+.categories-page {
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: #E6E6E6;
+  overflow: hidden;
+}
+
+.categories-container {
+  display: flex;
+  height: calc(100vh - 80px); /* Navbar yüksekliği çıkarıldı */
+  min-height: 800px;
+  gap: 12px;
+  padding: 8px 5px 8px 20px;
+  position: relative;
+  overflow: visible;
+  z-index: 1;
+}
+
+/* Sol Panel - Calendar */
+.left-panel {
+  width: 320px; /* Normal boyut */
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 800px;
+  overflow: hidden;
+}
+
+/* Orta Panel - Category Table */
+.categories-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-width: 0; /* Flexbox shrinking için */
+  background-color: transparent;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+  margin-right: 70px !important; /* FloatingChat için minimal alan */
+}
+
+/* Sağ Panel - FloatingChat */
+.right-panel {
+  width: 100px;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: absolute;
+  right: 0px;
+  top: 8px;
+  z-index: 10;
+}
+
+.categories-page .floating-chat {
+  width: 100%;
+  height: 100%;
+  position: relative !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: 1 !important;
+}
+
+/* Responsive Tasarım */
+
+/* Desktop Large (1400px+) */
+@media (min-width: 1400px) {
+  .categories-container {
+    padding: 8px 5px 8px 20px;
+    gap: 16px;
+  }
+  
+  .left-panel {
+    width: 350px;
+    min-width: 350px;
+  }
+}
+
+/* Desktop Medium (1200px - 1399px) */
+@media (max-width: 1399px) and (min-width: 1200px) {
+  .categories-container {
+    padding: 8px 5px 8px 20px;
+    gap: 14px;
+  }
+  
+  .left-panel {
+    width: 330px;
+    min-width: 330px;
+  }
+}
+
+/* Desktop Small (992px - 1199px) */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .categories-container {
+    padding: 8px 5px 8px 20px;
+    gap: 12px;
+  }
+  
+  .left-panel {
+    width: 300px;
+    min-width: 300px;
+  }
+}
+
+/* Tablet (768px - 991px) */
+@media (max-width: 991px) and (min-width: 768px) {
+  .categories-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 80px);
+    gap: 12px;
+    padding: 12px 20px;
+  }
+  
+  .left-panel {
+    width: 100%;
+    min-width: auto;
+    height: 500px;
+    min-height: 500px;
+    order: 1;
+  }
+  
+  .categories-content {
+    height: auto;
+    min-height: 400px;
+    order: 2;
+    margin-right: 0 !important;
+  }
+  
+  .right-panel {
+    position: relative;
+    width: 100%;
+    height: 80px;
+    order: 3;
+    top: auto;
+    right: auto;
+  }
+  
+  .categories-page .floating-chat {
+    flex-direction: row;
+    justify-content: center;
+    padding: 10px;
+    height: auto;
+    gap: 15px;
+  }
+}
+
+/* Mobile Large (576px - 767px) */
+@media (max-width: 767px) and (min-width: 576px) {
+  .categories-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 80px);
+    gap: 8px;
+    padding: 8px 15px;
+  }
+  
+  .left-panel {
+    width: 100%;
+    min-width: auto;
+    height: 450px;
+    min-height: 450px;
+    order: 1;
+  }
+  
+  .categories-content {
+    height: auto;
+    min-height: 350px;
+    order: 2;
+    margin-right: 0 !important;
+  }
+  
+  .right-panel {
+    position: relative;
+    width: 100%;
+    height: 70px;
+    order: 3;
+    top: auto;
+    right: auto;
+  }
+}
+
+/* Mobile Small (max 575px) */
+@media (max-width: 575px) {
+  .categories-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 80px);
+    gap: 6px;
+    padding: 6px 10px;
+  }
+  
+  .left-panel {
+    width: 100%;
+    min-width: auto;
+    height: 400px;
+    min-height: 400px;
+    order: 1;
+  }
+  
+  .categories-content {
+    height: auto;
+    min-height: 300px;
+    order: 2;
+  }
+}

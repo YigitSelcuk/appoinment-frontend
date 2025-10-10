@@ -1,0 +1,383 @@
+/* ViewTaskModal - Professional Formal Design */
+.view-task-modal {
+  --primary-color: #1e40af;
+  --secondary-color: #3b82f6;
+  --accent-color: #60a5fa;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --background-primary: #ffffff;
+  --background-secondary: #f9fafb;
+  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-heavy: 0 20px 25px rgba(0, 0, 0, 0.1);
+}
+
+.view-task-modal .modal-dialog {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0;
+}
+
+.view-task-modal .modal-content {
+  border: none;
+  border-radius: 12px;
+  box-shadow: var(--shadow-heavy), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  background: var(--background-primary);
+  overflow: hidden;
+}
+
+/* Modal Header - Simple Form Style */
+.view-task-modal .modal-header {
+  background: #3C02AA;
+  color: white;
+  padding: 1.25rem 2rem;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.view-task-modal .modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: white;
+}
+
+.view-task-modal .close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+
+
+/* Modal Body - Professional Layout */
+.view-task-modal .modal-body {
+  padding: 0;
+  background: var(--background-secondary);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Content Container */
+.view-task-modal .unified-info-card {
+  background: var(--background-primary);
+  margin: 0;
+  border-radius: 0;
+}
+
+/* Info Sections - Professional Design */
+.view-task-modal .info-section {
+  padding: 2rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--background-primary);
+}
+
+.view-task-modal .info-section:last-child {
+  border-bottom: none;
+}
+
+/* Section Header - Clean Professional */
+.view-task-modal .section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--accent-color);
+}
+
+.view-task-modal .section-icon {
+  width: 2rem;
+  height: 2rem;
+  background: var(--secondary-color);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.875rem;
+}
+
+.view-task-modal .section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Grid Layout - Professional */
+.view-task-modal .info-grid-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.view-task-modal .info-item {
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.view-task-modal .info-item:hover {
+  border-color: var(--secondary-color);
+  box-shadow: var(--shadow-medium);
+}
+
+.view-task-modal .info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.view-task-modal .item-header {
+  margin-bottom: 0.5rem;
+}
+
+.view-task-modal .item-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.view-task-modal .item-value {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Completion Progress - Professional */
+.view-task-modal .completion-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--background-secondary);
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.view-task-modal .completion-percentage {
+  font-size: 1.125rem;
+  color: var(--secondary-color);
+  font-weight: 700;
+  min-width: 3rem;
+  text-align: center;
+}
+
+.view-task-modal .completion-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.view-task-modal .completion-bar .progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Priority Badge - Professional */
+.view-task-modal .priority-badge-inline {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid currentColor;
+  display: inline-block;
+}
+
+/* Notes and Description - Enhanced */
+.view-task-modal .notes-container,
+.view-task-modal .description-container {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.view-task-modal .notes-text,
+.view-task-modal .description-text {
+  color: #1e293b;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Email addresses */
+.view-task-modal .email-address {
+  color: var(--secondary-color);
+  text-decoration: none;
+}
+
+.view-task-modal .email-address:hover {
+  text-decoration: underline;
+}
+
+/* Date values */
+.view-task-modal .date-value {
+  font-family: 'Courier New', monospace;
+  background: var(--background-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+
+
+/* Modal Footer - Professional */
+.view-task-modal .modal-footer {
+  background: var(--background-primary);
+  border-top: 1px solid var(--border-color);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.view-task-modal .footer-info {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.view-task-modal .close-button {
+  background: var(--secondary-color) !important;
+  border: none !important;
+  color: white !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.view-task-modal .close-button:hover {
+  background: var(--primary-color) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--shadow-medium) !important;
+}
+
+/* Scrollbar - Professional */
+.view-task-modal .modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.view-task-modal .modal-body::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+  border-radius: 3px;
+}
+
+.view-task-modal .modal-body::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.view-task-modal .modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .view-task-modal .modal-dialog {
+    max-width: 95%;
+    margin: 0.5rem;
+  }
+  
+  .view-task-modal .modal-header {
+    padding: 1.5rem;
+  }
+  
+  .view-task-modal .modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+  }
+  
+  .view-task-modal .modal-footer {
+    padding: 1rem 1.5rem;
+  }
+  
+  .view-task-modal .info-grid-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .view-task-modal .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .view-task-modal .task-meta {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 576px) {
+  .view-task-modal .modal-dialog {
+    margin: 1vh auto;
+    height: 98vh;
+  }
+
+  .view-task-modal .modal-header {
+    padding: 15px 20px;
+  }
+
+  .view-task-modal .unified-info-card {
+    margin: 10px 15px;
+  }
+
+  .view-task-modal .info-section {
+    padding: 10px 15px;
+  }
+
+  .view-task-modal .footer-content {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .view-task-modal .modal-footer {
+    padding: 12px 15px;
+  }
+
+  .view-task-modal .close-button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}

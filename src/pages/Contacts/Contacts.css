@@ -1,0 +1,365 @@
+.contacts-page {
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: #E6E6E6;
+  overflow: hidden;
+}
+
+/* Sağ Panel - FloatingChat */
+.right-panel {
+  width: 100px;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: absolute;
+  right: 0px;
+  top: 8px;
+  z-index: 10;
+}
+
+.contacts-page .floating-chat {
+  width: 100%;
+  height: 100%;
+  position: relative !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: 1 !important;
+}
+
+.contacts-container {
+  display: flex;
+  height: calc(100vh - 80px); /* Navbar yüksekliği çıkarıldı */
+  min-height: 800px;
+  gap: 12px;
+  padding: 8px 5px 8px 20px;
+  position: relative;
+  overflow: visible;
+  z-index: 1;
+}
+
+/* Sol Panel - Calendar */
+.left-panel {
+  width: 320px; /* Normal boyut */
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 96px); /* Navbar ve padding için ayarlama */
+  min-height: 800px;
+  overflow: hidden;
+}
+
+/* Orta Panel - Contacts Table */
+.contacts-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 96px); /* Calendar ile aynı yükseklik */
+  overflow: visible; /* Pagination'ın görünmesi için visible yap */
+  min-width: 0; /* Flexbox shrinking için */
+  background-color: transparent;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+  margin-right: 70px !important; /* FloatingChat için minimal alan */
+}
+
+.page-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  margin-bottom: 1rem;
+}
+
+.page-title {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.page-title svg {
+  color: #28a745;
+}
+
+.page-header p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+}
+
+/* Modern Responsive Design */
+
+/* Tablet ve büyük ekranlar için düzenlemeler */
+@media (max-width: 1200px) {
+  .contacts-container {
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .left-panel {
+    min-width: 280px;
+  }
+  
+  .contacts-content {
+    min-width: 400px;
+  }
+  
+  .right-panel {
+    min-width: 280px;
+  }
+}
+
+/* 990px'de calendar düzeni */
+@media (max-width: 990px) {
+  .contacts-page .left-panel {
+    height: 100% !important;
+    min-height: 100% !important;
+    overflow: hidden !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  
+  .contacts-page .left-panel .calendar-widget {
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  
+  .contacts-page .calendar-grid {
+    flex: 0 0 auto !important;
+    min-height: 300px !important;
+  }
+  
+  .contacts-page .today-section {
+    flex: 1 !important;
+    min-height: 300px !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Contacts content'in calendar'a müdahale etmemesi için */
+  .contacts-page .contacts-content {
+    z-index: 1 !important;
+    position: relative !important;
+  }
+  
+  .contacts-page .contacts-table-container {
+    z-index: 1 !important;
+    position: relative !important;
+  }
+}
+
+/* Tablet Portrait */
+@media (max-width: 1024px) {
+  .contacts-container {
+    flex-direction: column;
+    padding: 12px;
+    gap: 12px;
+    height: auto;
+    min-height: calc(100vh - 80px);
+  }
+  
+  .contacts-page .left-panel {
+    width: 100%;
+    min-width: unset;
+    height: 100% !important;
+    min-height: 900px !important;
+    order: 1;
+  }
+  
+  .contacts-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .contacts-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contacts-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contacts-content {
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    min-height: 500px;
+    order: 2;
+  }
+  
+  .right-panel {
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    min-height: 300px;
+    order: 3;
+  }
+}
+
+/* Tablet ve Mobile geçiş */
+@media (max-width: 768px) {
+  .contacts-container {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .contacts-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .contacts-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .contacts-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contacts-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contacts-content {
+    min-height: 450px;
+  }
+  
+  .right-panel {
+    min-height: 250px;
+  }
+}
+
+/* Mobile Landscape */
+@media (max-width: 640px) {
+  .contacts-container {
+    padding: 6px;
+    gap: 6px;
+  }
+  
+  .contacts-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .contacts-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .contacts-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contacts-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contacts-content {
+    min-height: 400px;
+  }
+  
+  .right-panel {
+    min-height: 220px;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 480px) {
+  .contacts-container {
+    padding: 4px;
+    gap: 4px;
+  }
+  
+  .contacts-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+    border-radius: 8px;
+  }
+  
+  .contacts-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .contacts-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contacts-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contacts-content {
+    min-height: 350px;
+    border-radius: 8px;
+  }
+  
+  .right-panel {
+    min-height: 200px;
+    border-radius: 8px;
+  }
+}
+
+/* Very Small Mobile */
+@media (max-width: 360px) {
+  .contacts-container {
+    padding: 2px;
+    gap: 2px;
+  }
+  
+  .contacts-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .contacts-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .contacts-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contacts-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .contacts-content {
+    min-height: 320px;
+  }
+  
+  .right-panel {
+    min-height: 180px;
+  }
+}

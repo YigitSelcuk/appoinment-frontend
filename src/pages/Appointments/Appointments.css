@@ -1,0 +1,835 @@
+/* Appointments Page Styles - Tam Ekran Layout */
+
+.appointments-page {
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: #E6E6E6;
+  overflow: hidden;
+}
+
+.appointments-container {
+  display: flex;
+  height: calc(100vh - 80px); /* Navbar yüksekliği çıkarıldı */
+  min-height: 800px;
+  gap: 12px; /* Boşluğu artırdım */
+  padding: 8px 5px 8px 20px; /* Sağ padding azaltıldı */
+  position: relative;
+}
+
+/* Sol Panel - Calendar */
+.left-panel {
+  width: 320px; /* Normal boyut */
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Orta Panel - WeeklyCalendar - Maksimum genişletildi */
+.weekly-calendar-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-width: 0; /* Flexbox shrinking için */
+  margin-right: 50px; /* FloatingChat için minimal alan */
+}
+
+/* Sağ Panel - FloatingChat - En sağa kaydırıldı */
+.right-panel {
+  width: 100px; /* Daha geniş */
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: absolute; /* Absolute positioning ile en sağa */
+  right: 0px; /* Sağ kenara yapıştır */
+  top: 8px; /* Üstten boşluk */
+  z-index: 10; /* Üstte olsun */
+}
+
+/* Üst Başlık */
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #E5E7EB;
+  background: white;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #1F2937;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.date-navigation {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-btn {
+  background: #F3F4F6;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
+}
+
+.nav-btn:hover {
+  background-color: #E5E7EB;
+}
+
+.current-date {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: #374151;
+  min-width: 220px;
+  text-align: center;
+}
+
+.view-controls {
+  display: flex;
+  gap: 2px;
+  background: #F3F4F6;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.view-btn {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn.active {
+  background: #3C02AA;
+  color: white;
+  box-shadow: 0 2px 4px rgba(60, 2, 170, 0.2);
+}
+
+.view-btn:hover:not(.active) {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+/* Haftalık Takvim Grid */
+.weekly-calendar {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  overflow: auto;
+  background: white;
+}
+
+/* Saat Sütunu */
+.time-column {
+  background: #FAFBFC;
+  border-right: 1px solid #E5E7EB;
+}
+
+.time-header {
+  height: 70px;
+  border-bottom: 1px solid #E5E7EB;
+  background: #F9FAFB;
+}
+
+.time-slot {
+  height: 60px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6B7280;
+  border-bottom: 1px solid #F3F4F6;
+  padding-top: 8px;
+}
+
+/* Gün Sütunları */
+.day-column {
+  border-right: 1px solid #E5E7EB;
+  position: relative;
+}
+
+.day-column:last-child {
+  border-right: none;
+}
+
+.day-header {
+  height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #E5E7EB;
+  background: #F9FAFB;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.day-header:hover {
+  background: #E5E7EB;
+  transform: translateY(-1px);
+}
+
+.day-name {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.day-date {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: #1F2937;
+}
+
+.day-slots {
+  position: relative;
+  height: calc(16 * 60px);
+  min-height: 960px;
+}
+
+.time-cell {
+  height: 60px;
+  border-bottom: 1px solid #F3F4F6;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.appointment-block {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.appointment-block:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.appointment-time {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.appointment-title {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.appointment-attendee {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  margin-top: auto;
+}
+
+.attendee-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attendee-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.messaging-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 12px; /* Biraz daha geniş padding */
+  height: 100%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.messaging-button {
+  background: #3C02AA;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 10px; /* Biraz daha geniş padding */
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: 100%;
+  text-align: center;
+}
+
+.messaging-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(60, 2, 170, 0.3);
+}
+
+.user-avatars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.avatar-item {
+  display: flex;
+  justify-content: center;
+}
+
+.avatar {
+  position: relative;
+  width: 52px; /* Biraz büyütüldü */
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 3px solid #F3F4F6;
+}
+
+.avatar:hover {
+  transform: scale(1.05);
+  border-color: #3C02AA;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: #10B981;
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #EF4444;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Responsive Design */
+
+/* Desktop Large (1400px+) */
+@media (min-width: 1400px) {
+  .appointments-container {
+    padding: 8px 5px 8px 20px;
+    gap: 16px;
+  }
+  
+  .left-panel {
+    width: 350px;
+    min-width: 350px;
+  }
+  
+  .right-panel {
+    width: 110px; /* Büyük ekranlarda daha geniş */
+    min-width: 110px;
+    right: 0;
+  }
+  
+  .weekly-calendar-section {
+    margin-right: 50px; /* Right panel + boşluk */
+  }
+}
+
+/* Desktop Medium (1200px - 1399px) */
+@media (max-width: 1399px) and (min-width: 1200px) {
+  .appointments-container {
+    padding: 8px 5px 8px 20px;
+    gap: 14px;
+  }
+  
+  .left-panel {
+    width: 330px;
+    min-width: 330px;
+  }
+  
+  .right-panel {
+    width: 100px;
+    min-width: 100px;
+    right: 0;
+  }
+  
+  .weekly-calendar-section {
+    margin-right: 70px; /* Right panel + boşluk */
+  }
+}
+
+/* Desktop Small (1000px - 1199px) */
+@media (max-width: 1199px) and (min-width: 1000px) {
+  .appointments-container {
+    padding: 8px 5px 8px 20px;
+    gap: 10px;
+    height: calc(100vh - 80px);
+    min-height: 900px;
+  }
+  
+  .left-panel {
+    width: 280px;
+    min-width: 280px;
+    height: 100%;
+    min-height: 800px;
+  }
+  
+  .right-panel {
+    width: 85px;
+    min-width: 85px;
+    right: 0;
+  }
+  
+  .weekly-calendar-section {
+    margin-right: 20px; /* Right panel + boşluk */
+    flex: 1;
+  }
+  
+  .avatar {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .messaging-button {
+    font-size: 10px;
+    padding: 9px 7px;
+  }
+  
+  .messaging-section {
+    padding: 14px 8px;
+  }
+}
+
+/* Desktop Medium Small (992px - 999px) */
+@media (max-width: 999px) and (min-width: 992px) {
+  .appointments-container {
+    padding: 8px 5px 8px 20px;
+    gap: 12px;
+    height: calc(100vh - 80px);
+    min-height: 850px;
+  }
+  
+  .left-panel {
+    width: 300px;
+    min-width: 300px;
+    height: 100%;
+    min-height: 750px;
+  }
+  
+  .right-panel {
+    width: 90px;
+    min-width: 90px;
+    right: 0;
+  }
+  
+  .weekly-calendar-section {
+    margin-right: 25px; 
+  }
+  
+  .avatar {
+    width: 46px;
+    height: 46px;
+  }
+  
+  .messaging-button {
+    font-size: 11px;
+    padding: 10px 8px;
+  }
+  
+  .messaging-section {
+    padding: 16px 10px;
+  }
+}
+
+/* Tablet (768px - 991px) */
+@media (max-width: 991px) and (min-width: 768px) {
+  .appointments-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 80px);
+    gap: 12px;
+    padding: 12px 20px;
+  }
+  
+  .left-panel {
+    width: 100%;
+    min-width: auto;
+    height: 100vh;
+    min-height: 500px;
+    order: 3; /* Calendar bileşenini en aşağı al */
+    overflow: visible;
+  }
+  
+  .weekly-calendar-section {
+    height: 600px;
+    order: 1; /* WeeklyCalendar en üstte */
+    margin-right: 0;
+    margin-top: 0;
+  }
+  
+  .right-panel {
+    width: 100%;
+    min-width: auto;
+    height: 120px;
+    order: 2; /* Chat ortada */
+    position: relative; /* Tablet'te relative position */
+    right: auto;
+    top: auto;
+    z-index: auto;
+  }
+  
+  .messaging-section {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    height: 100%;
+  }
+  
+  .messaging-button {
+    width: auto;
+    min-width: 140px;
+    font-size: 12px;
+    padding: 12px 16px;
+  }
+  
+  .user-avatars {
+    flex-direction: row;
+    width: auto;
+    gap: 12px;
+  }
+  
+  .avatar {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* Mobile Large (576px - 767px) */
+@media (max-width: 767px) and (min-width: 576px) {
+  .appointments-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 80px);
+    gap: 8px;
+    padding: 8px 15px; /* Navbar mobile padding ile eşitlenmiş */
+  }
+  
+  .left-panel {
+    width: 100%;
+    min-width: auto;
+    height: 80vh;
+    min-height: 400px;
+    order: 3; /* Calendar bileşenini en aşağı al */
+  }
+  
+  .weekly-calendar-section {
+    height: 500px;
+    order: 1; /* WeeklyCalendar en üstte */
+    margin-right: 0;
+  }
+  
+  .right-panel {
+    width: 100%;
+    min-width: auto;
+    height: 100px;
+    order: 2; /* Chat ortada */
+    position: relative; /* Mobile'de relative position */
+    right: auto;
+    top: auto;
+    z-index: auto;
+  }
+  
+  .messaging-section {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    height: 100%;
+  }
+  
+  .messaging-button {
+    width: auto;
+    min-width: 120px;
+    font-size: 11px;
+    padding: 10px 14px;
+  }
+  
+  .user-avatars {
+    flex-direction: row;
+    width: auto;
+    gap: 8px;
+  }
+  
+  .avatar {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .weekly-calendar {
+    grid-template-columns: 50px repeat(7, 1fr);
+  }
+  
+  .time-slot {
+    font-size: 10px;
+    height: 50px;
+  }
+  
+  .time-cell {
+    height: 50px;
+  }
+  
+  .day-slots {
+    height: calc(16 * 50px);
+    min-height: 800px;
+  }
+  
+  .appointment-block {
+    padding: 6px 8px;
+    font-size: 9px;
+  }
+  
+  .appointment-title {
+    font-size: 10px;
+  }
+  
+  .day-header {
+    height: 60px;
+  }
+  
+  .day-name {
+    font-size: 10px;
+  }
+  
+  .day-date {
+    font-size: 16px;
+  }
+}
+
+/* Mobile Small (max 575px) */
+@media (max-width: 575px) {
+  .appointments-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 80px);
+    gap: 6px;
+    padding: 6px 10px; /* Çok küçük ekranlar için daha az padding */
+  }
+  
+  .left-panel {
+    width: 100%;
+    min-width: auto;
+    height: 70vh;
+    min-height: 350px;
+    order: 3; /* Calendar bileşenini en aşağı al */
+  }
+  
+  .weekly-calendar-section {
+    height: 450px;
+    order: 1; /* WeeklyCalendar en üstte */
+    margin-right: 0;
+  }
+  
+  .right-panel {
+    width: 100%;
+    min-width: auto;
+    height: 80px;
+    order: 2; /* Chat ortada */
+    position: relative; /* Mobile'de relative position */
+    right: auto;
+    top: auto;
+    z-index: auto;
+  }
+  
+  .messaging-section {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    height: 100%;
+  }
+  
+  .messaging-button {
+    width: auto;
+    min-width: 100px;
+    font-size: 10px;
+    padding: 8px 12px;
+  }
+  
+  .user-avatars {
+    flex-direction: row;
+    width: auto;
+    gap: 6px;
+  }
+  
+  .avatar {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .weekly-calendar {
+    grid-template-columns: 40px repeat(5, 1fr); /* Sadece 5 gün göster */
+  }
+  
+  .day-column:nth-child(n+7) {
+    display: none; /* Hafta sonu gizle */
+  }
+  
+  .time-slot {
+    font-size: 9px;
+    height: 45px;
+  }
+  
+  .time-cell {
+    height: 45px;
+  }
+  
+  .day-slots {
+    height: calc(16 * 45px);
+    min-height: 720px;
+  }
+  
+  .appointment-block {
+    padding: 4px 6px;
+    font-size: 8px;
+  }
+  
+  .appointment-title {
+    font-size: 9px;
+  }
+  
+  .day-header {
+    height: 50px;
+  }
+  
+  .day-name {
+    font-size: 9px;
+  }
+  
+  .day-date {
+    font-size: 14px;
+  }
+  
+  .appointment-time {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  
+  .appointment-attendee {
+    font-size: 8px;
+  }
+  
+  .attendee-avatar {
+    width: 16px;
+    height: 16px;
+  }
+}

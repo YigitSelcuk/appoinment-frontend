@@ -1,0 +1,110 @@
+/* WhatsApp Select Modal - Sade Tasarım */
+.whatsapp-select-modal .modal-dialog {
+  max-width: 400px;
+  width: 100%;
+  padding: 0;
+}
+
+.whatsapp-select-modal {
+  padding: 0 !important;
+}
+
+.whatsapp-select-modal .modal {
+  padding: 0 !important;
+}
+
+.whatsapp-select-modal .modal-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+.whatsapp-select-modal .modal-header {
+  background: #4e0dcc;
+  color: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: none;
+}
+
+.whatsapp-select-modal .modal-header h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.whatsapp-select-modal .btn-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  filter: brightness(0) invert(1);
+}
+
+.whatsapp-select-modal .btn-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.whatsapp-select-modal .contact-info {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.whatsapp-select-modal .contact-info h6 {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0;
+}
+
+.whatsapp-select-modal .phone-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.whatsapp-select-modal .phone-btn {
+  width: 100%;
+  padding: 12px 20px;
+  border: 2px solid #25D366;
+  color: #25D366;
+  background: white;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.whatsapp-select-modal .phone-btn:hover {
+  background: #25D366;
+  color: white;
+  border-color: #25D366;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .whatsapp-select-modal .modal-dialog {
+    max-width: 95%;
+    margin: 10px auto;
+    padding: 0;
+  }
+  
+  .whatsapp-select-modal {
+    padding: 0 !important;
+  }
+  
+  .whatsapp-select-modal .phone-btn {
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+}

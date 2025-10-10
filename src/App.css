@@ -1,0 +1,97 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #E6E6E6;
+}
+
+/* Global FloatingChat positioning */
+
+
+.App {
+  width: 100%;
+  height: 100vh;
+  background-color: #E6E6E6;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Messaging Panel Page Styles */
+.messaging-panel-page {
+  min-height: 100vh;
+  background: #E6E6E6;
+}
+
+.messaging-panel-page .container-fluid {
+  padding: 0;
+  height: calc(100vh - 70px);
+}
+
+.messaging-panel-page .row {
+  height: 100%;
+  margin: 0;
+}
+
+.messaging-panel-page .calendar-sidebar {
+  background: white;
+  border-right: 1px solid #e9ecef;
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.messaging-panel-page .calendar-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 30px 20px 30px;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.messaging-panel-page .messages-content {
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}

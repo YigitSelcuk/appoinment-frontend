@@ -1,0 +1,626 @@
+/* Bootstrap table override */
+.table-striped > tbody > tr:nth-of-type(odd) > td,
+.table-striped > tbody > tr:nth-of-type(odd) > th {
+  background-color: transparent !important;
+}
+
+.messages-table-container {
+  background: #ffffff;
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0px 60px 120px rgba(38, 51, 77, 0.05);
+}
+
+/* Başlık Barı */
+.header-bar {
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 15px 20px;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-self: start;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+.header-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 6px;
+  color: #495057;
+}
+
+.header-icon i {
+  font-size: 16px;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  letter-spacing: 0.5px;
+}
+
+/* Arama Kutusu Stilleri */
+.messages-table-container .search-input-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.messages-table-container .header-search-input {
+  width: 100%;
+  border: 2px solid #E5E7EB;
+  border-radius: 20px;
+  padding: 10px 40px 10px 16px;
+  font-size: 14px;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 400;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.messages-table-container .header-search-input:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+  outline: none;
+  background: #ffffff;
+}
+
+.messages-table-container .header-search-input::placeholder {
+  color: #9CA3AF;
+  font-weight: 400;
+}
+
+.messages-table-container .search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.messages-table-container .header-clear-btn {
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.messages-table-container .header-clear-btn:hover {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-btn {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 45px;
+  height: 45px;
+}
+
+.header-btn:hover {
+  background: #f8f9fa;
+  border-color: #d0d0d0;
+}
+
+.header-btn i {
+  font-size: 15px;
+}
+
+
+
+/* Tablo Stilleri */
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+  background: #ffffff;
+  padding: 0;
+}
+
+.messages-table {
+  margin-bottom: 0;
+  font-size: 14px;
+  background: #ffffff;
+  border: none;
+  width: 100%;
+}
+
+.messages-table thead th {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  color: #495057;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  padding: 15px 8px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.messages-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.messages-table-container .messages-table tbody tr:nth-child(odd),
+.messages-table-container .messages-table tbody tr:nth-child(odd) td {
+  background-color: #ffffff !important;
+}
+
+.messages-table-container .messages-table tbody tr:nth-child(even),
+.messages-table-container .messages-table tbody tr:nth-child(even) td {
+  background-color: #f9f9f9 !important;
+}
+
+.messages-table-container .messages-table tbody tr:hover,
+.messages-table-container .messages-table tbody tr:hover td {
+  background-color: #e3f2fd !important;
+}
+
+.messages-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.messages-table tbody td {
+  padding: 12px 8px;
+  vertical-align: middle;
+  text-align: center;
+  font-size: 13px;
+  color: #495057;
+}
+
+.messages-table tbody td:first-child {
+  text-align: center;
+}
+
+.messages-table tbody td:last-child {
+  text-align: center;
+}
+
+.messages-table thead th:first-child {
+  text-align: center;
+}
+
+.messages-table thead th:last-child {
+  text-align: center;
+}
+
+.select-all-checkbox,
+.message-checkbox {
+  transform: scale(1.2);
+  accent-color: #4E0DCC;
+}
+
+/* Status Badge */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-gönderildi {
+  background-color: #10B981;
+  color: #ffffff;
+}
+
+.status-zamanlandı {
+  background-color: #F59E0B;
+  color: #ffffff;
+}
+
+.status-iptal-edildi {
+  background-color: #EF4444;
+  color: #ffffff;
+}
+
+.status-beklemede {
+  background-color: #6B7280;
+  color: #ffffff;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-btn {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #f8f9fa;
+  border-color: #d0d0d0;
+  transform: translateY(-1px);
+}
+
+.action-btn i {
+  font-size: 12px;
+  color: #495057;
+}
+
+/* Footer */
+.messages-table-container .table-footer {
+  background: #ffffff;
+  padding: 20px 30px 20px 20px;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.messages-table-container .total-records {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  text-align: left;
+}
+
+.messages-table-container .pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Sayfalama Stilleri */
+.messages-table-container .custom-pagination {
+  margin-bottom: 0;
+  gap: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.messages-table-container .custom-pagination .page-item {
+  margin: 0;
+}
+
+.messages-table-container .custom-pagination .page-link {
+  color: #9CA3AF;
+  border: none;
+  background-color: transparent;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.messages-table-container .custom-pagination .page-item.active .page-link {
+  background-color: #F3F4F6;
+  color: #374151;
+  font-weight: 600;
+}
+
+.messages-table-container .custom-pagination .page-link:hover {
+  color: #374151;
+  background-color: #F3F4F6;
+  text-decoration: none;
+}
+
+.messages-table-container .custom-pagination .page-item.disabled .page-link {
+  color: #D1D5DB;
+  background-color: transparent;
+  cursor: not-allowed;
+}
+
+.messages-table-container .custom-pagination .page-item.disabled .page-link:hover {
+  color: #D1D5DB;
+  background-color: transparent;
+}
+
+/* Pagination navigation buttons */
+.messages-table-container .custom-pagination .page-item:first-child .page-link,
+.messages-table-container .custom-pagination .page-item:last-child .page-link {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+/* Ellipsis styling */
+.messages-table-container .custom-pagination .page-item .page-link:contains("...") {
+  border: none;
+  background: transparent;
+  color: #9CA3AF;
+}
+
+/* Action Button Specific Styles */
+.action-btn.edit-btn svg path {
+  fill: #4E0DCC;
+}
+
+.action-btn.view-btn svg path {
+  fill: #09C71D;
+}
+
+.action-btn.send-btn svg path {
+  fill: #F66700;
+}
+
+.action-btn.delete-btn svg path {
+  fill: #FF005C;
+}
+
+.action-btn:hover.edit-btn {
+  background: rgba(78, 13, 204, 0.1);
+  border-color: #4E0DCC;
+}
+
+.action-btn:hover.view-btn {
+  background: rgba(9, 199, 29, 0.1);
+  border-color: #09C71D;
+}
+
+.action-btn:hover.send-btn {
+  background: rgba(246, 103, 0, 0.1);
+  border-color: #F66700;
+}
+
+.action-btn:hover.delete-btn {
+  background: rgba(255, 0, 92, 0.1);
+  border-color: #FF005C;
+}
+
+/* Column Widths - Updated for new structure with checkbox */
+.messages-table th:nth-child(1),
+.messages-table td:nth-child(1) {
+  width: 50px;
+  text-align: center;
+}
+
+.messages-table th:nth-child(2),
+.messages-table td:nth-child(2) {
+  width: 70px;
+  text-align: center;
+}
+
+.messages-table th:nth-child(3),
+.messages-table td:nth-child(3) {
+  width: 250px;
+  text-align: left;
+}
+
+.messages-table th:nth-child(4),
+.messages-table td:nth-child(4) {
+  width: 200px;
+  text-align: left;
+}
+
+.messages-table th:nth-child(5),
+.messages-table td:nth-child(5) {
+  width: 120px;
+  text-align: center;
+}
+
+.messages-table th:nth-child(6),
+.messages-table td:nth-child(6) {
+  width: 100px;
+  text-align: center;
+}
+
+.messages-table th:nth-child(7),
+.messages-table td:nth-child(7) {
+  width: 120px;
+  text-align: center;
+}
+
+.messages-table th:nth-child(8),
+.messages-table td:nth-child(8) {
+  width: 200px;
+  text-align: center;
+}
+
+/* Scrollbar */
+.table-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .messages-table {
+    font-size: 12px;
+  }
+
+  .messages-table thead th,
+  .messages-table tbody td {
+    padding: 10px 6px;
+  }
+
+  .action-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .action-btn i {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 992px) {
+  .messages-table-container .table-footer .col-md-6 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .messages-table-container .table-footer .col-md-6:last-child {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .messages-table-container .header-bar {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 15px 10px;
+  }
+
+  .messages-table-container .header-left {
+    justify-self: center;
+  }
+
+  .messages-table-container .header-center {
+    justify-self: center;
+    max-width: 100%;
+  }
+
+  .messages-table-container .header-right {
+    justify-self: center;
+  }
+
+  .table-wrapper {
+    font-size: 11px;
+  }
+
+  .messages-table thead th:first-child,
+  .messages-table tbody td:first-child {
+    display: none;
+  }
+
+  .messages-table thead th:last-child,
+  .messages-table tbody td:last-child {
+    position: sticky;
+    right: 0;
+    background: inherit;
+  }
+
+  .messages-table-container .table-footer {
+    padding: 15px 20px;
+  }
+
+  .messages-table-container .messages-table {
+    font-size: 11px;
+  }
+
+  .messages-table-container .messages-table thead th,
+  .messages-table-container .messages-table tbody td {
+    padding: 6px 4px;
+  }
+
+  .messages-table-container .action-buttons {
+    gap: 2px;
+  }
+
+  .messages-table-container .action-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 9px;
+  }
+
+  .messages-table-container .select-all-checkbox,
+  .messages-table-container .message-checkbox {
+    transform: scale(0.9);
+  }
+
+  .messages-table-container .total-records {
+    font-size: 12px;
+    text-align: left;
+  }
+
+  .messages-table-container .custom-pagination .page-link {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+} 

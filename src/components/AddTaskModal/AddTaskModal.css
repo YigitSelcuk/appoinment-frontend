@@ -1,0 +1,197 @@
+/* AddTaskModal - Standart Modal Tasarımı */
+.add-task-modal .modal-dialog {
+  max-width: 700px;
+  margin: 5vh auto;
+}
+
+.add-task-modal .modal-content {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.add-task-modal .modal-header {
+  background: #3C02AA;
+  color: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: none;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.add-task-modal .modal-header h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.add-task-modal .btn-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  filter: brightness(0) invert(1);
+}
+
+.add-task-modal .btn-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.add-task-modal .modal-body {
+  padding: 24px;
+  max-height: calc(90vh - 140px);
+  overflow-y: auto;
+}
+
+.add-task-modal .form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.add-task-modal .form-control,
+.add-task-modal .form-select {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.add-task-modal .form-control:focus,
+.add-task-modal .form-select:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+  outline: none;
+}
+
+.add-task-modal .form-control::placeholder {
+  color: #9CA3AF;
+  font-weight: 400;
+}
+
+.add-task-modal textarea.form-control {
+  resize: none;
+  min-height: 100px;
+}
+
+.add-task-modal .modal-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.add-task-modal .btn-secondary {
+  background: #6c757d;
+  border: 1px solid #6c757d;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.add-task-modal .btn-secondary:hover {
+  background: #5a6268;
+  border-color: #5a6268;
+}
+
+.add-task-modal .btn-primary {
+  background: #4E0DCC;
+  border: 1px solid #4E0DCC;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.add-task-modal .btn-primary:hover {
+  background: #3c0a99;
+  border-color: #3c0a99;
+}
+
+.add-task-modal .btn-primary:disabled {
+  background: #4E0DCC;
+  border-color: #4E0DCC;
+  opacity: 0.65;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+/* User Search Dropdown Styles */
+.add-task-modal .user-search-container {
+  position: relative;
+}
+
+.add-task-modal .user-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 2px;
+}
+
+.add-task-modal .user-option {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+  font-size: 14px;
+}
+
+.add-task-modal .user-option:last-child {
+  border-bottom: none;
+}
+
+.add-task-modal .user-option:hover {
+  background-color: #f8f9fa !important;
+}
+
+.add-task-modal .user-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.add-task-modal .user-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.add-task-modal .user-dropdown::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.add-task-modal .user-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

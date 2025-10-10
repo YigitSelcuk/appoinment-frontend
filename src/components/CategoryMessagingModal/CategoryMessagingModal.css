@@ -1,0 +1,882 @@
+/* CategoryMessagingModal - AddContactModal Standardı */
+.category-messaging-modal .modal-dialog {
+  max-width: 700px;
+  margin: 5vh auto;
+  width: 100%;
+  padding: 0;
+}
+
+.category-messaging-modal {
+  padding: 0 !important;
+}
+
+.category-messaging-modal .modal {
+  padding: 0 !important;
+}
+
+/* Modal backdrop ve scroll engellemesi */
+.category-messaging-modal .modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+
+/* Body scroll engellemesi */
+body.modal-open {
+  overflow: hidden !important;
+  padding-right: 0 !important;
+}
+
+.category-messaging-modal .modal-content {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+.category-messaging-modal .modal-dialog {
+  z-index: 1050;
+}
+
+.modal-content-custom {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.modal-header-custom {
+  background: #4E0DCC;
+  color: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: none;
+}
+
+.modal-header-custom h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body-custom {
+  padding: 24px;
+  max-height: calc(90vh - 140px);
+  overflow-y: auto;
+}
+
+.contact-info {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-input {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+  outline: none;
+}
+
+.category-search-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.category-search-input {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.category-search-input:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+  outline: none;
+}
+
+.category-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.category-dropdown-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.category-dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.category-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.category-dropdown-item.no-results {
+  color: #999;
+  cursor: default;
+  font-style: italic;
+}
+
+.category-dropdown-item.no-results:hover {
+  background-color: transparent;
+}
+
+.selected-categories {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.selected-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contact-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.group-selection {
+  margin-bottom: 24px;
+}
+
+.group-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.group-select {
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.group-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.filter-tag {
+  background: #4E0DCC;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.filter-tag:hover {
+  background: #3a0a99;
+}
+
+.group-sub-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.sub-filter {
+  background: #f8f9fa;
+  color: #666;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.group-actions {
+  margin-top: 12px;
+}
+
+.show-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.show-btn:hover {
+  background: #218838;
+}
+
+.send-time-section {
+  margin-bottom: 24px;
+}
+
+.time-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.time-toggle {
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 12px;
+  background: white;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn.active {
+  background: #4E0DCC;
+  color: white;
+}
+
+.toggle-btn:not(.active):hover {
+  background: #f8f9fa;
+}
+
+.scheduled-inputs {
+  margin-top: 16px;
+}
+
+.date-time-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.date-picker-container,
+.time-input {
+  flex: 1;
+}
+
+.date-picker-container {
+  min-width: 200px;
+  position: relative;
+}
+
+.time-input {
+  min-width: 120px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.time-input:focus {
+  outline: none;
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+}
+
+/* Modern DatePicker Stiller */
+.date-picker-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.date-picker-input:focus {
+  outline: none;
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+}
+
+/* Custom Calendar Stiller */
+.custom-calendar {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  font-family: inherit;
+  z-index: 9999;
+}
+
+/* Global override - Tüm dropdown yazıları için */
+.custom-calendar [class*="read-view"] {
+  color: white !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+.custom-calendar [class*="read-view"] span {
+  color: white !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* DatePicker Popper konumlandırma */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker-popper[data-placement^="bottom"] {
+  margin-top: 8px;
+}
+
+.react-datepicker-popper[data-placement^="top"] {
+  margin-bottom: 8px;
+}
+
+.custom-calendar .react-datepicker__header {
+  background: #4E0DCC;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  padding: 16px 0;
+}
+
+.custom-calendar .react-datepicker__current-month {
+  display: none;
+}
+
+/* Ay ve Yıl Dropdown Stiller */
+.custom-calendar .react-datepicker__month-dropdown-container,
+.custom-calendar .react-datepicker__year-dropdown-container {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+/* Dropdown açık durumda container stilleri */
+.custom-calendar .react-datepicker__month-dropdown-container--open .react-datepicker__month-read-view,
+.custom-calendar .react-datepicker__year-dropdown-container--open .react-datepicker__year-read-view,
+.custom-calendar .react-datepicker__month-dropdown-container .react-datepicker__month-read-view,
+.custom-calendar .react-datepicker__year-dropdown-container .react-datepicker__year-read-view {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+.custom-calendar .react-datepicker__month-dropdown,
+.custom-calendar .react-datepicker__year-dropdown {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 8px;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.custom-calendar .react-datepicker__month-dropdown {
+  min-width: 140px;
+}
+
+.custom-calendar .react-datepicker__year-dropdown {
+  min-width: 100px;
+}
+
+.custom-calendar .react-datepicker__month-option,
+.custom-calendar .react-datepicker__year-option {
+  padding: 8px 12px;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  text-align: center;
+}
+
+.custom-calendar .react-datepicker__month-option:hover,
+.custom-calendar .react-datepicker__year-option:hover {
+  background: #f0f0f0;
+  color: #4E0DCC;
+}
+
+.custom-calendar .react-datepicker__month-option--selected,
+.custom-calendar .react-datepicker__year-option--selected {
+  background: #4E0DCC;
+  color: white;
+  font-weight: 600;
+}
+
+.custom-calendar .react-datepicker__month-option--selected:hover,
+.custom-calendar .react-datepicker__year-option--selected:hover {
+  background: #3a0a99;
+}
+
+/* Header'daki dropdown tetikleyiciler */
+.custom-calendar .react-datepicker__current-month,
+.custom-calendar .react-datepicker__header__dropdown {
+  cursor: pointer;
+  user-select: none;
+}
+
+.custom-calendar .react-datepicker__header__dropdown {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 0;
+  width: 100%;
+}
+
+.custom-calendar .react-datepicker__month-read-view,
+.custom-calendar .react-datepicker__year-read-view {
+  color: white !important;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  position: relative;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1) !important;
+  white-space: nowrap;
+}
+
+.custom-calendar .react-datepicker__month-read-view:hover,
+.custom-calendar .react-datepicker__year-read-view:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-1px);
+  color: white !important;
+}
+
+/* Dropdown açık durumda buton stilleri */
+.custom-calendar .react-datepicker__month-read-view--selected,
+.custom-calendar .react-datepicker__year-read-view--selected {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+.custom-calendar .react-datepicker__month-read-view--down-arrow,
+.custom-calendar .react-datepicker__year-read-view--down-arrow,
+.custom-calendar [class*="down-arrow"],
+.custom-calendar [class*="arrow"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Tüm durumlar için yazı görünürlüğü */
+.custom-calendar .react-datepicker__month-read-view *,
+.custom-calendar .react-datepicker__year-read-view * {
+  color: white !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.custom-calendar .react-datepicker__month-read-view .react-datepicker__month-read-view--selected-month,
+.custom-calendar .react-datepicker__year-read-view .react-datepicker__year-read-view--selected-year {
+  color: white !important;
+  opacity: 1 !important;
+  display: inline !important;
+}
+
+/* Dropdown scroll bar stili */
+.custom-calendar .react-datepicker__month-dropdown::-webkit-scrollbar,
+.custom-calendar .react-datepicker__year-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-calendar .react-datepicker__month-dropdown::-webkit-scrollbar-track,
+.custom-calendar .react-datepicker__year-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.custom-calendar .react-datepicker__month-dropdown::-webkit-scrollbar-thumb,
+.custom-calendar .react-datepicker__year-dropdown::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.custom-calendar .react-datepicker__month-dropdown::-webkit-scrollbar-thumb:hover,
+.custom-calendar .react-datepicker__year-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.custom-calendar .react-datepicker__day-name {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0 4px;
+  width: 32px;
+  line-height: 32px;
+  text-transform: uppercase;
+}
+
+.custom-calendar .react-datepicker__day {
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 2px;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.custom-calendar .react-datepicker__day:hover {
+  background: #f0f0f0;
+  color: #4E0DCC;
+}
+
+.custom-calendar .react-datepicker__day--selected {
+  background: #4E0DCC;
+  color: white;
+  font-weight: 600;
+}
+
+.custom-calendar .react-datepicker__day--selected:hover {
+  background: #3a0a99;
+}
+
+.custom-calendar .react-datepicker__day--today {
+  background: #e8f4fd;
+  color: #4E0DCC;
+  font-weight: 600;
+}
+
+.custom-calendar .react-datepicker__day--disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.custom-calendar .react-datepicker__day--disabled:hover {
+  background: transparent;
+  color: #ccc;
+}
+
+.custom-calendar .react-datepicker__navigation {
+  top: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.custom-calendar .react-datepicker__navigation:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.custom-calendar .react-datepicker__navigation--previous {
+  left: 16px;
+}
+
+.custom-calendar .react-datepicker__navigation--next {
+  right: 16px;
+}
+
+.custom-calendar .react-datepicker__triangle {
+  display: none;
+}
+
+/* Time input için özel stiller */
+.time-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.5);
+}
+
+.time-input::-webkit-calendar-picker-indicator:hover {
+  filter: invert(0.3);
+}
+
+.message-section {
+  margin-bottom: 24px;
+}
+
+.message-textarea {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.message-textarea:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+  outline: none;
+}
+
+.character-count {
+  text-align: right;
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.modal-footer-custom {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #eee;
+  background: #f8f9fa;
+  position: sticky;
+  bottom: 0;
+  z-index: 1000;
+  margin-top: auto;
+}
+
+.cancel-btn {
+  background: #6c757d;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #5a6268;
+}
+
+.send-btn {
+  background: #28a745 !important;
+  border: none !important;
+  color: white !important;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.send-btn:hover {
+  background: #218838 !important;
+}
+
+.send-btn:disabled {
+  background: #6c757d !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Select all checkbox stilleri */
+.select-all-container {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.select-all-checkbox .form-check-input {
+  border: 2px solid #4E0DCC;
+  border-radius: 4px;
+  width: 18px;
+  height: 18px;
+}
+
+.select-all-checkbox .form-check-input:checked {
+  background-color: #4E0DCC;
+  border-color: #4E0DCC;
+}
+
+.select-all-checkbox .form-check-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-left: 8px;
+}
+
+/* Modal content için flex layout */
+.modal-content-custom {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 90vh;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.modal-body-custom {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Horizontal scroll engellemesi */
+.category-messaging-modal * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.category-messaging-modal .form-input,
+.category-messaging-modal .category-search-input,
+.category-messaging-modal .message-textarea,
+.category-messaging-modal .date-picker-input,
+.category-messaging-modal .time-input {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+@media (max-width: 768px) {
+  .category-messaging-modal .modal-dialog {
+    margin: 10px auto;
+    max-width: calc(100vw - 20px);
+    width: calc(100vw - 20px);
+    padding: 0;
+  }
+
+  .category-messaging-modal {
+    padding: 0 !important;
+  }
+
+  .modal-body-custom {
+    padding: 16px;
+    overflow-x: hidden;
+  }
+
+  .modal-header-custom {
+    padding: 16px;
+  }
+
+  .modal-footer-custom {
+    padding: 16px;
+  }
+
+  .cancel-btn,
+  .send-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .group-filters,
+  .group-sub-filters {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .filter-tag {
+    padding: 4px 8px;
+    font-size: 11px;
+    max-width: 100%;
+    word-break: break-word;
+  }
+
+  .sub-filter {
+    padding: 3px 6px;
+    font-size: 10px;
+    max-width: 100%;
+    word-break: break-word;
+  }
+}

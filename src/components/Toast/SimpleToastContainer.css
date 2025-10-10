@@ -1,0 +1,24 @@
+.simple-toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.simple-toast-container > * {
+  pointer-events: auto;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .simple-toast-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+  }
+}

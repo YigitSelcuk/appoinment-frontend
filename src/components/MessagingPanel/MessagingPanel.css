@@ -1,0 +1,354 @@
+/* MessagingPanel Component Styles */
+.messaging-panel {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  z-index: 1000;
+  padding: 20px 0;
+}
+
+/* Mesajlaşma Butonu */
+.messaging-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.messaging-btn {
+  width: 50px;
+  height: 160px;
+  background: linear-gradient(135deg, #3C02AA 0%, #5D1FD4 100%);
+  border: none;
+  border-radius: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px 0;
+  box-shadow: 0px 10px 30px rgba(136, 51, 255, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.messaging-btn:hover {
+  background: linear-gradient(135deg, #4A0BC7 0%, #6B2EE8 100%);
+  transform: scale(1.05);
+  box-shadow: 0px 15px 40px rgba(136, 51, 255, 0.3);
+}
+
+.messaging-btn:active {
+  transform: scale(0.98);
+}
+
+.messaging-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.messaging-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.67;
+  color: #FFFFFF;
+  text-align: center;
+  letter-spacing: 0.5px;
+  margin-top: 5px;
+}
+
+/* Kullanıcı Avatarları */
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+  align-items: center;
+}
+
+.user-avatar-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-avatar {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, rgba(51, 97, 255, 0.3) 0%, rgba(196, 196, 196, 0.8) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #63676F;
+  font-size: 18px;
+  border: 2px solid rgba(196, 196, 196, 0.5);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.avatar-circle:hover {
+  transform: scale(1.1);
+  border-color: #3C02AA;
+  box-shadow: 0 4px 12px rgba(60, 2, 170, 0.2);
+}
+
+/* Online Durumu Göstergesi */
+.online-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background-color: #05D91A;
+  border-radius: 50%;
+  border: 1px solid #FFFFFF;
+  z-index: 2;
+}
+
+/* Bildirim Badge - Genel */
+.notification-badge {
+  position: absolute;
+  bottom: 60px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, #FF6633 0%, #FF8A5C 100%);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0px 30px 60px rgba(255, 102, 51, 0.3);
+  z-index: 1001;
+  animation: pulse 2s infinite;
+}
+
+.notification-badge span {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 900;
+  font-size: 10px;
+  line-height: 2;
+  color: #FFFFFF;
+  text-align: center;
+}
+
+/* Kişi Bazlı Okunmamış Mesaj Badge'i */
+.user-unread-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #FF4757 0%, #FF6B7A 100%);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0px 4px 12px rgba(255, 71, 87, 0.4);
+  z-index: 3;
+  animation: unreadPulse 1.5s infinite;
+  padding: 0 4px;
+}
+
+.user-unread-badge span {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  font-size: 9px;
+  color: #FFFFFF;
+  text-align: center;
+  line-height: 1;
+}
+
+/* Okunmamış mesajı olan kullanıcı avatarı vurgusu */
+.user-avatar.has-unread .avatar-circle {
+  border: 2px solid #FF4757;
+  box-shadow: 0 0 15px rgba(255, 71, 87, 0.3);
+  animation: unreadGlow 2s infinite;
+}
+
+.user-avatar.has-unread:hover .avatar-circle {
+  border-color: #FF4757;
+  box-shadow: 0 4px 20px rgba(255, 71, 87, 0.5);
+}
+
+/* Animasyonlar */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0px 30px 60px rgba(255, 102, 51, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0px 35px 70px rgba(255, 102, 51, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0px 30px 60px rgba(255, 102, 51, 0.3);
+  }
+}
+
+@keyframes unreadPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0px 4px 12px rgba(255, 71, 87, 0.4);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0px 6px 16px rgba(255, 71, 87, 0.6);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0px 4px 12px rgba(255, 71, 87, 0.4);
+  }
+}
+
+@keyframes unreadGlow {
+  0% {
+    box-shadow: 0 0 15px rgba(255, 71, 87, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255, 71, 87, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(255, 71, 87, 0.3);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .messaging-panel {
+    right: 10px;
+  }
+  
+  .messaging-btn {
+    width: 45px;
+    height: 140px;
+  }
+  
+  .messaging-text {
+    font-size: 11px;
+  }
+  
+  .avatar-circle {
+    width: 45px;
+    height: 45px;
+    font-size: 16px;
+  }
+  
+  .notification-badge {
+    width: 28px;
+    height: 28px;
+    bottom: 50px;
+  }
+  
+  .notification-badge span {
+    font-size: 9px;
+  }
+  
+  .user-unread-badge {
+    min-width: 16px;
+    height: 16px;
+    top: -3px;
+    right: -3px;
+  }
+  
+  .user-unread-badge span {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 992px) {
+  .messaging-panel {
+    right: 5px;
+    gap: 15px;
+  }
+  
+  .messaging-btn {
+    width: 40px;
+    height: 120px;
+  }
+  
+  .messaging-text {
+    font-size: 10px;
+  }
+  
+  .avatar-circle {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+  
+  .users-list {
+    gap: 15px;
+  }
+  
+  .online-indicator {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .notification-badge {
+    width: 25px;
+    height: 25px;
+    bottom: 40px;
+    right: 8px;
+  }
+  
+  .notification-badge span {
+    font-size: 8px;
+  }
+  
+  .user-unread-badge {
+    min-width: 14px;
+    height: 14px;
+    top: -2px;
+    right: -2px;
+  }
+  
+  .user-unread-badge span {
+    font-size: 7px;
+  }
+}
+
+@media (max-width: 768px) {
+  .messaging-panel {
+    display: none; /* Mobilde gizle */
+  }
+}
+
+/* Hover Efektleri */
+.messaging-panel:hover .avatar-circle {
+  transform: translateX(-5px);
+}
+
+.messaging-panel:hover .messaging-btn {
+  transform: scale(1.02);
+}
+
+/* Smooth Transitions */
+* {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+} 

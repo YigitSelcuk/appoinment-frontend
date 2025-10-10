@@ -1,0 +1,1402 @@
+/* Bootstrap table override */
+.table-striped > tbody > tr:nth-of-type(odd) > td,
+.table-striped > tbody > tr:nth-of-type(odd) > th {
+  background-color: transparent !important;
+}
+
+.contacts-table-container {
+  background: #ffffff;
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  /* Overflow'u hidden yaparak içeriğin taşmasını engelle */
+  overflow: hidden;
+  box-shadow: 0px 60px 120px rgba(38, 51, 77, 0.05);
+  min-height: 800px;
+  /* Max-height kaldırıldı ki pagination görünsün */
+  position: relative;
+  z-index: 1;
+}
+
+/* Container için beyaz arka plan */
+.contacts-table-container {
+  background: #ffffff !important;
+}
+
+.contacts-table-container .header-bar {
+  background: #ffffff !important;
+}
+
+.contacts-table-container .table-footer {
+  background: #ffffff !important;
+}
+
+/* Dropdown override */
+.contacts-table-container .header-btn.dropdown-toggle {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.contacts-table-container .header-btn.dropdown-toggle:hover {
+  background: #f8f9fa !important;
+  background-color: #f8f9fa !important;
+}
+
+.contacts-table-container .header-btn.dropdown-toggle:focus {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Başlık Barı */
+.contacts-table-container .header-bar {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 15px 20px;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.contacts-table-container .header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-self: start;
+}
+
+.contacts-table-container .header-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  justify-self: center;
+  width: 100%;
+}
+
+.contacts-table-container .header-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: transparent !important;
+}
+
+.contacts-table-container .header-icon svg {
+  width: 100%;
+  height: 100%;
+  max-width: 40px;
+  max-height: 40px;
+}
+
+.contacts-table-container .header-icon i {
+  font-size: 16px;
+}
+
+.contacts-table-container .header-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  letter-spacing: 0.5px;
+}
+
+.contacts-table-container .header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+.contacts-table-container .header-btn {
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 48px;
+  height: 48px;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.contacts-table-container .header-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.contacts-table-container .header-btn:hover {
+  border-color: #d0d0d0;
+  background: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Dropdown button styling */
+.contacts-table-container .header-btn.dropdown-toggle {
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 50% !important;
+  color: #495057 !important;
+  box-shadow: none !important;
+  background: #ffffff !important;
+}
+
+.contacts-table-container .header-btn.dropdown-toggle:hover {
+  border-color: #d0d0d0 !important;
+  background: #f8f9fa !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.contacts-table-container .header-btn.dropdown-toggle:focus {
+  border-color: #e0e0e0 !important;
+  box-shadow: none !important;
+  background: #ffffff !important;
+}
+
+.contacts-table-container .header-btn.dropdown-toggle:active,
+.contacts-table-container .header-btn.dropdown-toggle.show {
+  border-color: #4E0DCC !important;
+  background: #f8f9fa !important;
+  box-shadow: 0 0 0 2px rgba(78, 13, 204, 0.1) !important;
+}
+
+.contacts-table-container .header-btn.dropdown-toggle::after {
+  display: none !important;
+}
+
+.contacts-table-container .header-btn i {
+  font-size: 15px;
+}
+
+.contacts-table-container .header-btn.bulk-sms-btn {
+  background-color: #28a745 !important;
+  border: 1px solid #28a745 !important;
+  color: white !important;
+  border-radius: 10px !important;
+  padding: 8px 16px !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.2s ease !important;
+  min-width: 100px !important;
+  height: 45px !important;
+  width: auto !important;
+}
+
+.header-btn.bulk-sms-btn:hover {
+  background-color: #218838 !important;
+  border-color: #1e7e34 !important;
+  color: white !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.25) !important;
+}
+
+.header-btn.bulk-sms-btn:focus {
+  background-color: #218838 !important;
+  border-color: #1e7e34 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+}
+
+.header-btn.bulk-sms-btn:active {
+  background-color: #1e7e34 !important;
+  border-color: #1c7430 !important;
+  color: white !important;
+}
+
+/* Action Menu Button Stilleri */
+.action-menu-btn {
+  border: 1px solid #dee2e6 !important;
+  padding: 6px 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: white !important;
+  color: #6c757d !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  margin: 0 auto !important;
+}
+
+.action-menu-btn:hover {
+  border-color: #4E0DCC !important;
+  background: #f8f9fa !important;
+  color: #4E0DCC !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(78, 13, 204, 0.15) !important;
+}
+
+.action-menu-btn:focus {
+  border-color: #4E0DCC !important;
+  box-shadow: 0 0 0 2px rgba(78, 13, 204, 0.1) !important;
+}
+
+.action-menu-btn:active,
+.action-menu-btn.show {
+  border-color: #4E0DCC !important;
+  background: #f8f9fa !important;
+  color: #4E0DCC !important;
+  box-shadow: 0 0 0 2px rgba(78, 13, 204, 0.1) !important;
+}
+
+.action-menu-btn::after {
+  display: none !important;
+}
+
+/* Dropdown Menu Stilleri - Yeniden yazıldı */
+.contacts-table-container .dropdown {
+  position: relative !important;
+}
+
+.contacts-table-container .dropdown-toggle {
+  background: transparent !important;
+  border: none !important;
+  padding: 4px !important;
+  color: #6c757d !important;
+}
+
+.contacts-table-container .dropdown-toggle:hover {
+  color: #495057 !important;
+  background: #f8f9fa !important;
+  border-radius: 4px !important;
+}
+
+.contacts-table-container .dropdown-toggle:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.contacts-table-container .dropdown-toggle::after {
+  display: none !important;
+}
+
+.contacts-table-container .dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  z-index: 99999 !important;
+  display: none !important;
+  min-width: 160px !important;
+  padding: 8px 0 !important;
+  margin: 2px 0 0 !important;
+  font-size: 14px !important;
+  color: #495057 !important;
+  text-align: left !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  background-clip: padding-box !important;
+  transform: translateZ(0) !important;
+}
+
+.contacts-table-container .dropdown-menu.show {
+  display: block !important;
+}
+
+.contacts-table-container .dropdown-menu[data-popper-placement] {
+  position: absolute !important;
+}
+
+/* Dropdown için ekstra güçlü kurallar */
+.contacts-table-container tbody tr td .dropdown {
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
+.contacts-table-container tbody tr td .dropdown .dropdown-menu {
+  position: absolute !important;
+  z-index: 99999 !important;
+  top: 100% !important;
+  left: -140px !important;
+  right: auto !important;
+  transform: none !important;
+  will-change: transform !important;
+}
+
+.contacts-table-container tbody tr:last-child td .dropdown .dropdown-menu {
+  top: auto !important;
+  bottom: 100% !important;
+}
+
+/* Bootstrap dropdown override */
+.dropdown-menu.show {
+  display: block !important;
+  z-index: 99999 !important;
+}
+
+.contacts-table-container .dropdown-item {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  padding: 8px 16px !important;
+  clear: both !important;
+  font-weight: 400 !important;
+  color: #495057 !important;
+  text-align: inherit !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.contacts-table-container .dropdown-item:hover {
+  color: #4E0DCC !important;
+  background-color: #f8f9fa !important;
+}
+
+.contacts-table-container .dropdown-item:focus {
+  color: #4E0DCC !important;
+  background-color: #f8f9fa !important;
+  outline: none !important;
+}
+
+.contacts-table-container .dropdown-item.text-danger {
+  color: #dc3545 !important;
+}
+
+.contacts-table-container .dropdown-item.text-danger:hover {
+  color: #dc3545 !important;
+  background-color: #fff5f5 !important;
+}
+
+.contacts-table-container .dropdown-item svg {
+  margin-right: 8px !important;
+  flex-shrink: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.contacts-table-container .dropdown-divider {
+  height: 0 !important;
+  margin: 4px 0 !important;
+  overflow: hidden !important;
+  border-top: 1px solid #e9ecef !important;
+}
+
+/* Tablo hücrelerinin hizalaması */
+th, td {
+  vertical-align: middle;
+}
+
+/* Checkbox sütunu ortalama */
+th:nth-child(1),
+td:nth-child(1) {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Sıra numarası sütunu ortalama */
+th:nth-child(2),
+td:nth-child(2) {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Resim sütunu ortalama */
+th:nth-child(3),
+td:nth-child(3) {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* İşlemler sütunu ortalama */
+th:last-child,
+td:last-child {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Header içindeki arama kutusu stilleri */
+.header-center .search-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.header-center .search-input {
+  width: 100%;
+  border: 2px solid #E5E7EB;
+  border-radius: 20px;
+  padding: 10px 40px 10px 16px;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 400;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.header-center .search-input::placeholder {
+  color: #9CA3AF;
+  font-weight: 400;
+}
+
+.header-center .search-input:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+  outline: none;
+}
+
+.header-center .search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+
+
+
+/* Bulk SMS Modal Stilleri */
+.bulk-sms-modal {
+  padding: 0 !important;
+}
+
+.bulk-sms-modal .modal {
+  padding: 0 !important;
+}
+
+.bulk-sms-modal .modal-backdrop {
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.bulk-sms-modal .modal-dialog {
+  margin: 5vh auto;
+  padding: 0;
+  width: 100%;
+  max-width: 700px;
+}
+
+.bulk-sms-modal .modal-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+/* Modal açıkken body scroll engellemesi */
+body.modal-open {
+  overflow: hidden !important;
+  padding-right: 0px !important;
+}
+
+/* Responsive modal */
+@media (max-width: 768px) {
+  .bulk-sms-modal .modal-dialog {
+    margin: 10px auto;
+    max-width: calc(100vw - 20px);
+    width: calc(100vw - 20px);
+    padding: 0;
+  }
+
+  .bulk-sms-modal {
+    padding: 0 !important;
+  }
+}
+
+/* Özel Yatay Scrollbar Stilleri */
+.custom-scrollbar-container {
+  position: relative;
+  width: 100%;
+  height: 12px;
+  margin-top: 8px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  z-index: 10;
+}
+
+.custom-scrollbar-track {
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  position: relative;
+  border-radius: 6px;
+}
+
+.custom-scrollbar-thumb {
+  height: 100%;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  border-radius: 6px;
+  cursor: grab;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+  position: absolute;
+  top: 0;
+  left: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.custom-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  box-shadow: 0 3px 6px rgba(0, 123, 255, 0.4);
+}
+
+.custom-scrollbar-thumb:active {
+  cursor: grabbing;
+  background: linear-gradient(135deg, #004085, #002752);
+}
+
+/* Responsive scrollbar */
+@media (max-width: 768px) {
+  .custom-scrollbar-container {
+    height: 8px;
+    margin-top: 6px;
+  }
+  
+  .custom-scrollbar-thumb {
+    border-radius: 4px;
+  }
+}
+
+/* Tablo Stilleri */
+.table-wrapper {
+  flex: 1;
+  /* Sadece yatay scroll, dikey scroll kaldırıldı */
+  overflow-x: auto;
+  overflow-y: visible;
+  background: #ffffff;
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  /* Alt köşelerde border-radius kaldırıldı, container'da zaten var */
+  border-radius: 0;
+  /* Max-height kaldırıldı ki pagination görünsün */
+  height: auto;
+}
+
+.contacts-table {
+  width: 100%;
+  min-width: 1400px; /* Minimum genişlik belirle */
+  border-collapse: collapse;
+  background: #ffffff;
+  transition: transform 0.1s ease; /* Transform animasyonu ekle */
+  margin-bottom: 0;
+  font-size: 13px;
+  background: #ffffff;
+  border: none;
+  width: 100%;
+  min-width: 950px;
+  border-radius: 0; /* Border-radius kaldırıldı */
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: visible; /* Table overflow'u visible yap */
+  table-layout: auto;
+}
+
+.contacts-table th,
+.contacts-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.contacts-table thead th {
+  border-bottom: 1px solid #e0e0e0;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  color: #495057;
+  font-weight: 600;
+  font-size: 12px;
+  text-align: center;
+  padding: 10px 4px;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.contacts-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.contacts-table-container .contacts-table tbody tr:nth-child(odd),
+.contacts-table-container .contacts-table tbody tr:nth-child(odd) td {
+  background-color: #ffffff !important;
+}
+
+.contacts-table-container .contacts-table tbody tr:nth-child(even),
+.contacts-table-container .contacts-table tbody tr:nth-child(even) td {
+  background-color: #f9f9f9 !important;
+}
+
+.contacts-table-container .contacts-table tbody tr:hover,
+.contacts-table-container .contacts-table tbody tr:hover td {
+  background-color: #e3f2fd !important;
+}
+
+.contacts-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.contacts-table tbody td {
+  padding: 8px 4px;
+  vertical-align: middle;
+  text-align: center;
+  font-size: 13px;
+  color: #495057;
+  border-left: none;
+  border-right: none;
+  position: relative;
+}
+
+.contacts-table tbody td:first-child {
+  padding-left: 12px;
+}
+
+.contacts-table tbody td:last-child {
+  padding-right: 30px;
+}
+
+.contacts-table thead th:first-child {
+  padding-left: 12px;
+}
+
+.contacts-table thead th:last-child {
+  padding-right: 30px;
+}
+
+.contacts-table tbody td:nth-child(2) {
+  font-weight: 600;
+  color: #007bff;
+}
+
+/* Checkbox Stilleri */
+.select-all-checkbox,
+.contact-checkbox {
+  margin: 0;
+  transform: scale(1.1);
+}
+
+.select-all-checkbox .form-check-input,
+.contact-checkbox .form-check-input {
+  border: 1px solid #d0d0d0;
+  border-radius: 3px;
+}
+
+.select-all-checkbox .form-check-input:checked,
+.contact-checkbox .form-check-input:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Avatar Stilleri */
+.contact-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+
+/* İşlem Butonları */
+.action-buttons {
+  display: flex;
+  gap: 1px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 200px;
+  width: 100%;
+}
+
+.action-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  transition: all 0.2s ease;
+  border: 1px solid;
+  border-radius: 3px;
+  overflow: visible !important;
+  position: relative;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.8;
+}
+
+.action-btn.btn-outline-success {
+  border-color: #28a745 !important;
+  color: #28a745 !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-success:hover {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  color: white !important;
+}
+
+.action-btn.btn-outline-info {
+  border-color: #17a2b8 !important;
+  color: #17a2b8 !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-info:hover {
+  background-color: #17a2b8 !important;
+  border-color: #17a2b8 !important;
+  color: white !important;
+}
+
+.action-btn.btn-outline-danger {
+  border-color: #dc3545 !important;
+  color: #dc3545 !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-danger:hover {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: white !important;
+}
+
+.action-btn.btn-outline-primary {
+  border-color: #007bff !important;
+  color: #007bff !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-primary:hover {
+  background-color: #007bff !important;
+  border-color: #007bff !important;
+  color: white !important;
+}
+
+.action-btn i {
+  font-size: 12px;
+}
+
+.action-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  pointer-events: none;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 1;
+}
+
+.action-btn svg path {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+.action-btn svg g {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+/* SVG override için güçlü kurallar */
+.contacts-table-container .action-btn svg,
+.contacts-table .action-btn svg,
+.table .action-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.contacts-table-container .action-btn svg path,
+.contacts-table .action-btn svg path,
+.table .action-btn svg path {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+.contacts-table-container .action-btn,
+.contacts-table .action-btn,
+.table .action-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+}
+
+.whatsapp-btn {
+  border-color: #25D366 !important;
+  color: #25D366 !important;
+  background-color: transparent !important;
+}
+
+.whatsapp-btn:hover {
+  background-color: #25D366 !important;
+  border-color: #25D366 !important;
+  color: white !important;
+}
+
+.header-btn.bulk-sms-btn:disabled {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: white !important;
+  cursor: not-allowed !important;
+  opacity: 0.65 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.header-btn.bulk-sms-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
+}
+
+/* SMS Modal Stilleri */
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  border-bottom: 1px solid #e9ecef;
+  padding: 1.5rem;
+}
+
+.modal-title {
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+}
+
+.modal-title svg {
+  fill: #28a745;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.form-control {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+  transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.alert-info {
+  background-color: #e7f3ff;
+  border-color: #b6d7ff;
+  color: #004085;
+  border-radius: 8px;
+}
+
+.modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 1rem 1.5rem;
+}
+
+
+.contacts-table-container .table-footer {
+  background: #ffffff;
+  padding: 20px 30px 20px 20px;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  /* Footer'ın her zaman görünmesini sağla */
+  position: relative;
+  z-index: 10;
+  min-height: 60px;
+}
+
+.contacts-table-container .total-records {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  text-align: left;
+}
+
+.contacts-table-container .pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Sayfalama Stilleri */
+.contacts-table-container .custom-pagination {
+  margin-bottom: 0;
+  gap: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.contacts-table-container .custom-pagination .page-item {
+  margin: 0;
+}
+
+.contacts-table-container .custom-pagination .page-link {
+  color: #9CA3AF;
+  border: none;
+  background: none !important;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.contacts-table-container .custom-pagination .page-item.active .page-link {
+  color: #374151;
+  font-weight: 600;
+}
+
+.contacts-table-container .custom-pagination .page-link:hover {
+  color: #374151;
+  text-decoration: none;
+}
+
+.contacts-table-container .custom-pagination .page-item.disabled .page-link {
+  color: #D1D5DB;
+  cursor: not-allowed;
+}
+
+.contacts-table-container .custom-pagination .page-item.disabled .page-link:hover {
+  color: #D1D5DB;
+}
+
+/* Pagination navigation buttons */
+.contacts-table-container .custom-pagination .page-item:first-child .page-link,
+.contacts-table-container .custom-pagination .page-item:last-child .page-link {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+/* Ellipsis styling */
+.contacts-table-container .custom-pagination .page-item .page-link:contains("...") {
+  border: none;
+  color: #9CA3AF;
+}
+
+/* HORIZONTAL SCROLL SİSTEMİ - ULTRA BASİT */
+
+/* Büyük ekranlar için optimizasyon */
+@media (max-width: 1200px) {
+  .contacts-table {
+    font-size: 11px;
+  }
+  
+  .contacts-table thead th,
+  .contacts-table tbody td {
+    padding: 6px 4px;
+  }
+  
+  .action-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 9px;
+  }
+
+  .action-btn svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  
+  .contact-avatar {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* Tablet boyutları */
+@media (max-width: 768px) {
+  .header-bar {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 15px;
+    padding: 15px;
+    text-align: center;
+  }
+  
+  .header-left,
+  .header-center,
+  .header-right {
+    justify-self: center;
+  }
+  
+  .header-center .search-container {
+    max-width: 100%;
+  }
+  
+  .header-center .search-input {
+    font-size: 14px;
+    padding: 8px 35px 8px 12px;
+  }
+  
+  .contacts-table-container .table-footer {
+    padding: 15px 20px;
+  }
+  
+  .contacts-table {
+    font-size: 11px;
+  }
+  
+  .contacts-table thead th,
+  .contacts-table tbody td {
+    padding: 6px 4px;
+  }
+  
+  .action-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 8px;
+  }
+
+  .action-btn svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+  
+  .contact-avatar {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .total-records {
+    font-size: 12px;
+  }
+  
+  .custom-pagination .page-link {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
+/* Mobil cihazlar için yatay kaydırma */
+/* 1400px altında scrollbar göster */
+@media (max-width: 1400px) {
+  .table-wrapper {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Tabloyu 1400px genişliğe sabitle - yatay scroll oluşsun */
+  .contacts-table {
+    width: 1400px !important;
+    min-width: 1400px !important;
+    table-layout: fixed !important;
+  }
+
+  /* Native scrollbar'ı gizle - özel scrollbar kullanacağız */
+  .table-wrapper::-webkit-scrollbar {
+    height: 0px !important;
+    background: transparent !important;
+  }
+
+  .table-wrapper::-webkit-scrollbar-thumb {
+    background: transparent !important;
+  }
+
+  .table-wrapper::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  /* Hücreleri tek satıra al - kaydırma net olsun */
+  .contacts-table th,
+  .contacts-table td {
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Ana container */
+  .contacts-table-container {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Table wrapper - YATAY SCROLL */
+  .table-wrapper {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+  }
+
+  /* Tablo genişliği - Ekrandan çok geniş yap */
+  .contacts-table {
+    width: 1400px !important;
+    min-width: 1400px !important;
+    table-layout: fixed !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Tüm hücreler için nowrap */
+  .contacts-table th,
+  .contacts-table td {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    padding: 10px 8px !important;
+    font-size: 12px !important;
+  }
+
+  /* Sütun genişlikleri - Toplam 1400px */
+  .contacts-table th:nth-child(1), .contacts-table td:nth-child(1) { width: 70px !important; }   /* Checkbox */
+  .contacts-table th:nth-child(2), .contacts-table td:nth-child(2) { width: 70px !important; }   /* Sıra */
+  .contacts-table th:nth-child(3), .contacts-table td:nth-child(3) { width: 90px !important; }   /* Resim */
+  .contacts-table th:nth-child(4), .contacts-table td:nth-child(4) { width: 180px !important; }  /* Adı */
+  .contacts-table th:nth-child(5), .contacts-table td:nth-child(5) { width: 180px !important; }  /* Soyadı */
+  .contacts-table th:nth-child(6), .contacts-table td:nth-child(6) { width: 140px !important; }  /* Kategori */
+  .contacts-table th:nth-child(7), .contacts-table td:nth-child(7) { width: 150px !important; }  /* Telefon 1 */
+  .contacts-table th:nth-child(8), .contacts-table td:nth-child(8) { width: 150px !important; }  /* Telefon 2 */
+  .contacts-table th:nth-child(9), .contacts-table td:nth-child(9) { width: 140px !important; }  /* Ünvan */
+  .contacts-table th:nth-child(10), .contacts-table td:nth-child(10) { width: 140px !important; } /* Mahalle */
+  .contacts-table th:nth-child(11), .contacts-table td:nth-child(11) { width: 140px !important; } /* İşlem */
+
+  /* Avatar ve butonlar */
+  .contact-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+  }
+
+  .action-btn {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 10px !important;
+    padding: 4px !important;
+  }
+
+  .action-btn svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  /* Scrollbar görünür ve büyük yap */
+  .table-wrapper::-webkit-scrollbar {
+    height: 15px !important;
+    background: #f8f9fa !important;
+    border-radius: 0 !important;
+  }
+
+  .table-wrapper::-webkit-scrollbar-thumb {
+    background: #007bff !important;
+    border-radius: 8px !important;
+    border: 2px solid #f8f9fa !important;
+  }
+
+  .table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #0056b3 !important;
+  }
+
+  .table-wrapper::-webkit-scrollbar-track {
+    background: #f8f9fa !important;
+    border-radius: 0 !important;
+  }
+
+  /* Header düzeni */
+  .contacts-table-container .header-bar {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 12px 15px !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+  }
+
+  .contacts-table-container .header-left {
+    justify-self: center !important;
+    order: 1 !important;
+  }
+
+  .contacts-table-container .header-center {
+    order: 2 !important;
+    width: 100% !important;
+  }
+
+  .contacts-table-container .header-right {
+    justify-self: center !important;
+    order: 3 !important;
+  }
+
+  /* Footer */
+  .table-footer {
+    padding: 12px 15px !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+  }
+
+  .total-records {
+    font-size: 12px !important;
+    text-align: center !important;
+  }
+
+  .pagination-wrapper {
+    justify-content: center !important;
+  }
+
+  /* Checkbox ve form elementleri */
+  .contacts-table input[type="checkbox"] {
+    transform: scale(1.2) !important;
+  }
+
+  /* Tablo başlıkları */
+  .contacts-table thead th {
+    background: #f8f9fa !important;
+    font-weight: 600 !important;
+    color: #495057 !important;
+    text-align: center !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+  }
+
+  /* Satır hover efekti */
+  .contacts-table tbody tr:hover {
+    background-color: #f8f9fa !important;
+  }
+}
+
+/* Tablo sütunları için temel genişlikler */
+.contacts-table th:nth-child(1),
+.contacts-table td:nth-child(1) { /* CHECKBOX */
+  width: 60px;
+  min-width: 60px;
+}
+
+.contacts-table th:nth-child(2),
+.contacts-table td:nth-child(2) { /* SIRA */
+  width: 40px;
+  min-width: 40px;
+}
+
+.contacts-table th:nth-child(3),
+.contacts-table td:nth-child(3) { /* RESİM */
+  width: 100px;
+  min-width: 100px;
+}
+
+.contacts-table th:nth-child(4),
+.contacts-table td:nth-child(4) { /* ADI */
+  width: 100px;
+  min-width: 100px;
+}
+
+.contacts-table th:nth-child(5),
+.contacts-table td:nth-child(5) { /* SOYADI */
+  width: 100px;
+  min-width: 100px;
+}
+
+.contacts-table th:nth-child(6),
+.contacts-table td:nth-child(6) { /* KATEGORİ */
+  width: 100px;
+  min-width: 100px;
+}
+
+.contacts-table th:nth-child(7),
+.contacts-table td:nth-child(7) { /* TELEFON 1 */
+  width: 100px;
+  min-width: 100px;
+}
+
+.contacts-table th:nth-child(8),
+.contacts-table td:nth-child(8) { /* TELEFON 2 */
+  width: 100px;
+  min-width: 100px;
+}
+
+.contacts-table th:nth-child(9),
+.contacts-table td:nth-child(9) { /* ÜNVAN */
+  width: 100px;
+  min-width: 100px;
+}
+
+.contacts-table th:nth-child(10),
+.contacts-table td:nth-child(10) { /* MAHALLE */
+  width: 100px;
+  min-width: 100px;
+}
+
+.contacts-table th:nth-child(11),
+.contacts-table td:nth-child(11) { /* İŞLEM */
+  width: 100px;
+  min-width: 100px;
+}

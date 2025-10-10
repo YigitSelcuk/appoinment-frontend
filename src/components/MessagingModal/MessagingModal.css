@@ -1,0 +1,878 @@
+/* MessagingModal - AddContactModal Standardı */
+.messaging-modal .modal-dialog {
+  max-width: 700px;
+  margin: 5vh auto;
+  width: 100%;
+  padding: 0;
+}
+
+.messaging-modal {
+  padding: 0 !important;
+}
+
+.messaging-modal .modal {
+  padding: 0 !important;
+}
+
+.messaging-modal .modal-content {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+.modal-content-custom {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.modal-header-custom {
+  background: #4E0DCC;
+  color: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: none;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-content h4 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body-custom {
+  padding: 24px;
+  max-height: calc(90vh - 140px);
+  overflow-y: auto;
+}
+
+.contact-info {
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-input {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+  outline: none;
+}
+
+.category-search-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.category-search-input {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.category-search-input:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+  outline: none;
+}
+
+.category-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.category-dropdown-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.category-dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.category-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.category-dropdown-item.no-results {
+  color: #999;
+  cursor: default;
+  font-style: italic;
+}
+
+.category-dropdown-item.no-results:hover {
+  background-color: transparent;
+}
+
+.selected-categories {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.selected-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contact-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.group-selection {
+  margin-bottom: 24px;
+}
+
+/* Kişi Bilgileri Bölümü */
+.contact-info-section {
+  margin-bottom: 24px;
+}
+
+.contact-info-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contact-details {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e9ecef;
+}
+
+.contact-detail-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 12px;
+}
+
+.contact-detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.contact-detail-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-detail-item.full-width {
+  flex: 1 1 100%;
+}
+
+.detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  background: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+@media (max-width: 768px) {
+  .contact-detail-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .contact-details {
+    padding: 12px;
+  }
+}
+
+/* Telefon Seçimi Stiller */
+.phone-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.phone-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.phone-option:hover {
+  border-color: #4E0DCC;
+  background: #f8f9ff;
+}
+
+.phone-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #4E0DCC;
+}
+
+.phone-option input[type="radio"]:checked + .phone-label {
+  color: #4E0DCC;
+  font-weight: 600;
+}
+
+.phone-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 80px;
+}
+
+.phone-number {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+.phone-option:has(input[type="radio"]:checked) {
+  border-color: #4E0DCC;
+  background: #f8f9ff;
+}
+
+.phone-option:has(input[type="radio"]:checked) .phone-number {
+  color: #4E0DCC;
+  font-weight: 600;
+}
+
+.group-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.group-select {
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.group-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.filter-tag {
+  background: #E8F4FD;
+  color: #1E40AF;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-tag:hover {
+  background: #DBEAFE;
+}
+
+.group-sub-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sub-filter {
+  background: #F3F4F6;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.group-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.show-btn {
+  color: #4E0DCC;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.show-btn:hover {
+  text-decoration: underline;
+}
+
+.send-time-section {
+  margin-bottom: 24px;
+}
+
+.time-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.time-toggle {
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.toggle-btn {
+  background: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.toggle-btn.active {
+  background: #10B981;
+  color: white;
+}
+
+.toggle-btn:not(.active):hover {
+  background: #F9FAFB;
+}
+
+.scheduled-inputs {
+  margin-top: 12px;
+}
+
+.date-time-row {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+  align-items: center;
+}
+
+.date-picker-container {
+  flex: 1;
+  position: relative;
+}
+
+.date-picker-input {
+  width: 100% !important;
+  padding: 12px 16px !important;
+  border: 2px solid #e0e0e0 !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  background-color: #f8f9fa !important;
+  color: #333 !important;
+  transition: all 0.3s ease !important;
+  box-sizing: border-box !important;
+}
+
+.date-picker-input:focus {
+  outline: none !important;
+  border-color: #4E0DCC !important;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1) !important;
+  background-color: white !important;
+}
+
+.date-picker-input::placeholder {
+  color: #999 !important;
+  font-weight: 400 !important;
+}
+
+.time-input {
+  flex: 1;
+  padding: 12px 16px !important;
+  border: 2px solid #e0e0e0 !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  background-color: #f8f9fa !important;
+  color: #333 !important;
+  transition: all 0.3s ease !important;
+  box-sizing: border-box !important;
+}
+
+.time-input:focus {
+  outline: none !important;
+  border-color: #4E0DCC !important;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1) !important;
+  background-color: white !important;
+}
+
+/* Modern Takvim Stilleri */
+.react-datepicker {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  border: none !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+  background: white !important;
+  overflow: hidden !important;
+}
+
+.react-datepicker__header {
+  background: linear-gradient(135deg, #4E0DCC 0%, #6B46C1 100%) !important;
+  border-bottom: none !important;
+  border-radius: 16px 16px 0 0 !important;
+  padding: 20px 16px 16px !important;
+  color: white !important;
+}
+
+.react-datepicker__current-month {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  margin-bottom: 8px !important;
+}
+
+.react-datepicker__day-names {
+  display: flex !important;
+  justify-content: space-between !important;
+  margin-bottom: 8px !important;
+}
+
+.react-datepicker__day-name {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  width: 32px !important;
+  line-height: 32px !important;
+  text-align: center !important;
+}
+
+.react-datepicker__month-container {
+  background: white !important;
+}
+
+.react-datepicker__month {
+  padding: 16px !important;
+  margin: 0 !important;
+}
+
+.react-datepicker__week {
+  display: flex !important;
+  justify-content: space-between !important;
+  margin-bottom: 4px !important;
+}
+
+.react-datepicker__day {
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  text-align: center !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  color: #333 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.react-datepicker__day:hover {
+  background: #f0f0f0 !important;
+  color: #4E0DCC !important;
+}
+
+.react-datepicker__day--selected {
+  background: #4E0DCC !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__day--selected:hover {
+  background: #3D0A99 !important;
+}
+
+.react-datepicker__day--today {
+  background: #E8F2FF !important;
+  color: #4E0DCC !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__day--disabled {
+  color: #ccc !important;
+  cursor: not-allowed !important;
+}
+
+.react-datepicker__day--disabled:hover {
+  background: transparent !important;
+  color: #ccc !important;
+}
+
+.react-datepicker__day--outside-month {
+  color: #ccc !important;
+}
+
+.react-datepicker__navigation {
+  top: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.react-datepicker__navigation:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.react-datepicker__navigation--previous {
+  left: 16px !important;
+}
+
+.react-datepicker__navigation--next {
+  right: 16px !important;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: white !important;
+  border-width: 2px 2px 0 0 !important;
+  width: 6px !important;
+  height: 6px !important;
+  top: 8px !important;
+}
+
+/* Dropdown Stilleri */
+.react-datepicker__month-dropdown-container,
+.react-datepicker__year-dropdown-container {
+  position: relative !important;
+}
+
+.react-datepicker__month-dropdown,
+.react-datepicker__year-dropdown {
+  background: white !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 1000 !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  width: 120px !important;
+  margin-top: 4px !important;
+}
+
+.react-datepicker__month-option,
+.react-datepicker__year-option {
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-size: 14px !important;
+  color: #333 !important;
+  text-align: center !important;
+}
+
+.react-datepicker__month-option:hover,
+.react-datepicker__year-option:hover {
+  background: #f0f0f0 !important;
+  color: #4E0DCC !important;
+}
+
+.react-datepicker__month-option--selected_month,
+.react-datepicker__year-option--selected_year {
+  background: #4E0DCC !important;
+  color: white !important;
+}
+
+.react-datepicker__month-read-view,
+.react-datepicker__year-read-view {
+  cursor: pointer !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+  font-weight: 500 !important;
+  color: white !important;
+  font-size: 14px !important;
+  display: inline-block !important;
+  margin: 0 4px !important;
+}
+
+.react-datepicker__month-read-view:hover,
+.react-datepicker__year-read-view:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.react-datepicker__month-read-view--down-arrow,
+.react-datepicker__year-read-view--down-arrow {
+  display: none !important;
+}
+
+/* Header düzeni */
+.react-datepicker__header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.react-datepicker__current-month {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+/* Scrollbar stilleri */
+.react-datepicker__month-dropdown::-webkit-scrollbar,
+.react-datepicker__year-dropdown::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.react-datepicker__month-dropdown::-webkit-scrollbar-track,
+.react-datepicker__year-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1 !important;
+  border-radius: 3px !important;
+}
+
+.react-datepicker__month-dropdown::-webkit-scrollbar-thumb,
+.react-datepicker__year-dropdown::-webkit-scrollbar-thumb {
+  background: #c1c1c1 !important;
+  border-radius: 3px !important;
+}
+
+.react-datepicker__month-dropdown::-webkit-scrollbar-thumb:hover,
+.react-datepicker__year-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8 !important;
+}
+
+.message-section {
+  margin-bottom: 24px;
+}
+
+.message-textarea {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.message-textarea:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+  outline: none;
+}
+
+.character-count {
+  text-align: right;
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.messaging-modal .modal-footer-custom {
+  padding: 20px 24px;
+  border-top: 1px solid #f0f0f0;
+  display: flex !important;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #f9f9f9;
+  position: relative;
+  z-index: 1;
+}
+
+.messaging-modal .cancel-btn {
+  background: #FF6B35 !important;
+  border: none !important;
+  color: white !important;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.messaging-modal .cancel-btn:hover {
+  background: #E55A2B !important;
+}
+
+.messaging-modal .send-btn {
+  background: #10B981 !important;
+  border: none !important;
+  color: white !important;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.messaging-modal .send-btn:hover {
+  background: #059669 !important;
+}
+
+.messaging-modal .send-btn:disabled {
+  background: #6B7280 !important;
+  cursor: not-allowed;
+}
+
+.messaging-modal .cancel-btn:disabled {
+  background: #9CA3AF !important;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .messaging-modal .modal-dialog {
+    margin: 2vh auto;
+    max-width: 95%;
+  }
+  
+  .modal-body-custom {
+    padding: 16px;
+    max-height: calc(90vh - 120px);
+  }
+  
+  .modal-header-custom {
+    padding: 16px;
+  }
+  
+  .messaging-modal .modal-footer-custom {
+    padding: 16px;
+    flex-direction: column;
+  }
+  
+  .messaging-modal .cancel-btn,
+  .messaging-modal .send-btn {
+    width: 100%;
+  }
+  
+  .group-filters,
+  .group-sub-filters {
+    gap: 6px;
+  }
+  
+  .filter-tag {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+  
+  .sub-filter {
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+}

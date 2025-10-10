@@ -1,0 +1,1102 @@
+.weekly-calendar-container {
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.weekly-calendar-container * {
+  box-sizing: border-box;
+}
+
+/* Üst Başlık */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 16px; /* Padding azaltıldı */
+  border-bottom: 1px solid #E5E7EB;
+  background: white;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #1F2937;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.date-navigation {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-btn {
+  background: #F3F4F6;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
+}
+
+.nav-btn:hover {
+  background-color: #E5E7EB;
+}
+
+.date-selector {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 220px;
+}
+
+.current-date {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: #374151;
+  text-align: center;
+  cursor: pointer;
+  transition: color 0.2s;
+  flex: 1;
+}
+
+.current-date:hover {
+  color: #3C02AA;
+}
+
+.date-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: all;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.view-controls {
+  display: flex;
+  gap: 2px;
+  background: #F3F4F6;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.view-btn {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn.active {
+  background: #3C02AA;
+  color: white;
+  box-shadow: 0 2px 4px rgba(60, 2, 170, 0.2);
+}
+
+.view-btn:hover:not(.active) {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+/* Haftalık Takvim Grid */
+.weekly-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  overflow: auto;
+  background: white;
+}
+
+/* Saat Sütunu */
+.time-column {
+  background: #FAFBFC;
+  border-right: 1px solid #E5E7EB;
+}
+
+.time-header {
+  height: 70px;
+  border-bottom: 1px solid #E5E7EB;
+  background: #F9FAFB;
+}
+
+.time-slot {
+  height: 80px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6B7280;
+  border-bottom: 1px solid #F3F4F6;
+  padding-top: 2px;
+}
+
+/* Gün Sütunları */
+.day-column {
+  border-right: 1px solid #E5E7EB;
+  position: relative;
+}
+
+.day-column:last-child {
+  border-right: none;
+}
+
+.day-header {
+  height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #E5E7EB;
+  background: #F9FAFB;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.day-header:hover {
+  background: #E5E7EB;
+  transform: translateY(-1px);
+}
+
+.day-name {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.day-date {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: #1F2937;
+}
+
+.day-slots {
+  position: relative;
+  height: calc(24 * 80px); /* 24 saat (00:00-23:00) x 80px */
+  min-height: 1920px;
+}
+
+@media (max-width: 768px) {
+  .day-slots {
+    height: calc(24 * 60px); /* Mobilde 24 saat */
+    min-height: 1440px;
+  }
+}
+
+/* Google Calendar benzeri grid çizgileri */
+.time-cell {
+  height: 80px;
+  border-bottom: 1px solid #EEF2F7; /* Daha ince ve yumuşak çizgi */
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.time-cell::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #F5F7FA; /* yarım saat çizgisi */
+}
+
+@media (max-width: 768px) {
+  .time-cell { height: 60px; }
+}
+
+.time-cell:hover {
+  background-color: #F0F7FF;
+}
+
+.time-cell.past-time {
+  background-color: #F3F4F6;
+  opacity: 0.6;
+  cursor: default;
+}
+
+.time-cell.past-time:hover {
+  background-color: #E5E7EB;
+}
+
+/* Modern Loading Activity Indicator */
+.modern-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  gap: 20px;
+}
+
+.activity-indicator {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3C02AA, #6B46C1);
+  animation: bounce 1.4s ease-in-out infinite both;
+}
+
+.dot-1 {
+  animation-delay: -0.32s;
+}
+
+.dot-2 {
+  animation-delay: -0.16s;
+}
+
+.dot-3 {
+  animation-delay: 0s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.loading-text {
+  color: #4A5568;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Diğer Görünüm Modları */
+.day-view,
+.month-view,
+.year-view {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+}
+
+/* Aylık Görünüm */
+.month-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  width: 100%;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.month-grid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.month-header {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  width: 100%;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+  box-sizing: border-box;
+}
+
+.month-day-header {
+  padding: 16px 8px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 12px;
+  color: #495057;
+  border-right: 1px solid #e9ecef;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.month-day-header:last-child {
+  border-right: none;
+}
+
+.month-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  flex: 1;
+  gap: 0;
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.month-day {
+  border: 1px solid #e9ecef;
+  border-top: none;
+  border-left: none;
+  padding: 12px;
+  min-height: 120px;
+  min-width: 0;
+  height: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.month-day:nth-child(7n) {
+  border-right: none;
+}
+
+.month-day:hover {
+  background: #f8f9fa;
+}
+
+.month-day.current-month {
+  background: white;
+}
+
+.month-day.other-month {
+  background: #f8f9fa;
+  color: #adb5bd;
+}
+
+.month-day.other-month:hover {
+  background: #e9ecef;
+}
+
+.month-day.today {
+  background: #e3f2fd !important;
+  border: 2px solid #3C02AA !important;
+}
+
+.month-day.today .month-day-number {
+  background: #3C02AA;
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.month-day-number {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 6px;
+  color: #333;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.month-day.other-month .month-day-number {
+  color: #adb5bd;
+}
+
+.month-day-appointments {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  min-height: 0;
+  margin-top: 2px;
+}
+
+.month-appointment {
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #333;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
+  max-height: 20px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Google Calendar etkinlikleri için aylık görünüm stilleri */
+.month-appointment.google-event {
+  background: linear-gradient(135deg, rgba(var(--appointment-color-rgb, 66, 133, 244), 0.1) 0%, rgba(var(--appointment-color-rgb, 66, 133, 244), 0.05) 100%);
+  border: 1px solid var(--appointment-color, #2196F3);
+  color: #1F2937;
+}
+
+.month-appointment.google-event .month-appointment-title::before {
+  content: "📅 ";
+  font-size: 10px;
+}
+
+.month-appointment.google-event .month-appointment-title {
+  font-style: italic;
+  color: #1F2937;
+  font-weight: 600;
+}
+
+/* Sistem randevuları için aylık görünüm stilleri */
+.month-appointment:not(.google-event) {
+  background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
+  border: 1px solid #9C27B0;
+  color: #6A1B9A;
+}
+
+.month-appointment:not(.google-event) .month-appointment-title::before {
+  content: "🏢 ";
+  font-size: 10px;
+}
+
+.month-appointment:not(.google-event) .month-appointment-title {
+  font-weight: 600;
+  color: #6A1B9A;
+}
+
+.month-appointment-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.month-appointment:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.month-appointment-time {
+  font-weight: 600;
+  font-size: 12px;
+  color: #495057;
+  flex-shrink: 0;
+}
+
+.month-appointment-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #333;
+}
+
+.month-appointment-more {
+  font-size: 9px;
+  color: #6c757d;
+  text-align: center;
+  padding: 1px 2px;
+  cursor: pointer;
+  border-radius: 2px;
+  background: #f8f9fa;
+  flex-shrink: 0;
+  min-height: 12px;
+  max-height: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive tasarım */
+@media (max-width: 1200px) {
+  .month-day {
+    padding: 4px;
+  }
+  
+  .month-day-header {
+    padding: 6px;
+    font-size: 12px;
+  }
+  
+  .month-appointment {
+    font-size: 9px;
+    padding: 1px 3px;
+    min-height: 12px;
+    max-height: 14px;
+    gap: 3px;
+  }
+  
+  .month-appointment-dot {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .month-appointment-time,
+  .month-appointment-title {
+    font-size: 8px;
+  }
+  
+  .month-appointment-more {
+    font-size: 8px;
+    min-height: 10px;
+    max-height: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .month-day {
+    padding: 3px;
+  }
+  
+  .month-day-header {
+    padding: 4px;
+    font-size: 11px;
+  }
+  
+  .month-day-number {
+    font-size: 12px;
+  }
+  
+  .month-appointment {
+    font-size: 8px;
+    padding: 1px 2px;
+    min-height: 10px;
+    max-height: 12px;
+    gap: 2px;
+  }
+  
+  .month-appointment-dot {
+    width: 4px;
+    height: 4px;
+  }
+  
+  .month-appointment-time,
+  .month-appointment-title {
+    font-size: 7px;
+  }
+  
+  .month-appointment-more {
+    font-size: 7px;
+    min-height: 8px;
+    max-height: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .month-day {
+    padding: 2px;
+  }
+  
+  .month-day-header {
+    padding: 3px;
+    font-size: 10px;
+  }
+  
+  .month-day-number {
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+  
+  .month-day.today .month-day-number {
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+  }
+  
+  .month-appointment {
+    font-size: 7px;
+    padding: 1px;
+    min-height: 8px;
+    max-height: 10px;
+    gap: 2px;
+  }
+  
+  .month-appointment-dot {
+    width: 3px;
+    height: 3px;
+  }
+  
+  .month-appointment-time,
+  .month-appointment-title {
+    font-size: 6px;
+  }
+  
+  .month-appointment-more {
+    font-size: 6px;
+    min-height: 6px;
+    max-height: 6px;
+    padding: 1px 2px;
+  }
+}
+
+/* Günlük ve Yıllık Görünüm */
+.day-view-content,
+.year-view-content {
+  text-align: center;
+  padding: 60px 40px;
+  border-radius: 12px;
+  background: #f8f9fa;
+  border: 2px dashed #ddd;
+}
+
+.day-view-content h3,
+.year-view-content h3 {
+  color: #666;
+  margin-bottom: 16px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.day-view-content p,
+.year-view-content p {
+  color: #999;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Randevu Blokları */
+.appointment-block {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: rgba(var(--appointment-color), 0.1); /* Blurlu arka plan */
+  border: 2px solid rgba(var(--appointment-color), 0.8); /* Border rengi */
+  color: #1F2937; /* Koyu metin rengi */
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px); /* Blur efekti */
+  min-height: 60px;
+}
+
+.appointment-block:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0.9;
+}
+
+.appointment-block:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.appointment-time {
+  font-size: 10px;
+  font-weight: 600;
+  color: white; /* Beyaz metin */
+  /* Background JavaScript'te inline style olarak uygulanacak */
+  padding: 3px 8px;
+  border-radius: 6px;
+  align-self: flex-start;
+  white-space: nowrap; /* Tek satırda göster */
+}
+
+.appointment-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1F2937; /* Koyu metin rengi */
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.appointment-attendee {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  margin-top: auto;
+  color: #000000; /* Siyah metin rengi */
+}
+
+.attendee-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attendee-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+  .weekly-grid {
+    grid-template-columns: 70px repeat(7, 1fr);
+  }
+  
+  .time-slot {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .calendar-header {
+    padding: 20px 12px; /* Padding azaltıldı */
+  }
+  
+  .header-controls {
+    gap: 16px;
+  }
+  
+  .weekly-grid {
+    grid-template-columns: 60px repeat(7, 1fr);
+  }
+  
+  .appointment-title {
+    font-size: 10px;
+  }
+  
+  .appointment-attendee {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 992px) {
+  .calendar-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .header-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .weekly-grid {
+    grid-template-columns: 50px repeat(7, 1fr);
+  }
+  
+  .day-name {
+    font-size: 10px;
+  }
+  
+  .day-date {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .weekly-grid {
+    grid-template-columns: 40px repeat(4, 1fr);
+  }
+  
+  .day-column:nth-child(n+6) {
+    display: none;
+  }
+  
+  .time-slot {
+    height: 60px;
+    font-size: 10px;
+  }
+  
+  .time-cell {
+    height: 60px;
+  }
+  
+  .day-slots {
+    height: calc(24 * 60px); /* Mobilde 24 saat */
+    min-height: 1440px;
+  }
+  
+  .day-header {
+    height: 50px;
+  }
+  
+  .appointment-block {
+    padding: 6px 8px;
+  }
+  
+  .appointment-title {
+    font-size: 9px;
+  }
+  
+  .calendar-title {
+    font-size: 18px;
+  }
+}
+
+/* Google Calendar Kontrolleri */
+.google-calendar-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.google-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #F3F4F6;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.google-toggle-btn:hover {
+  background: #E5E7EB;
+  border-color: #9CA3AF;
+}
+
+.google-toggle-btn.enabled {
+  background: #EEF2FF;
+  border-color: #3C02AA;
+  color: #3C02AA;
+}
+
+.google-toggle-btn.enabled:hover {
+  background: #E0E7FF;
+}
+
+
+
+.google-auth-controls {
+  display: flex;
+  align-items: center;
+}
+
+.google-auth-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.google-auth-btn.signed-out {
+  background: #4285F4;
+  color: white;
+  box-shadow: 0 2px 4px rgba(66, 133, 244, 0.2);
+}
+
+.google-auth-btn.signed-out:hover:not(:disabled) {
+  background: #3367D6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(66, 133, 244, 0.3);
+}
+
+.google-auth-btn.signed-in {
+  background: #F3F4F6;
+  color: #6B7280;
+  border: 1px solid #D1D5DB;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.google-auth-btn.signed-in:hover:not(:disabled) {
+  background: #E5E7EB;
+  border-color: #9CA3AF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.google-auth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.google-auth-btn i {
+  font-size: 16px;
+}
+
+.google-auth-btn .btn-text {
+  white-space: nowrap;
+}
+
+/* Responsive tasarım */
+@media (max-width: 768px) {
+  .google-auth-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+    min-width: 120px;
+    gap: 6px;
+  }
+  
+  .google-auth-btn i {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .google-auth-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 100px;
+    gap: 4px;
+  }
+  
+  .google-auth-btn .btn-text {
+    display: none;
+  }
+  
+  .google-auth-btn {
+    min-width: 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    padding: 0;
+  }
+  
+  .google-auth-btn i {
+    font-size: 16px;
+  }
+}
+
+/* Google etkinlikleri için özel stil */
+.appointment-block.google-event {
+  border-left: 4px solid var(--appointment-color, #4285F4);
+  background: linear-gradient(135deg, rgba(var(--appointment-color-rgb, 66, 133, 244), 0.1) 0%, rgba(var(--appointment-color-rgb, 66, 133, 244), 0.05) 100%);
+  position: relative;
+}
+
+.appointment-block.google-event::before {
+  content: "📅";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.appointment-block.google-event .appointment-title {
+  color: #1F2937;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.appointment-block.google-event .appointment-attendee {
+  color: #374151;
+}
+
+/* Kendi sistemimizden gelen randevular için özel stil */
+.appointment-block:not(.google-event) {
+  border-left: 4px solid var(--appointment-color, #3C02AA);
+  background: linear-gradient(135deg, rgba(60, 2, 170, 0.1) 0%, rgba(60, 2, 170, 0.05) 100%);
+  position: relative;
+}
+
+.appointment-block:not(.google-event)::before {
+  content: "🏢";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.appointment-block:not(.google-event) .appointment-title {
+  color: #1F2937;
+  font-weight: 600;
+}
+
+.appointment-block:not(.google-event) .appointment-attendee {
+  color: #374151;
+}
+
+/* Anlık saat çizgisi - SİLİNDİ (Kullanıcı tarafından sıfırdan yazılacak) */
+
+/* Utility classes for Google Calendar */
+.text-success {
+  color: #10B981 !important;
+}
+
+.text-muted {
+  color: #6B7280 !important;
+}

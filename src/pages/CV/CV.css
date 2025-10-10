@@ -1,0 +1,273 @@
+.cv-page {
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: #E6E6E6;
+  overflow: hidden;
+}
+
+.cv-container {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 80px);
+  min-height: 800px;
+  gap: 12px;
+  padding: 8px 5px 8px 20px;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+/* Sol Panel - Calendar */
+.left-panel {
+  width: 320px;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Orta Panel - CV Table */
+.cv-content {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background-color: transparent;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+  margin-right: 70px !important;
+  border-radius: 10px;
+}
+
+/* Sağ Panel - FloatingChat */
+.right-panel {
+  width: 100px;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: absolute;
+  right: 5px;
+  top: 8px;
+  z-index: 10;
+}
+
+.cv-page .floating-chat {
+  width: 100%;
+  height: 100%;
+  position: relative !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: 1 !important;
+}
+
+/* Responsive Tasarım */
+
+/* Desktop Large (1400px+) */
+@media (min-width: 1400px) {
+  .cv-container {
+    padding: 8px 5px 8px 20px;
+    gap: 16px;
+  }
+  
+  .left-panel {
+    width: 350px;
+    min-width: 350px;
+  }
+  
+  .cv-content {
+    margin-right: 108px;
+  }
+}
+
+/* Desktop Medium (1200px - 1399px) */
+@media (max-width: 1399px) and (min-width: 1200px) {
+  .cv-container {
+    padding: 8px 5px 8px 20px;
+    gap: 14px;
+  }
+  
+  .left-panel {
+    width: 330px;
+    min-width: 330px;
+  }
+  
+  .cv-content {
+    margin-right: 106px;
+  }
+}
+
+/* Desktop Small (992px - 1199px) */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .cv-container {
+    padding: 8px 5px 8px 15px;
+    gap: 12px;
+  }
+  
+  .left-panel {
+    width: 300px;
+    min-width: 300px;
+  }
+  
+  .cv-content {
+    margin-right: 104px;
+  }
+}
+
+/* Tablet (768px - 991px) */
+@media (max-width: 991px) and (min-width: 768px) {
+  .cv-container {
+    flex-direction: column;
+    padding: 8px 10px;
+    gap: 8px;
+    height: auto;
+    min-height: calc(100vh - 80px);
+  }
+  
+  .left-panel {
+    width: 100%;
+    min-width: auto;
+    height: 400px;
+    min-height: 400px;
+    order: 1;
+  }
+  
+  .cv-content {
+    width: 100%;
+    margin-right: 0;
+    height: auto;
+    min-height: 600px;
+    flex: none;
+    order: 2;
+  }
+  
+  .right-panel {
+    position: fixed;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 80px;
+    height: 300px;
+    z-index: 1000;
+  }
+}
+
+/* Mobile (max 767px) */
+@media (max-width: 767px) {
+  .cv-container {
+    flex-direction: column;
+    padding: 5px;
+    gap: 8px;
+    height: auto;
+    min-height: calc(100vh - 70px);
+  }
+  
+  .left-panel {
+    width: 100%;
+    min-width: auto;
+    height: 350px;
+    min-height: 350px;
+    order: 1;
+  }
+  
+  .cv-content {
+    width: 100%;
+    margin-right: 0;
+    height: auto;
+    min-height: 500px;
+    flex: none;
+    order: 2;
+  }
+  
+  .right-panel {
+    position: fixed;
+    right: 5px;
+    bottom: 20px;
+    width: 60px;
+    height: 200px;
+    z-index: 1000;
+  }
+  
+  .cv-page .floating-chat {
+    width: 60px !important;
+  }
+}
+
+/* Small Mobile (max 480px) */
+@media (max-width: 480px) {
+  .cv-container {
+    padding: 3px;
+    gap: 5px;
+  }
+  
+  .left-panel {
+    height: 300px;
+    min-height: 300px;
+  }
+  
+  .cv-content {
+    min-height: 450px;
+  }
+  
+  .right-panel {
+    width: 50px;
+    height: 150px;
+    right: 3px;
+    bottom: 15px;
+  }
+  
+  .cv-page .floating-chat {
+    width: 50px !important;
+  }
+}
+
+/* Hover ve Transition Efektleri */
+.left-panel:hover,
+.cv-content:hover {
+  transition: all 0.3s ease;
+}
+
+/* Z-index Hiyerarşisi */
+.cv-container {
+  z-index: 1;
+}
+
+.left-panel {
+  z-index: 2;
+}
+
+.cv-content {
+  z-index: 3;
+}
+
+.right-panel {
+  z-index: 10;
+}
+
+/* Scroll Optimization */
+.cv-container * {
+  box-sizing: border-box;
+}
+
+.cv-content > * {
+  flex-shrink: 0;
+}
+
+/* Performance Optimizations */
+.cv-page {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.cv-container {
+  contain: layout style paint;
+} 

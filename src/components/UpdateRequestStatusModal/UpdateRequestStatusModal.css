@@ -1,0 +1,141 @@
+.update-status-modal .modal-header {
+  background: linear-gradient(135deg, #4E0DCC 0%, #6B46C1 100%);
+  color: white;
+  border-bottom: none;
+}
+
+.update-status-modal .modal-header .btn-close {
+  filter: invert(1);
+}
+
+.request-info {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #4E0DCC;
+}
+
+.request-info h6 {
+  color: #4E0DCC;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.request-info p {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.badge-low {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.badge-normal {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.badge-urgent {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.badge-very-urgent {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.badge-critical {
+  background-color: #721c24;
+  color: white;
+}
+
+.badge-reviewing {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.badge-solving {
+  background-color: #cce7ff;
+  color: #004085;
+}
+
+.badge-testing {
+  background-color: #e7f3ff;
+  color: #0056b3;
+}
+
+.badge-completed {
+  background-color: #155724;
+  color: white;
+}
+
+.badge-cancelled {
+  background-color: #6c757d;
+  color: white;
+}
+
+.badge-rejected {
+  background-color: #dc3545;
+  color: white;
+}
+
+.badge-waiting {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-assigned {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.badge-default {
+  background-color: #e9ecef;
+  color: #6c757d;
+}
+
+.status-preview {
+  background-color: #f0f9ff;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #e0f2fe;
+}
+
+.required {
+  color: #dc3545;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #333;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 0.2rem rgba(78, 13, 204, 0.25);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4E0DCC 0%, #6B46C1 100%);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #3d0a9e 0%, #553c9a 100%);
+}
+
+.btn-primary:disabled {
+  background: #6c757d;
+}

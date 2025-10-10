@@ -1,0 +1,178 @@
+/* Delete Task Modal Styles */
+.delete-task-modal .modal-dialog {
+  max-width: 500px;
+}
+
+.delete-task-modal .modal-content {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.delete-task-modal .modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.delete-task-modal .modal-header .warning-icon {
+  color: #dc3545;
+  font-size: 1.25rem;
+}
+
+.delete-task-modal .modal-title {
+  color: #212529;
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.delete-task-modal .modal-body {
+  padding: 2rem;
+}
+
+.delete-task-modal .delete-confirmation {
+  text-align: center;
+}
+
+.delete-task-modal .delete-confirmation .warning-icon {
+  color: #dc3545;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.delete-task-modal .confirmation-text {
+  margin-bottom: 1.5rem;
+}
+
+.delete-task-modal .confirmation-text h5 {
+  color: #212529;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.delete-task-modal .confirmation-text p {
+  color: #6c757d;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+.delete-task-modal .task-info {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: left;
+}
+
+.delete-task-modal .task-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.delete-task-modal .task-info-item:last-child {
+  border-bottom: none;
+}
+
+.delete-task-modal .task-info-item strong {
+  color: #495057;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.delete-task-modal .task-info-item span {
+  color: #6c757d;
+  text-align: right;
+  flex: 1;
+}
+
+.delete-task-modal .modal-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.delete-task-modal .btn {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.delete-task-modal .btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.delete-task-modal .btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+.delete-task-modal .btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.delete-task-modal .btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+  .delete-task-modal .modal-dialog {
+    margin: 1rem;
+  }
+  
+  .delete-task-modal .modal-header,
+  .delete-task-modal .modal-body,
+  .delete-task-modal .modal-footer {
+    padding: 1rem;
+  }
+  
+  .delete-task-modal .modal-title {
+    font-size: 1.1rem;
+  }
+  
+  .delete-task-modal .confirmation-text h5 {
+    font-size: 1rem;
+  }
+  
+  .delete-task-modal .modal-footer {
+    flex-direction: column;
+  }
+  
+  .delete-task-modal .btn {
+    width: 100%;
+  }
+  
+  .delete-task-modal .task-info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .delete-task-modal .task-info-item span {
+    text-align: left;
+  }
+}
+
+/* Animation */
+.delete-task-modal .modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out;
+  transform: translate(0, -50px);
+}
+
+.delete-task-modal .modal.show .modal-dialog {
+  transform: none;
+}

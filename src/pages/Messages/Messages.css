@@ -1,0 +1,48 @@
+/* Messages.css - Contacts sayfası ile aynı stil */
+.messages-page {
+  min-height: 100vh;
+  background-color: #E6E6E6;
+  padding-top: 5px; /* Navbar için boşluk */
+}
+
+.messages-page .container-fluid {
+  height: calc(100vh - 80px); /* Navbar yüksekliğini çıkar */
+  padding-right: 30px !important;
+}
+
+.messages-page .row {
+  height: 100%;
+  margin-right: 0 !important;
+}
+
+/* Sol Taraf - Takvim */
+.calendar-sidebar {
+  overflow-y: auto;
+}
+
+.calendar-container {
+  padding: 20px 30px 20px 30px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  min-height: calc(100vh - 80px);
+}
+
+/* Sağ Taraf - SMS Tablosu */
+.messages-content {
+  background-color: transparent;
+  padding: 20px 30px 20px 0 !important;
+  overflow-y: auto;
+}
+
+/* Responsive Tasarım */
+@media (max-width: 992px) {
+  .calendar-sidebar {
+    display: none;
+  }
+  
+  .messages-content {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+} 

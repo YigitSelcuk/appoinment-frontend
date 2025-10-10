@@ -1,0 +1,149 @@
+.circular-progress-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 300px;
+  position: relative;
+  overflow: visible;
+}
+
+.circular-progress-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.circular-progress-svg {
+  transform: rotate(135deg);
+}
+
+.progress-circle {
+  transition: stroke-dashoffset 0.8s ease-in-out;
+}
+
+.circular-progress-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.progress-icon {
+  font-size: 20px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #FF9500 0%, #FF6B35 100%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.progress-label {
+  font-size: 11px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.progress-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+  position: relative;
+}
+
+.progress-dropdown-container {
+  position: relative;
+  width: 100%;
+  max-width: 200px;
+}
+
+.progress-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.progress-dropdown-trigger:hover {
+  border-color: #3B82F6;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+}
+
+.progress-period {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.progress-dropdown-arrow {
+  font-size: 10px;
+  color: #999;
+  transition: transform 0.2s ease;
+}
+
+.progress-dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.progress-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.progress-dropdown-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.progress-dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.progress-dropdown-item.active {
+  background-color: #3B82F6;
+  color: white;
+}
+
+.progress-dropdown-item.active:hover {
+  background-color: #2563EB;
+}
