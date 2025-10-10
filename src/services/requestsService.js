@@ -2,11 +2,23 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+// Helper function to get auth headers
+const getAuthHeaders = (token) => {
+  if (!token) {
+    throw new Error('Erişim token\'ı gerekli');
+  }
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+};
+
 // Tüm talepleri getir
-export const getRequests = async (params = {}) => {
+export const getRequests = async (params = {}, token) => {
   try {
     const response = await axios.get(`${API_URL}/requests`, {
       params,
+      headers: token ? getAuthHeaders(token) : {},
       withCredentials: true
     });
     return response.data;
@@ -102,7 +114,11 @@ export const getDepartmentRequests = async (params = {}) => {
 // Talep durumunu güncelle
 export const updateRequestStatus = async (id, statusData) => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axios.put(`${API_URL}/requests/${id}/status`, statusData, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
       withCredentials: true
     });
     return response.data;
@@ -113,9 +129,10 @@ export const updateRequestStatus = async (id, statusData) => {
 };
 
 // Talep durum geçmişini getir
-export const getRequestStatusHistory = async (id) => {
+export const getRequestStatusHistory = async (id, token) => {
   try {
     const response = await axios.get(`${API_URL}/requests/${id}/history`, {
+      headers: token ? getAuthHeaders(token) : {},
       withCredentials: true
     });
     return response.data;

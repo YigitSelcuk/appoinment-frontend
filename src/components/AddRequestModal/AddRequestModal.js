@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Modal, Button, Form, Row, Col, Alert } from "react-bootstrap";
 import { useSimpleToast } from "../../contexts/SimpleToastContext";
 import { ilceler, getMahalleler } from "../../data/istanbulData";
 import requestsService from "../../services/requestsService";
+import { getDepartments } from "../../services/usersService";
 import "./AddRequestModal.css";
 
 const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
@@ -17,7 +18,7 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
     telefon: "",
     talepDurumu: "SEÇİNİZ",
     talepTuru: "ARIZA TALEBİNİN GİDERİLMESİ",
-    ilgiliMudurluk: "BİLGİ İŞLEM MÜDÜRLÜĞÜ",
+    ilgiliMudurluk: "",
     talepBasligi: "",
     aciklama: "",
     durum: "DÜŞÜK"
@@ -31,6 +32,66 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
     message: "" 
   });
   const [availableMahalleler, setAvailableMahalleler] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const editorRef = useRef(null);
+
+  // Cursor pozisyonunu kaydet
+  const saveCursorPosition = () => {
+    if (editorRef.current) {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        return {
+          startContainer: range.startContainer,
+          startOffset: range.startOffset,
+          endContainer: range.endContainer,
+          endOffset: range.endOffset
+        };
+      }
+    }
+    return null;
+  };
+
+  // Cursor pozisyonunu geri yükle
+  const restoreCursorPosition = (position) => {
+    if (position && editorRef.current) {
+      try {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.setStart(position.startContainer, position.startOffset);
+        range.setEnd(position.endContainer, position.endOffset);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } catch (e) {
+        // Eğer pozisyon geçersizse, editörün sonuna git
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(editorRef.current);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+  };
+
+  // Editör fonksiyonları
+  const formatText = (command, value = null) => {
+    if (editorRef.current) {
+      const position = saveCursorPosition();
+      document.execCommand(command, false, value);
+      handleInputChange('aciklama', editorRef.current.innerHTML);
+      setTimeout(() => restoreCursorPosition(position), 0);
+      editorRef.current.focus();
+    }
+  };
+
+  const handleEditorChange = () => {
+    if (editorRef.current) {
+      const position = saveCursorPosition();
+      handleInputChange('aciklama', editorRef.current.innerHTML);
+      setTimeout(() => restoreCursorPosition(position), 0);
+    }
+  };
 
   // Modal açıldığında formu sıfırla
   useEffect(() => {
@@ -55,6 +116,32 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
       setAvailableMahalleler([]);
     }
   }, [show]);
+
+  // Editör içeriğini güncelle
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== formData.aciklama) {
+      const position = saveCursorPosition();
+      editorRef.current.innerHTML = formData.aciklama || '';
+      setTimeout(() => restoreCursorPosition(position), 0);
+    }
+  }, [formData.aciklama]);
+
+  // Departments verilerini çek
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await getDepartments();
+        // Backend'den gelen response: { success: true, departments: [...] }
+        const departmentList = response.departments || [];
+        setDepartments(departmentList);
+      } catch (error) {
+        console.error('Departments yüklenirken hata:', error);
+        setDepartments([]); // Hata durumunda boş array
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   // TC Kimlik No doğrulama algoritması
   const validateTCKimlik = (tcNo) => {
@@ -336,7 +423,7 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
     >
       {/* Header */}
       <div className="modal-header-custom">
-        <h4 className="modal-title">RANDEVU OLUŞTUR</h4>
+        <h4 className="modal-title">TALEP OLUŞTUR</h4>
         <Button 
           variant="link" 
           className="close-btn"
@@ -355,16 +442,7 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
         )}
 
         <div className="form-content">
-          {/* Durum Ekle Butonu */}
-          <div className="status-btn-container">
-            <Button 
-              variant="warning" 
-              className="status-btn"
-              size="sm"
-            >
-              DURUM EKLE
-            </Button>
-          </div>
+         
           {/* TC Kimlik No */}
           <div className="tc-input-container">
             <Form.Label className="form-label">TC KİMLİK NO</Form.Label>
@@ -400,7 +478,7 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
                   type="text"
                   value={formData.ad}
                   onChange={(e) => handleInputChange('ad', e.target.value)}
-                  placeholder="YAKUP"
+                  placeholder="Ad"
                   className="form-input"
                 />
               </Form.Group>
@@ -412,7 +490,7 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
                   type="text"
                   value={formData.soyad}
                   onChange={(e) => handleInputChange('soyad', e.target.value)}
-                  placeholder="YILMAZ"
+                  placeholder="Soyad"
                   className="form-input"
                 />
               </Form.Group>
@@ -423,38 +501,42 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
             <Col md={6}>
               <Form.Group>
                 <Form.Label className="form-label">İLÇE</Form.Label>
-                <Form.Select
-                  value={formData.ilce}
-                  onChange={(e) => handleInputChange('ilce', e.target.value)}
-                  className="form-select"
-                >
-                  <option value="">İlçe seçiniz</option>
-                  {ilceler.map((ilce) => (
-                    <option key={ilce} value={ilce}>
-                      {ilce}
-                    </option>
-                  ))}
-                </Form.Select>
+                <div className="select-wrapper">
+                  <Form.Select
+                    value={formData.ilce}
+                    onChange={(e) => handleInputChange('ilce', e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="">İlçe seçiniz</option>
+                    {ilceler.map((ilce) => (
+                      <option key={ilce} value={ilce}>
+                        {ilce}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </div>
               </Form.Group>
             </Col>
             <Col md={6}>
               <Form.Group>
                 <Form.Label className="form-label">MAHALLE</Form.Label>
-                <Form.Select
-                  value={formData.mahalle}
-                  onChange={(e) => handleInputChange('mahalle', e.target.value)}
-                  className="form-select"
-                  disabled={!formData.ilce}
-                >
-                  <option value="">
-                    {formData.ilce ? "Mahalle seçiniz" : "Önce ilçe seçiniz"}
-                  </option>
-                  {availableMahalleler.map((mahalle) => (
-                    <option key={mahalle} value={mahalle}>
-                      {mahalle}
+                <div className="select-wrapper">
+                  <Form.Select
+                    value={formData.mahalle}
+                    onChange={(e) => handleInputChange('mahalle', e.target.value)}
+                    className="form-select"
+                    disabled={!formData.ilce}
+                  >
+                    <option value="">
+                      {formData.ilce ? "Mahalle seçiniz" : "Önce ilçe seçiniz"}
                     </option>
-                  ))}
-                </Form.Select>
+                    {availableMahalleler.map((mahalle) => (
+                      <option key={mahalle} value={mahalle}>
+                        {mahalle}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </div>
               </Form.Group>
             </Col>
           </Row>
@@ -485,23 +567,25 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
                   value={formData.telefon}
                   onChange={(e) => handleInputChange('telefon', e.target.value)}
                   placeholder="0 (5XX) XXX XX XX"
-                  className="form-input"
+                  className="form-control form-input"
                 />
               </Form.Group>
             </Col>
             <Col md={6}>
               <Form.Group>
                 <Form.Label className="form-label">TALEP DURUMU</Form.Label>
-                <Form.Select
-                  value={formData.talepDurumu}
-                  onChange={(e) => handleInputChange('talepDurumu', e.target.value)}
-                  className="form-select"
-                >
-                  <option value="SEÇİNİZ">SEÇİNİZ</option>
-                  <option value="KRİTİK">KRİTİK</option>
-                  <option value="NORMAL">NORMAL</option>
-                  <option value="DÜŞÜK">DÜŞÜK</option>
-                </Form.Select>
+                <div className="select-wrapper">
+                  <Form.Select
+                    value={formData.talepDurumu}
+                    onChange={(e) => handleInputChange('talepDurumu', e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="SEÇİNİZ">SEÇİNİZ</option>
+                    <option value="KRİTİK">KRİTİK</option>
+                    <option value="NORMAL">NORMAL</option>
+                    <option value="DÜŞÜK">DÜŞÜK</option>
+                  </Form.Select>
+                </div>
               </Form.Group>
             </Col>
           </Row>
@@ -510,29 +594,36 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
             <Col md={6}>
               <Form.Group>
                 <Form.Label className="form-label">TALEP TÜRÜ</Form.Label>
-                <Form.Select
-                  value={formData.talepTuru}
-                  onChange={(e) => handleInputChange('talepTuru', e.target.value)}
-                  className="form-select"
-                >
-                  <option value="ARIZA TALEBİNİN GİDERİLMESİ">ARIZA TALEBİNİN GİDERİLMESİ</option>
-                  <option value="YENİ HİZMET TALEBİ">YENİ HİZMET TALEBİ</option>
-                  <option value="BİLGİ TALEBİ">BİLGİ TALEBİ</option>
-                </Form.Select>
+                <div className="select-wrapper">
+                  <Form.Select
+                    value={formData.talepTuru}
+                    onChange={(e) => handleInputChange('talepTuru', e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="ARIZA TALEBİNİN GİDERİLMESİ">ARIZA TALEBİNİN GİDERİLMESİ</option>
+                    <option value="YENİ HİZMET TALEBİ">YENİ HİZMET TALEBİ</option>
+                    <option value="BİLGİ TALEBİ">BİLGİ TALEBİ</option>
+                  </Form.Select>
+                </div>
               </Form.Group>
             </Col>
             <Col md={6}>
               <Form.Group>
                 <Form.Label className="form-label">İLGİLİ MÜDÜRLÜK</Form.Label>
-                <Form.Select
-                  value={formData.ilgiliMudurluk}
-                  onChange={(e) => handleInputChange('ilgiliMudurluk', e.target.value)}
-                  className="form-select"
-                >
-                  <option value="BİLGİ İŞLEM MÜDÜRLÜĞÜ">BİLGİ İŞLEM MÜDÜRLÜĞÜ</option>
-                  <option value="KÜLTÜR VE SOSYAL İŞLER MÜDÜRLÜĞÜ">KÜLTÜR VE SOSYAL İŞLER MÜDÜRLÜĞÜ</option>
-                  <option value="FEN İŞLERİ MÜDÜRLÜĞÜ">FEN İŞLERİ MÜDÜRLÜĞÜ</option>
-                </Form.Select>
+                <div className="select-wrapper">
+                  <Form.Select
+                    value={formData.ilgiliMudurluk}
+                    onChange={(e) => handleInputChange('ilgiliMudurluk', e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="">SEÇİNİZ</option>
+                    {Array.isArray(departments) && departments.map((department, index) => (
+                      <option key={index} value={department}>
+                        {department}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </div>
               </Form.Group>
             </Col>
           </Row>
@@ -541,19 +632,21 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
             <Col md={6}>
               <Form.Group>
                 <Form.Label className="form-label">DURUM</Form.Label>
-                <Form.Select
-                  value={formData.durum}
-                  onChange={(e) => handleInputChange('durum', e.target.value)}
-                  className="form-select"
-                >
-                  <option value="DÜŞÜK">DÜŞÜK</option>
-                  <option value="NORMAL">NORMAL</option>
-                  <option value="ACİL">ACİL</option>
-                  <option value="ÇOK ACİL">ÇOK ACİL</option>
-                  <option value="KRİTİK">KRİTİK</option>
-                  <option value="TAMAMLANDI">TAMAMLANDI</option>
-                  <option value="İPTAL EDİLDİ">İPTAL EDİLDİ</option>
-                </Form.Select>
+                <div className="select-wrapper">
+                  <Form.Select
+                    value={formData.durum}
+                    onChange={(e) => handleInputChange('durum', e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="DÜŞÜK">DÜŞÜK</option>
+                    <option value="NORMAL">NORMAL</option>
+                    <option value="ACİL">ACİL</option>
+                    <option value="ÇOK ACİL">ÇOK ACİL</option>
+                    <option value="KRİTİK">KRİTİK</option>
+                    <option value="TAMAMLANDI">TAMAMLANDI</option>
+                    <option value="İPTAL EDİLDİ">İPTAL EDİLDİ</option>
+                  </Form.Select>
+                </div>
               </Form.Group>
             </Col>
             <Col md={6}>
@@ -579,58 +672,64 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
             <Col md={12}>
               <Form.Group>
                 <Form.Label className="form-label">AÇIKLAMA</Form.Label>
-                <div className="editor-toolbar">
-                  <button type="button" className="editor-btn">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 8H13" stroke="#666" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                  <button type="button" className="editor-btn">
-                    <strong>B</strong>
-                  </button>
-                  <button type="button" className="editor-btn">
-                    <em>I</em>
-                  </button>
-                  <button type="button" className="editor-btn">
-                    <u>U</u>
-                  </button>
-                  <button type="button" className="editor-btn">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <circle cx="3" cy="8" r="1" fill="#666"/>
-                      <line x1="6" y1="8" x2="13" y2="8" stroke="#666" strokeWidth="1"/>
-                      <circle cx="3" cy="4" r="1" fill="#666"/>
-                      <line x1="6" y1="4" x2="13" y2="4" stroke="#666" strokeWidth="1"/>
-                      <circle cx="3" cy="12" r="1" fill="#666"/>
-                      <line x1="6" y1="12" x2="13" y2="12" stroke="#666" strokeWidth="1"/>
-                    </svg>
-                  </button>
-                  <button type="button" className="editor-btn">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <text x="2" y="12" fontSize="12" fill="#666">1.</text>
-                      <line x1="6" y1="4" x2="13" y2="4" stroke="#666" strokeWidth="1"/>
-                      <text x="2" y="8" fontSize="10" fill="#666">2.</text>
-                      <line x1="6" y1="8" x2="13" y2="8" stroke="#666" strokeWidth="1"/>
-                    </svg>
-                  </button>
-                  <button type="button" className="editor-btn">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M8 3L13 8L8 13M3 8H13" stroke="#666" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                  <button type="button" className="editor-btn">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 3L13 13M3 13L13 3" stroke="#666" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
+                <div className="simple-editor">
+                  <div className="editor-toolbar">
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => formatText('bold')}
+                      title="Kalın"
+                    >
+                      <strong>B</strong>
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => formatText('italic')}
+                      title="İtalik"
+                    >
+                      <em>I</em>
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => formatText('underline')}
+                      title="Altı Çizili"
+                    >
+                      <u>U</u>
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => formatText('insertUnorderedList')}
+                      title="Liste"
+                    >
+                      •
+                    </button>
+                    <button
+                      type="button"
+                      className="toolbar-btn"
+                      onClick={() => formatText('insertOrderedList')}
+                      title="Numaralı Liste"
+                    >
+                      1.
+                    </button>
+                  </div>
+                  <div
+                    ref={editorRef}
+                    contentEditable
+                    className="editor-textarea"
+                    onInput={handleEditorChange}
+                    style={{ 
+                      minHeight: '100px', 
+                      padding: '12px', 
+                      border: 'none',
+                      fontSize: '14px',
+                      color: '#374151'
+                    }}
+                    data-placeholder="Açıklama Giriniz..."
+                  />
                 </div>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  value={formData.aciklama}
-                  onChange={(e) => handleInputChange('aciklama', e.target.value)}
-                  placeholder="50. Yıl parkında bulunan internet çıkışı alınması artırılması talebi."
-                  className="form-textarea editor-textarea"
-                />
               </Form.Group>
             </Col>
           </Row>

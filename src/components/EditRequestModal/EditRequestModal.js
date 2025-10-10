@@ -29,11 +29,44 @@ const EditRequestModal = ({ show, onHide, request, onRequestUpdated }) => {
   const [alert, setAlert] = useState({ show: false, message: "", type: "" });
   const [tcValidation, setTcValidation] = useState({ status: '', message: '' });
 
+  // TC Kimlik No doğrulama
+  const validateTC = (tc) => {
+    if (!tc) return true; // TC zorunlu değil
+    
+    const cleanTC = tc.replace(/\s/g, "");
+    if (cleanTC.length !== 11) return false;
+    
+    const digits = cleanTC.split("").map(Number);
+    
+    // İlk rakam 0 olamaz
+    if (digits[0] === 0) return false;
+    
+    // 10. rakam kontrolü
+    const oddSum = digits[0] + digits[2] + digits[4] + digits[6] + digits[8];
+    const evenSum = digits[1] + digits[3] + digits[5] + digits[7];
+    const tenthDigit = ((oddSum * 7) - evenSum) % 10;
+    
+    if (tenthDigit !== digits[9]) return false;
+    
+    // 11. rakam kontrolü
+    const eleventhDigit = (digits.slice(0, 10).reduce((sum, digit) => sum + digit, 0)) % 10;
+    
+    return eleventhDigit === digits[10];
+  };
+
   // Request değiştiğinde form verilerini güncelle
   useEffect(() => {
     if (request) {
+      // TC No'yu formatla
+      const formatTCNo = (tcNo) => {
+        if (!tcNo) return "";
+        const cleanTC = tcNo.toString().replace(/\D/g, "");
+        // TC No'yu 12345678901 formatında döndür (boşluksuz)
+        return cleanTC;
+      };
+
       setFormData({
-        tcNo: request.tc_no || "",
+        tcNo: formatTCNo(request.tc_no),
         ad: request.ad || "",
         soyad: request.soyad || "",
         ilce: request.ilce || "",
@@ -47,6 +80,25 @@ const EditRequestModal = ({ show, onHide, request, onRequestUpdated }) => {
         aciklama: request.aciklama || "",
         durum: request.durum || "DÜŞÜK"
       });
+
+      // TC No doğrulama durumunu set et
+      if (request.tc_no) {
+        const cleanTC = request.tc_no.toString().replace(/\D/g, "");
+        if (cleanTC.length === 11) {
+          const isValid = validateTC(cleanTC);
+          if (isValid) {
+            setTcValidation({ status: 'valid', message: 'Geçerli TC Kimlik No' });
+          } else {
+            setTcValidation({ status: 'invalid', message: 'Geçersiz TC Kimlik No' });
+          }
+        } else if (cleanTC.length > 0) {
+          setTcValidation({ status: 'warning', message: `${11 - cleanTC.length} rakam eksik` });
+        } else {
+          setTcValidation({ status: '', message: '' });
+        }
+      } else {
+        setTcValidation({ status: '', message: '' });
+      }
 
       // İlçe seçiliyse mahalleler listesini güncelle
       if (request.ilce) {
@@ -136,31 +188,6 @@ const EditRequestModal = ({ show, onHide, request, onRequestUpdated }) => {
         setErrors(prev => ({ ...prev, telefon: "" }));
       }
     }
-  };
-
-  // TC Kimlik No doğrulama
-  const validateTC = (tc) => {
-    if (!tc) return true; // TC zorunlu değil
-    
-    const cleanTC = tc.replace(/\s/g, "");
-    if (cleanTC.length !== 11) return false;
-    
-    const digits = cleanTC.split("").map(Number);
-    
-    // İlk rakam 0 olamaz
-    if (digits[0] === 0) return false;
-    
-    // 10. rakam kontrolü
-    const oddSum = digits[0] + digits[2] + digits[4] + digits[6] + digits[8];
-    const evenSum = digits[1] + digits[3] + digits[5] + digits[7];
-    const tenthDigit = ((oddSum * 7) - evenSum) % 10;
-    
-    if (tenthDigit !== digits[9]) return false;
-    
-    // 11. rakam kontrolü
-    const eleventhDigit = (digits.slice(0, 10).reduce((sum, digit) => sum + digit, 0)) % 10;
-    
-    return eleventhDigit === digits[10];
   };
 
   const validateForm = () => {
@@ -429,7 +456,7 @@ const EditRequestModal = ({ show, onHide, request, onRequestUpdated }) => {
               </div>
             </div>
 
-            {/* Telefon ve Talep Durumu */}
+            {/* Telefon ve Durum */}
             <div className="form-row">
               <div className="form-group">
                 <Form.Label className="form-label">Telefon</Form.Label>
@@ -443,17 +470,18 @@ const EditRequestModal = ({ show, onHide, request, onRequestUpdated }) => {
               </div>
               
               <div className="form-group">
-                <Form.Label className="form-label">Talep Durumu</Form.Label>
+                <Form.Label className="form-label">Durum</Form.Label>
                 <Form.Select
-                  name="talepDurumu"
-                  value={formData.talepDurumu}
+                  name="durum"
+                  value={formData.durum}
                   onChange={handleInputChange}
                   className="form-control"
                 >
-                  <option value="SEÇİNİZ">SEÇİNİZ</option>
-                  <option value="KRİTİK">KRİTİK</option>
-                  <option value="NORMAL">NORMAL</option>
-                  <option value="DÜŞÜK">DÜŞÜK</option>
+                  {statusOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </Form.Select>
               </div>
             </div>
@@ -504,24 +532,6 @@ const EditRequestModal = ({ show, onHide, request, onRequestUpdated }) => {
                   isInvalid={!!errors.talepBasligi}
                 />
                 {errors.talepBasligi && <Form.Control.Feedback type="invalid">{errors.talepBasligi}</Form.Control.Feedback>}
-              </div>
-            </div>
-
-            {/* Durum Seçimi */}
-            <div className="form-group">
-              <Form.Label className="form-label">Durum</Form.Label>
-              <div className="status-selector">
-                {statusOptions.map((option) => (
-                  <div
-                    key={option.value}
-                    className={`status-option ${option.className} ${
-                      formData.durum === option.value ? 'selected' : ''
-                    }`}
-                    onClick={() => setFormData(prev => ({ ...prev, durum: option.value }))}
-                  >
-                    {option.label}
-                  </div>
-                ))}
               </div>
             </div>
 

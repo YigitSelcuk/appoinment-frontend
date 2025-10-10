@@ -69,11 +69,7 @@ const DeleteRequestModal = ({ show, onHide, request, onRequestDeleted }) => {
       className="delete-request-modal"
     >
       <Modal.Body className="text-center">
-        {alert.show && (
-          <Alert variant={alert.type} className="mb-3">
-            {alert.message}
-          </Alert>
-        )}
+     
 
         <div className="mb-3">
           <i className="fas fa-exclamation-triangle text-danger" style={{fontSize: '3rem'}}></i>
@@ -84,7 +80,6 @@ const DeleteRequestModal = ({ show, onHide, request, onRequestDeleted }) => {
         <div className="mb-4">
           <strong>{request.ad} {request.soyad}</strong>
           <div className="text-muted">{request.talep_basligi || "Belirtilmemiş"}</div>
-          {request.telefon && <div className="text-muted">{request.telefon}</div>}
         </div>
 
         <div className="d-flex gap-2 justify-content-center">

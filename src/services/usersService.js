@@ -26,6 +26,22 @@ export const getUsers = async (token) => {
   }
 };
 
+// Department listesini getir
+export const getDepartments = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/users/departments`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      withCredentials: true
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
 // Mevcut kullanıcının bilgilerini getir
 export const getCurrentUser = async (token) => {
   try {

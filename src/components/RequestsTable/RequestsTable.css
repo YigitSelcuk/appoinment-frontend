@@ -793,3 +793,112 @@
   width: 100px;
   min-width: 100px;
 }
+
+/* Talep Ekle Butonu Stilleri */
+.add-request-btn {
+  background: white;
+  border: 2px solid #12B423;
+  border-radius: 10px;
+  padding: 8px 16px;
+  color: #12B423;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(18, 180, 35, 0.15);
+  min-height: 40px;
+}
+
+.add-request-btn:hover {
+  background: #f8fff9;
+  border-color: #0EA91C;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(18, 180, 35, 0.25);
+  color: #0EA91C;
+}
+
+.add-request-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(18, 180, 35, 0.25);
+}
+
+.add-request-btn svg {
+  flex-shrink: 0;
+}
+
+.add-request-btn svg path {
+  fill: #12B423;
+}
+
+.add-request-btn:hover svg path {
+  fill: #0EA91C;
+}
+
+.add-request-btn span {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Arama Kutusu Container Stilleri */
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 400px;
+  width: 100%;
+}
+
+.header-search-input {
+  width: 100%;
+  padding: 12px 45px 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 14px;
+  background: #ffffff;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header-search-input:focus {
+  border-color: #4E0DCC;
+  box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
+  outline: none;
+}
+
+.search-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Arama Temizleme Butonu */
+.header-clear-btn {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 8px;
+  margin-left: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.header-clear-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: scale(1.05);
+}
+
+.header-clear-btn:active {
+  transform: scale(0.95);
+}

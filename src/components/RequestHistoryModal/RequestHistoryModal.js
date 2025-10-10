@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Table, Spinner, Alert } from "react-bootstrap";
 import requestsService from "../../services/requestsService";
+import { useAuth } from "../../contexts/AuthContext";
 import "./RequestHistoryModal.css";
 
 const RequestHistoryModal = ({ show, onHide, request }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { accessToken } = useAuth();
 
   useEffect(() => {
     if (show && request) {
@@ -19,7 +21,7 @@ const RequestHistoryModal = ({ show, onHide, request }) => {
     setError("");
     
     try {
-      const response = await requestsService.getRequestStatusHistory(request.id);
+      const response = await requestsService.getRequestStatusHistory(request.id, accessToken);
       if (response.success) {
         setHistory(response.data);
       }

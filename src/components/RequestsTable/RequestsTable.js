@@ -3,6 +3,7 @@ import { Table, Button, Form, Row, Col, Pagination, Modal } from "react-bootstra
 import { createPortal } from 'react-dom';
 import { useNavigate } from "react-router-dom";
 import { useSimpleToast } from "../../contexts/SimpleToastContext";
+import { useAuth } from "../../contexts/AuthContext";
 import requestsService from "../../services/requestsService";
 import { fetchAllCategoriesForDropdown } from "../../services/categoriesService";
 import { smsService } from "../../services/smsService";
@@ -11,9 +12,8 @@ import AddRequestModal from "../AddRequestModal/AddRequestModal";
 import ViewRequestModal from "../ViewRequestModal/ViewRequestModal";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DeleteRequestModal from "../DeleteRequestModal/DeleteRequestModal";
-import MessagingModal from "../MessagingModal/MessagingModal";
-import WhatsAppSelectModal from "../WhatsAppSelectModal/WhatsAppSelectModal";
 import ExcelImportModal from "../ExcelImportModal/ExcelImportModal";
+
 import * as XLSX from 'xlsx';
 import "./RequestsTable.css";
 
@@ -36,6 +36,7 @@ const useDebounce = (value, delay) => {
 const RequestsTable = () => {
   const navigate = useNavigate();
   const { showSuccess, showError, showWarning } = useSimpleToast();
+  const { accessToken } = useAuth();
   
   const tableWrapperRef = useRef(null);
   
@@ -60,12 +61,13 @@ const RequestsTable = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showMessagingModal, setShowMessagingModal] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [showBulkSMSModal, setShowBulkSMSModal] = useState(false);
   const [showExcelImportModal, setShowExcelImportModal] = useState(false);
+
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [bulkSMSLoading, setBulkSMSLoading] = useState(false);
+  const [userInfo, setUserInfo] = useState({ role: '', department: '', isAdmin: false });
 
   const fetchRequests = async () => {
     try {
@@ -76,12 +78,17 @@ const RequestsTable = () => {
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
       };
 
-      const response = await requestsService.getRequests(params);
+      const response = await requestsService.getRequests(params, accessToken);
 
       if (response.success) {
         setRequests(response.data);
         setTotalPages(response.pagination?.totalPages || 1);
         setTotalRecords(response.pagination?.total || 0);
+        
+        // UserInfo'yu set et
+        if (response.userInfo) {
+          setUserInfo(response.userInfo);
+        }
       } else {
         setRequests([]);
         setTotalPages(1);
@@ -373,11 +380,6 @@ const RequestsTable = () => {
     setShowDeleteModal(true);
   };
 
-  const handleSendMessage = (request) => {
-    setSelectedRequest(request);
-    setShowMessagingModal(true);
-  };
-
   const handleWhatsAppMessage = (request) => {
     const phones = [];
     if (request.phone1) phones.push(request.phone1);
@@ -417,7 +419,7 @@ const RequestsTable = () => {
       const response = await requestsService.getRequests({
         limit: 10000, // Çok büyük bir sayı ile tüm kayıtları al
         ...(debouncedSearchTerm && { search: debouncedSearchTerm })
-      });
+      }, accessToken);
 
       if (!response.success || !response.data) {
         showError('Veriler alınırken bir hata oluştu.');
@@ -497,11 +499,136 @@ const RequestsTable = () => {
     fetchRequests(); // Talep silindikten sonra listeyi yenile
   };
 
+  // Tarih formatlaması
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'N/A';
+      
+      return date.toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Tarih formatlaması hatası:', error);
+      return 'N/A';
+    }
+  };
+
+  // Talep süresi hesaplama
+  const calculateRequestDuration = (createdAt) => {
+    if (!createdAt) return 'N/A';
+    
+    try {
+      const now = new Date();
+      
+      // Türkçe tarih formatını (dd.mm.yyyy hh:mm:ss) parse et
+      let created;
+      if (createdAt.includes('.') && createdAt.includes(' ')) {
+        // "03.07.2025 14:30:45" formatı
+        const [datePart, timePart] = createdAt.split(' ');
+        const [day, month, year] = datePart.split('.');
+        const [hour, minute, second] = timePart.split(':');
+        created = new Date(year, month - 1, day, hour, minute, second);
+      } else {
+        // ISO formatı veya diğer formatlar
+        created = new Date(createdAt);
+      }
+      
+      // Geçersiz tarih kontrolü
+      if (isNaN(created.getTime())) {
+        return 'Geçersiz tarih';
+      }
+      
+      const diffMs = now - created;
+      
+      // Negatif süre kontrolü (gelecek tarih)
+      if (diffMs < 0) {
+        return 'Henüz başlamadı';
+      }
+      
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (days > 0) {
+        return `${days} gün ${hours} saat`;
+      } else if (hours > 0) {
+        return `${hours} saat ${minutes} dk`;
+      } else if (minutes > 0) {
+        return `${minutes} dakika`;
+      } else {
+        return 'Az önce';
+      }
+    } catch (error) {
+      console.error('Tarih hesaplama hatası:', error, 'createdAt:', createdAt);
+      return 'Hesaplanamadı';
+    }
+  };
+
+  // Durum badge'i
+  const getStatusBadge = (talepDurumu, durum) => {
+    // Talep durumu renkleri (KRİTİK, NORMAL, DÜŞÜK)
+    const talepDurumuConfig = {
+      KRİTİK: { cssClass: "status-kritik", color: "#dc3545" },
+      NORMAL: { cssClass: "status-normal", color: "#28a745" },
+      DÜŞÜK: { cssClass: "status-dusuk", color: "#17a2b8" },
+      "SEÇİNİZ": { cssClass: "status-default", color: "#6c757d" },
+    };
+
+    // Genel durum renkleri - Yeni durumlar eklendi
+    const durumConfig = {
+      DÜŞÜK: { cssClass: "status-dusuk", color: "#6c757d" },
+      NORMAL: { cssClass: "status-normal", color: "#17a2b8" },
+      ACİL: { cssClass: "status-acil", color: "#ffc107" },
+      "ÇOK ACİL": { cssClass: "status-cok-acil", color: "#fd7e14" },
+      KRİTİK: { cssClass: "status-kritik", color: "#dc3545" },
+      TAMAMLANDI: { cssClass: "status-tamamlandi", color: "#28a745" },
+      "İPTAL EDİLDİ": { cssClass: "status-iptal", color: "#6c757d" },
+      // Eski durumlar da korunuyor
+      BEKLEMEDE: { cssClass: "status-beklemede", color: "#ffc107" },
+      İŞLEMDE: { cssClass: "status-islemde", color: "#fd7e14" },
+      İPTAL: { cssClass: "status-iptal", color: "#6c757d" },
+    };
+
+    // Önce durum alanını kontrol et, yoksa talep durumunu kullan
+    const displayStatus = durum || talepDurumu || 'DÜŞÜK';
+    const config = durumConfig[displayStatus] || talepDurumuConfig[displayStatus] || {
+      cssClass: "status-default",
+      color: "#6c757d",
+    };
+
+    return (
+      <span
+        className={`badge custom-status-badge ${config.cssClass}`}
+        style={{
+          backgroundColor: config.color,
+          color: "white",
+          fontSize: "11px",
+          fontWeight: "600",
+          padding: "4px 8px",
+          borderRadius: "4px",
+          border: "none",
+        }}
+      >
+        {displayStatus}
+      </span>
+    );
+  };
+
+  // Mevcut kullanıcının ID'sini al
+  const getCurrentUserId = () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return user.id;
+  };
+
   const closeAllModals = () => {
     setShowViewModal(false);
     setShowEditModal(false);
     setShowDeleteModal(false);
-    setShowMessagingModal(false);
     setShowWhatsAppModal(false);
     setShowBulkSMSModal(false);
     setShowExcelImportModal(false);
@@ -615,144 +742,116 @@ const RequestsTable = () => {
       <div className="header-bar">
         <div className="header-left">
           <div className="header-icon">
-           <img style={{width: '35px', height: '35px'}} src="/assets/images/phone.png" alt="request" />
-          </div>
-          <h2 className="header-title">TELEFON REHBERİ</h2>
-        </div>
-
-        {/* Arama Kutusu - Ortada */}
-        <div className="header-center">
-          <div className="search-container">
-            <Form.Control
-              type="text"
-              placeholder="Ad, soyad, telefon veya kategori ile ara..."
-              value={searchTerm}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="search-input"
-            />
-          </div>
-        </div>
-
-        <div className="header-right">
-          <button
-            className="header-btn"
-            onClick={handleShowAddModal}
-            title="Kişi Ekle"
-          >
             <svg
-              width="21"
-              height="22"
-              viewBox="0 0 21 22"
+              width="39"
+              height="39"
+              viewBox="0 0 39 39"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M13.9105 13.8016C14.4068 13.5223 14.9749 13.3633 15.5798 13.3633H15.5819C15.6434 13.3633 15.6721 13.2859 15.627 13.243C14.9979 12.6515 14.2792 12.1737 13.5003 11.8293C13.4921 11.825 13.4839 11.8229 13.4757 11.8186C14.7493 10.8496 15.5778 9.2748 15.5778 7.49805C15.5778 4.55469 13.3055 2.16992 10.5021 2.16992C7.69868 2.16992 5.42847 4.55469 5.42847 7.49805C5.42847 9.2748 6.25698 10.8496 7.53257 11.8186C7.52437 11.8229 7.51616 11.825 7.50796 11.8293C6.59126 12.2354 5.7689 12.8176 5.06138 13.5609C4.35795 14.2965 3.79792 15.1685 3.41255 16.1283C3.03339 17.0682 2.82876 18.0752 2.80962 19.0953C2.80907 19.1182 2.81291 19.1411 2.82091 19.1624C2.82891 19.1838 2.84091 19.2032 2.8562 19.2196C2.87149 19.2361 2.88976 19.2491 2.90994 19.258C2.93012 19.2669 2.95179 19.2715 2.97368 19.2715H4.2021C4.29029 19.2715 4.36411 19.1963 4.36616 19.1039C4.40718 17.4453 5.04087 15.892 6.16265 14.7146C7.32134 13.4965 8.86353 12.8262 10.5042 12.8262C11.6669 12.8262 12.7826 13.1635 13.7444 13.7951C13.7691 13.8114 13.7975 13.8205 13.8266 13.8217C13.8558 13.8228 13.8847 13.8159 13.9105 13.8016ZM10.5042 11.1934C9.5649 11.1934 8.68101 10.8088 8.0145 10.1105C7.68657 9.76789 7.4266 9.36065 7.24956 8.91227C7.07252 8.4639 6.98192 7.98326 6.98296 7.49805C6.98296 6.51191 7.35005 5.58379 8.0145 4.88555C8.67896 4.1873 9.56284 3.80273 10.5042 3.80273C11.4455 3.80273 12.3273 4.1873 12.9938 4.88555C13.3217 5.2282 13.5817 5.63545 13.7587 6.08382C13.9358 6.53219 14.0264 7.01283 14.0253 7.49805C14.0253 8.48418 13.6583 9.4123 12.9938 10.1105C12.3273 10.8088 11.4434 11.1934 10.5042 11.1934ZM18.0469 16.3066H16.3243V14.502C16.3243 14.4074 16.2504 14.3301 16.1602 14.3301H15.0118C14.9215 14.3301 14.8477 14.4074 14.8477 14.502V16.3066H13.1251C13.0348 16.3066 12.961 16.384 12.961 16.4785V17.6816C12.961 17.7762 13.0348 17.8535 13.1251 17.8535H14.8477V19.6582C14.8477 19.7527 14.9215 19.8301 15.0118 19.8301H16.1602C16.2504 19.8301 16.3243 19.7527 16.3243 19.6582V17.8535H18.0469C18.1372 17.8535 18.211 17.7762 18.211 17.6816V16.4785C18.211 16.384 18.1372 16.3066 18.0469 16.3066Z"
-                fill="#F66700"
+                d="M28.4375 7.86825C25.961 7.04763 22.9872 6.5 19.5 6.5C16.0144 6.5 13.039 7.04763 10.5625 7.86825M28.4375 7.86825C33.3466 9.49325 36.2944 12.1907 37.375 13.8125L33.3125 17.875L28.4375 14.625V7.86825ZM10.5625 7.86825C5.65338 9.49325 2.70563 12.1907 1.625 13.8125L5.6875 17.875L10.5625 14.625V7.86825ZM16.25 11.375V16.25M16.25 16.25L7.45225 25.0477C6.84271 25.6571 6.50018 26.4836 6.5 27.3455V29.25C6.5 30.112 6.84241 30.9386 7.4519 31.5481C8.0614 32.1576 8.88805 32.5 9.75 32.5H29.25C30.112 32.5 30.9386 32.1576 31.5481 31.5481C32.1576 30.9386 32.5 30.112 32.5 29.25V27.3455C32.4998 26.4836 32.1573 25.6571 31.5477 25.0477L22.75 16.25M16.25 16.25H22.75M22.75 16.25V11.375"
+                stroke="#4E0DCC"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M19.5 27.625C21.2949 27.625 22.75 26.1699 22.75 24.375C22.75 22.5801 21.2949 21.125 19.5 21.125C17.7051 21.125 16.25 22.5801 16.25 24.375C16.25 26.1699 17.7051 27.625 19.5 27.625Z"
+                stroke="#4E0DCC"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
-          </button>
+          </div>
+          <h2 className="header-title">
+            {(userInfo.isAdmin || userInfo.isBaskan || userInfo.isBaskanDepartment) ? 'TALEPLER' : `${userInfo.department} - TALEPLER`}
+          </h2>
+        </div>
 
-          {selectedRequests.length > 0 && (
+        <div className="header-center">
+          <div className="search-input-container">
+            <Form.Control
+              type="text"
+              placeholder="Taleplerde ara..."
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="header-search-input"
+            />
+            <svg
+              className="search-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M7.333 12.667A5.333 5.333 0 1 0 7.333 2a5.333 5.333 0 0 0 0 10.667ZM14 14l-2.9-2.9"
+                stroke="#9CA3AF"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {searchTerm && (
             <button
-              className="header-btn bulk-sms-btn"
-              onClick={handleShowBulkSMSModal}
-              title={`${selectedRequests.length} talebe SMS gönder`}
-              disabled={bulkSMSLoading}
-              style={{
-                backgroundColor: bulkSMSLoading ? '#ccc' : '#28a745',
-                color: 'white',
-                marginLeft: '10px'
-              }}
+              onClick={() => handleSearchChange("")}
+              className="header-clear-btn"
+              title="Aramayı Temizle"
             >
               <svg
-                width="18"
-                height="18"
-                viewBox="0 0 18 18"
+                width="12"
+                height="12"
+                viewBox="0 0 14 14"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
-                  d="M1.5 6L8.5 9.5L15.5 6M1.5 12L8.5 15.5L15.5 12M1.5 6L8.5 2.5L15.5 6"
-                  stroke="currentColor"
+                  d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5"
+                  stroke="#6B7280"
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
-              {bulkSMSLoading ? 'Gönderiliyor...' : `SMS (${selectedRequests.length})`}
             </button>
           )}
-          <button className="header-btn" onClick={handleExportToExcel} title="Excel'e Aktar">
+        </div>
+
+        <div className="header-right">
+          <button
+            className="add-request-btn"
+            onClick={handleShowAddModal}
+            title="Talep Ekle"
+          >
             <svg
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M6.61935 7.51463C6.57273 7.45587 6.51483 7.40703 6.44906 7.37099C6.38329 7.33494 6.31097 7.31241 6.23636 7.30472C6.16175 7.29703 6.08635 7.30435 6.01461 7.32623C5.94287 7.34811 5.87623 7.38412 5.81861 7.43213C5.76099 7.48015 5.71355 7.53921 5.67909 7.60583C5.64463 7.67245 5.62384 7.74528 5.61795 7.82006C5.61206 7.89483 5.62118 7.97003 5.64477 8.04122C5.66837 8.11242 5.70597 8.17818 5.75535 8.23463L8.26748 11.2496L5.75535 14.2646C5.66408 14.3797 5.62141 14.5258 5.63646 14.6719C5.65151 14.818 5.72308 14.9524 5.83589 15.0464C5.9487 15.1404 6.0938 15.1866 6.2402 15.175C6.38659 15.1635 6.52266 15.0952 6.61935 14.9846L8.99985 12.1283L11.3804 14.9858C11.476 15.1003 11.6132 15.1722 11.7618 15.1856C11.8354 15.1923 11.9096 15.1843 11.9802 15.1623C12.0507 15.1403 12.1162 15.1045 12.1729 15.0572C12.2296 15.0098 12.2765 14.9518 12.3108 14.8863C12.3451 14.8209 12.3661 14.7493 12.3728 14.6757C12.3794 14.6021 12.3715 14.5279 12.3495 14.4574C12.3274 14.3869 12.2917 14.3214 12.2444 14.2646L9.73223 11.2496L12.2444 8.23463C12.3356 8.11959 12.3783 7.97343 12.3632 7.82735C12.3482 7.68128 12.2766 7.54688 12.1638 7.45288C12.051 7.35887 11.9059 7.3127 11.7595 7.32424C11.6131 7.33578 11.477 7.40411 11.3804 7.51463L8.99985 10.371L6.61935 7.51463Z"
-                fill="#E84E0F"
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22C6.477 22 2 17.523 2 12ZM12 4C9.87827 4 7.84344 4.84285 6.34315 6.34315C4.84285 7.84344 4 9.87827 4 12C4 14.1217 4.84285 16.1566 6.34315 17.6569C7.84344 19.1571 9.87827 20 12 20C14.1217 20 16.1566 19.1571 17.6569 17.6569C19.1571 16.1566 20 14.1217 20 12C20 9.87827 19.1571 7.84344 17.6569 6.34315C16.1566 4.84285 14.1217 4 12 4Z"
+                fill="#12B423"
               />
               <path
-                d="M15.75 15.75V5.0625L10.6875 0H4.5C3.90326 0 3.33097 0.237053 2.90901 0.65901C2.48705 1.08097 2.25 1.65326 2.25 2.25V15.75C2.25 16.3467 2.48705 16.919 2.90901 17.341C3.33097 17.7629 3.90326 18 4.5 18H13.5C14.0967 18 14.669 17.7629 15.091 17.341C15.5129 16.919 15.75 16.3467 15.75 15.75ZM10.6875 3.375C10.6875 3.82255 10.8653 4.25178 11.1818 4.56824C11.4982 4.88471 11.9274 5.0625 12.375 5.0625H14.625V15.75C14.625 16.0484 14.5065 16.3345 14.2955 16.5455C14.0845 16.7565 13.7984 16.875 13.5 16.875H4.5C4.20163 16.875 3.91548 16.7565 3.7045 16.5455C3.49353 16.3345 3.375 16.0484 3.375 15.75V2.25C3.375 1.95163 3.49353 1.66548 3.7045 1.4545C3.91548 1.24353 4.20163 1.125 4.5 1.125H10.6875V3.375Z"
-                fill="#09C71D"
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M13 7C13 6.73478 12.8946 6.48043 12.7071 6.29289C12.5196 6.10536 12.2652 6 12 6C11.7348 6 11.4804 6.10536 11.2929 6.29289C11.1054 6.48043 11 6.73478 11 7V11H7C6.73478 11 6.48043 11.1054 6.29289 11.2929C6.10536 11.4804 6 11.7348 6 12C6 12.2652 6.10536 12.5196 6.29289 12.7071C6.48043 12.8946 6.73478 13 7 13H11V17C11 17.2652 11.1054 17.5196 11.2929 17.7071C11.4804 17.8946 11.7348 18 12 18C12.2652 18 12.5196 17.8946 12.7071 17.7071C12.8946 17.5196 13 17.2652 13 17V13H17C17.2652 13 17.5196 12.8946 17.7071 12.7071C17.8946 12.5196 18 12.2652 18 12C18 11.7348 17.8946 11.4804 17.7071 11.2929C17.5196 11.1054 17.2652 11 17 11H13V7Z"
+                fill="#12B423"
               />
             </svg>
-          </button>
-          <button className="header-btn" onClick={handleShowExcelImportModal} title="Excel'den İçe Aktar">
-            <svg
-              width="18"
-              height="19"
-              viewBox="0 0 18 19"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g clipPath="url(#clip0_156_391)">
-                <path
-                  d="M12.75 7.12598C14.3812 7.13548 15.2647 7.21227 15.8407 7.82027C16.5 8.51614 16.5 9.63556 16.5 11.8744V12.6661C16.5 14.9057 16.5 16.0251 15.8407 16.721C15.1822 17.4161 14.121 17.4161 12 17.4161H6C3.879 17.4161 2.81775 17.4161 2.15925 16.721C1.5 16.0243 1.5 14.9057 1.5 12.6661V11.8744C1.5 9.63556 1.5 8.51614 2.15925 7.82027C2.73525 7.21227 3.61875 7.13548 5.25 7.12598"
-                  stroke="#FF005C"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M9 1.58301V11.8747M9 11.8747L6.75 9.10384M9 11.8747L11.25 9.10384"
-                  stroke="#FF005C"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_156_391">
-                  <rect width="18" height="19" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
-          </button>
-          <button className="header-btn" onClick={() => navigate("/categories")}>
-            <svg
-              width="20"
-              height="21"
-              viewBox="0 0 20 21"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g clipPath="url(#clip0_156_404)">
-                <path
-                  d="M4.99982 2.625C4.40943 2.62408 3.83777 2.84258 3.3861 3.24181C2.93443 3.64104 2.6319 4.19523 2.53208 4.80622C2.43227 5.41722 2.54162 6.04559 2.84077 6.58004C3.13991 7.11449 3.60955 7.52054 4.16649 7.72625V14.875C4.16649 15.5712 4.42988 16.2389 4.89872 16.7312C5.36756 17.2234 6.00345 17.5 6.66649 17.5H12.6415C12.8381 18.0841 13.225 18.5763 13.7338 18.8898C14.2427 19.2033 14.8407 19.3178 15.4221 19.2131C16.0036 19.1084 16.5311 18.7912 16.9114 18.3176C17.2917 17.844 17.5002 17.2445 17.5002 16.625C17.5002 16.0055 17.2917 15.406 16.9114 14.9324C16.5311 14.4588 16.0036 14.1416 15.4221 14.0369C14.8407 13.9322 14.2427 14.0467 13.7338 14.3602C13.225 14.6737 12.8381 15.1659 12.6415 15.75H6.66649C6.44548 15.75 6.23352 15.6578 6.07723 15.4937C5.92095 15.3296 5.83316 15.1071 5.83316 14.875V11.375H12.6415C12.8381 11.9591 13.225 12.4513 13.7338 12.7648C14.2427 13.0783 14.8407 13.1928 15.4221 13.0881C16.0036 12.9834 16.5311 12.6662 16.9114 12.1926C17.2917 11.719 17.5002 11.1195 17.5002 10.5C17.5002 9.88054 17.2917 9.28103 16.9114 8.80743C16.5311 8.33383 16.0036 8.01663 15.4221 7.91192C14.8407 7.8072 14.2427 7.92171 13.7338 8.23519C13.225 8.54867 12.8381 9.04095 12.6415 9.625H5.83316V7.72625C6.38911 7.51962 6.85763 7.11333 7.15596 6.57916C7.45428 6.04498 7.56321 5.41729 7.46351 4.80695C7.36381 4.19662 7.06189 3.64292 6.61108 3.24367C6.16027 2.84441 5.58958 2.62529 4.99982 2.625Z"
-                  fill="#E84E0F"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_156_404">
-                  <rect width="20" height="21" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
+
+            <span>TALEP EKLE</span>
           </button>
 
+       
      
         </div>
       </div>
@@ -773,13 +872,13 @@ const RequestsTable = () => {
                 />
               </th>
               <th>SIRA</th>
-              <th>ADI</th>
-              <th>SOYADI</th>
-              <th>KATEGORİ</th>
-              <th>TELEFON 1</th>
-              <th>TELEFON 2</th>
-              <th>ÜNVAN</th>
-              <th>MAHALLE</th>
+              <th>TARİH</th>
+              <th>BAŞLIK</th>
+              <th>TALEP EDEN</th>
+              <th>İLETİŞİM</th>
+              <th>İLGİLİ BİRİM</th>
+              <th>DURUM</th>
+              <th>TALEP SÜRESİ</th>
               <th>İŞLEM</th>
             </tr>
           </thead>
@@ -791,7 +890,7 @@ const RequestsTable = () => {
                     <div className="spinner-border text-primary" role="status">
                       <span className="visually-hidden">Yükleniyor...</span>
                     </div>
-                    <span className="ms-2">Veriler yükleniyor...</span>
+                    <span className="ms-2">Talepler yükleniyor...</span>
                   </div>
                 </td>
               </tr>
@@ -800,7 +899,7 @@ const RequestsTable = () => {
                 <td colSpan="10" className="text-center py-4">
                   <div className="text-muted">
                     <i className="fas fa-search me-2"></i>
-                    Herhangi bir kayıt bulunamadı
+                    Herhangi bir talep bulunamadı
                   </div>
                 </td>
               </tr>
@@ -816,18 +915,17 @@ const RequestsTable = () => {
                     />
                   </td>
                   <td>{(currentPage - 1) * requestsPerPage + index + 1}</td>
-                  <td>{request.name}</td>
-                  <td>{request.surname}</td>
-                  <td>{request.category}</td>
-                  <td>{request.phone1}</td>
-                  <td>{request.phone2 || "-"}</td>
-                  <td>{request.title || "-"}</td>
-                  <td>{request.district || "-"}</td>
+                  <td>{request.created_at_display?.split(' ')[0] || formatDate(request.created_at) || 'N/A'}</td>
+                  <td className="request-title">{request.talep_basligi || 'Başlık Yok'}</td>
+                  <td className="requester-name">{`${request.ad} ${request.soyad}`}</td>
+                  <td className="contact-info">{request.telefon || 'N/A'}</td>
+                  <td className="related-unit">{request.ilgili_mudurluk || 'N/A'}</td>
+                  <td>{getStatusBadge(request.talep_durumu, request.durum)}</td>
+                  <td className="request-duration">{calculateRequestDuration(request.created_at_display || request.created_at)}</td>
                   <td>
                     <RequestActionMenu
+                      request={request}
                       onView={() => handleViewRequest(request)}
-                      onSendMessage={() => handleSendMessage(request)}
-                      onWhatsApp={() => handleWhatsAppMessage(request)}
                       onEdit={() => handleEditRequest(request)}
                       onDelete={() => handleDeleteRequest(request)}
                     />
@@ -987,21 +1085,7 @@ const RequestsTable = () => {
         onRequestDeleted={handleRequestDeleted}
       />
 
-      {/* Mesaj Gönderme Modal */}
-      <MessagingModal
-        show={showMessagingModal}
-        handleClose={closeAllModals}
-        request={selectedRequest}
-        categories={allCategories}
-      />
 
-      {/* WhatsApp Numara Seçim Modal */}
-      <WhatsAppSelectModal
-        show={showWhatsAppModal}
-        onHide={closeAllModals}
-        request={selectedRequest}
-        onSelectPhone={handlePhoneSelect}
-      />
 
       {/* Toplu SMS Modal */}
       {showBulkSMSModal && (
@@ -1021,6 +1105,8 @@ const RequestsTable = () => {
         onHide={closeAllModals}
         onImportComplete={handleExcelImportComplete}
       />
+
+
     </div>
   );
 };
@@ -1174,8 +1260,8 @@ const BulkSMSModal = ({ show, onHide, selectedCount, onSend, loading, showError 
 
 export default RequestsTable;
 
-// Portal tabanlı aksiyon menüsü (Users/Requests ile aynı yaklaşım)
-const RequestActionMenu = ({ onView, onSendMessage, onWhatsApp, onEdit, onDelete }) => {
+// Portal menu similar to UsersTable ActionMenu
+const RequestActionMenu = ({ request, onView, onEdit, onDelete }) => {
   const [open, setOpen] = useState(false);
   const btnRef = React.useRef(null);
   const menuRef = React.useRef(null);
@@ -1199,38 +1285,37 @@ const RequestActionMenu = ({ onView, onSendMessage, onWhatsApp, onEdit, onDelete
     setOpen((p) => !p);
   };
 
-  const Item = ({ icon, color, label, onClick }) => (
-    <div className="dropdown-item" onClick={() => { setOpen(false); onClick && onClick(); }} style={{ cursor: 'pointer', display:'flex', alignItems:'center', gap:8 }}>
-      <span style={{ width:14, height:14, display:'inline-flex' }}>
-        {icon === 'view' && <svg width="14" height="14" viewBox="0 0 24 24" fill={color}><path d="M12 6a9.77 9.77 0 0 0-9 6 9.77 9.77 0 0 0 18 0 9.77 9.77 0 0 0-9-6Zm0 10a4 4 0 1 1 4-4 4.005 4.005 0 0 1-4 4Z"/></svg>}
-        {icon === 'message' && <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.334 8L2.927 4.375c-.118-1.036.89-1.773 1.847-1.35l8.06 3.558c1.06.468 1.06 1.889 0 2.357l-8.06 3.558c-.957.423-1.965-.314-1.847-1.35L3.334 8zm0 0h4.833" stroke="#F66700" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-        {icon === 'whatsapp' && <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.648 9.588c-.198-.1-1.172-.578-1.353-.645-.182-.066-.314-.099-.447.1-.131.198-.511.644-.627.776-.115.133-.231.149-.429.05-.198-.1-.837-.309-1.593-.983-.589-.525-.987-1.174-1.102-1.373-.115-.198-.012-.305.087-.404.089-.089.198-.231.297-.347.1-.116.132-.198.198-.331.066-.132.033-.248-.017-.347-.05-.1-.446-1.075-.611-1.472-.161-.386-.325-.333-.446-.34-.115-.005-.247-.007-.38-.007-.132 0-.347.05-.528.248-.181.198-.693.677-.693 1.653 0 .975.71 1.917.809 2.049.099.132 1.397 2.133 3.385 2.992.472.204.841.326 1.129.417.475.151.907.13 1.248.079.381-.057 1.172-.479 1.337-.942.165-.463.165-.859.115-.942-.049-.083-.181-.132-.38-.231m-3.614 4.935h-.003a6.58 6.58 0 01-3.354-.919l-.241-.143-2.494.664.665-2.432-.157-.249a6.573 6.573 0 01-1.007-3.507c.001-3.633 2.958-6.589 6.592-6.589 1.76 0 3.415.687 4.659 1.932a6.55 6.55 0 011.929 4.663c-.002 3.633-2.958 6.589-6.589 6.589m5.609-12.198A7.877 7.877 0 008.033 0C3.663 0 .107 3.557.105 7.928c0 1.397.365 2.761 1.059 3.963L.038 16l4.204-1.103a7.921 7.921 0 003.789.965h.003c4.369 0 7.926-3.557 7.929-7.929A7.881 7.881 0 0013.643 2.325" fill="#25D366"/></svg>}
-        {icon === 'edit' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M2 10.667V13.333H4.66667L11.7333 6.26667L9.06667 3.6L2 10.667ZM13.2667 4.73333C13.5333 4.46667 13.5333 4.06667 13.2667 3.8L11.8667 2.4C11.6 2.13333 11.2 2.13333 10.9333 2.4L9.8 3.53333L12.4667 6.2L13.2667 5.4V4.73333Z"/></svg>}
-        {icon === 'delete' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M6 2.66667H10C10.3667 2.66667 10.6667 2.96667 10.6667 3.33333V4H5.33333V3.33333C5.33333 2.96667 5.63333 2.66667 6 2.66667ZM4 4.66667V12.6667C4 13.4 4.6 14 5.33333 14H10.6667C11.4 14 12 13.4 12 12.6667V4.66667H4Z"/></svg>}
-      </span>
-      {label}
-    </div>
-  );
+  const Item = ({ icon, color, label, onClick, hidden }) => {
+    if (!onClick || hidden) return null;
+    return (
+      <div className="dropdown-item" onClick={() => { setOpen(false); onClick(); }} style={{ cursor: 'pointer', display:'flex', alignItems:'center', gap:8 }}>
+        <span style={{ width:14, height:14, display:'inline-flex' }}>
+          {icon === 'view' && <svg width="14" height="14" viewBox="0 0 24 24" fill={color}><path d="M12 6a9.77 9.77 0 0 0-9 6 9.77 9.77 0 0 0 18 0 9.77 9.77 0 0 0-9-6Zm0 10a4 4 0 1 1 4-4 4.005 4.005 0 0 1-4 4Z"/></svg>}
+          {icon === 'check' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/></svg>}
+          {icon === 'message' && <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.334 8L2.927 4.375c-.118-1.036.89-1.773 1.847-1.35l8.06 3.558c1.06.468 1.06 1.889 0 2.357l-8.06 3.558c-.957.423-1.965-.314-1.847-1.35L3.334 8zm0 0h4.833" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+          {icon === 'edit' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M2 10.667V13.333H4.66667L11.7333 6.26667L9.06667 3.6L2 10.667ZM13.2667 4.73333C13.5333 4.46667 13.5333 4.06667 13.2667 3.8L11.8667 2.4C11.6 2.13333 11.2 2.13333 10.9333 2.4L9.8 3.53333L12.4667 6.2L13.2667 5.4V4.73333Z"/></svg>}
+          {icon === 'refresh' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fillRule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>}
+          {icon === 'history' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a6.996 6.996 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1.001.025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.165.086-.332.12-.501zm-.952 2.379c.184-.29.346-.594.486-.908l.914.405c-.16.36-.345.706-.555 1.038l-.845-.535zm-1.548 1.7c.27-.216.518-.447.747-.691l.789.616c-.297.379-.632.734-1.005 1.058l-.531-.983zm-2.137.796c.363-.121.704-.264 1.025-.424l.448.894c-.42.196-.861.353-1.315.463l-.158-.933zm-2.49.059c.339-.003.677-.015 1.014-.043l.075.997a8.46 8.46 0 0 1-1.114.043l.025-1.001zm-2.51-.212c.37.072.746.117 1.126.137l-.075.997c-.421-.023-.84-.071-1.254-.145l.203-.989zm-2.37-.71c.264.095.537.176.816.242l-.203.989c-.309-.073-.611-.158-.905-.259l.292-.972zm-1.834-1.79c.216.237.449.463.698.673l-.615.789a7.955 7.955 0 0 1-.845-.816l.762-.646zm-.744-1.352c.062.167.133.328.212.483l-.893.45c-.088-.182-.169-.372-.24-.569l.921-.364zm-.53-2.507c.017.349.048.696.095 1.038l-.985.17c-.05-.363-.081-.735-.095-1.114l.985-.094zm.131-1.538c-.033.17-.06.339-.081.51l-.993-.123a7.957 7.957 0 0 1 .23-1.155l.964.267c-.046.165-.086.332-.12.501zm.952-2.379c-.184.29-.346.594-.486.908l-.914-.405c.16-.36.345-.706.555-1.038l.845.535zm1.548-1.7c-.27.216-.518.447-.747.691l-.789-.616c.297-.379.632-.734 1.005-1.058l.531.983zm2.137-.796c-.363.121-.704.264-1.025.424l-.448-.894c.42-.196.861-.353 1.315-.463l.158.933zM8.5 4.5a.5.5 0 0 0-1 0v3.362l-1.429 2.38a.5.5 0 1 0 .858.515l1.5-2.5A.5.5 0 0 0 8.5 7.5V4.5z"/></svg>}
+          {icon === 'delete' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M6 2.66667H10C10.3667 2.66667 10.6667 2.96667 10.6667 3.33333V4H5.33333V3.33333C5.33333 2.96667 5.63333 2.66667 6 2.66667ZM4 4.66667V12.6667C4 13.4 4.6 14 5.33333 14H10.6667C11.4 14 12 13.4 12 12.6667V4.66667H4Z"/></svg>}
+        </span>
+        {label}
+      </div>
+    );
+  };
 
   const menu = (
     <div ref={menuRef} className="user-actions-menu" style={{ position:'fixed', top:pos.top, left:pos.left, zIndex:2147483647, minWidth:220, background:'#fff', border:'1px solid #e5e7eb', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,.12)'}}>
       <Item icon="view" color="#4E0DCC" label="Görüntüle" onClick={onView} />
-      <Item icon="message" color="#F66700" label="İleti Gönder" onClick={onSendMessage} />
-      <Item icon="whatsapp" color="#25D366" label="WhatsApp" onClick={onWhatsApp} />
+      <Item icon="edit" color="#3B82F6" label="Düzenle" onClick={onEdit} hidden={!onEdit} />
       <div style={{height:1, background:'#f1f3f5', margin:'6px 0'}} />
-      <Item icon="edit" color="#3B82F6" label="Düzenle" onClick={onEdit} />
-      <Item icon="delete" color="#dc3545" label="Sil" onClick={onDelete} />
+      <Item icon="delete" color="#dc3545" label="Sil" onClick={onDelete} hidden={!onDelete} />
     </div>
   );
 
   return (
     <>
-      <button ref={btnRef} onClick={toggle} className="action-menu-btn btn btn-outline-secondary btn-sm">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="8" cy="3" r="1.5" fill="currentColor" />
-          <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-          <circle cx="8" cy="13" r="1.5" fill="currentColor" />
-        </svg>
+      <button ref={btnRef} className="action-menu-btn btn btn-light" onClick={toggle}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#6b7280"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
       {open && createPortal(menu, document.body)}
     </>
