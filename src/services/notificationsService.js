@@ -213,15 +213,60 @@ export const getNotificationStyle = (type) => {
       icon: '📝',
       bgColor: '#FFFBEB'
     },
+    appointment_reminder: {
+      color: '#DC2626', // kırmızı
+      icon: '⏰',
+      bgColor: '#FEF2F2'
+    },
     task_assigned: {
       color: '#06B6D4', // cyan
       icon: '✅',
       bgColor: '#ECFEFF'
     },
+    task_unassigned: {
+      color: '#6B7280', // gri
+      icon: '❌',
+      bgColor: '#F9FAFB'
+    },
+    task_updated: {
+      color: '#F59E0B', // turuncu
+      icon: '📝',
+      bgColor: '#FFFBEB'
+    },
+    task_deleted: {
+      color: '#EF4444', // kırmızı
+      icon: '🗑️',
+      bgColor: '#FEF2F2'
+    },
+    task_approval_changed: {
+      color: '#8B5CF6', // mor
+      icon: '🔄',
+      bgColor: '#F3E8FF'
+    },
     message_received: {
       color: '#84CC16', // lime
       icon: '💬',
       bgColor: '#F7FEE7'
+    },
+    request_created: {
+      color: '#10B981', // yeşil
+      icon: '📋',
+      bgColor: '#ECFDF5'
+    },
+    request_updated: {
+      color: '#3B82F6', // mavi
+      icon: '📝',
+      bgColor: '#EFF6FF'
+    },
+    request_deleted: {
+      color: '#EF4444', // kırmızı
+      icon: '🗑️',
+      bgColor: '#FEF2F2'
+    },
+    request: {
+      color: '#8B5CF6', // mor
+      icon: '📋',
+      bgColor: '#F3E8FF'
     },
     system: {
       color: '#6B7280', // gri

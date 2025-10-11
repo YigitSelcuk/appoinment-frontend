@@ -115,23 +115,50 @@ const NotificationDropdown = () => {
       // Bildirim türüne göre yönlendirme yap
       switch (notification.type) {
         case 'task_assigned':
+        case 'task_unassigned':
         case 'task_updated':
         case 'task_deleted':
-        case 'task_unassigned':
-          navigate('/tasks');
+        case 'task_approval_changed':
+          // Görev ID'si varsa spesifik göreve yönlendir
+          if (notification.related_id) {
+            navigate(`/tasks?taskId=${notification.related_id}`);
+          } else {
+            navigate('/tasks');
+          }
           break;
         case 'appointment_created':
         case 'appointment_updated':
         case 'appointment_reminder':
-          navigate('/appointments');
+          // Randevu ID'si varsa spesifik randevuya yönlendir
+          if (notification.related_id) {
+            navigate(`/appointments?appointmentId=${notification.related_id}`);
+          } else {
+            navigate('/appointments');
+          }
           break;
         case 'cv_added':
         case 'cv_updated':
         case 'cv_deleted':
-          navigate('/cvs');
+          // CV ID'si varsa spesifik CV'ye yönlendir
+          if (notification.related_id) {
+            navigate(`/cvs?cvId=${notification.related_id}`);
+          } else {
+            navigate('/cvs');
+          }
           break;
         case 'message_received':
           navigate('/messages');
+          break;
+        case 'request':
+        case 'request_created':
+        case 'request_updated':
+        case 'request_deleted':
+          // Talep ID'si varsa spesifik talepe yönlendir
+          if (notification.related_id) {
+            navigate(`/requests?requestId=${notification.related_id}`);
+          } else {
+            navigate('/requests');
+          }
           break;
         default:
           // Diğer bildirim türleri için ana sayfaya yönlendir

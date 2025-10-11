@@ -12,6 +12,7 @@ import AddRequestModal from "../AddRequestModal/AddRequestModal";
 import ViewRequestModal from "../ViewRequestModal/ViewRequestModal";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DeleteRequestModal from "../DeleteRequestModal/DeleteRequestModal";
+import RequestDetailsModal from "../RequestDetailsModal/RequestDetailsModal";
 import ExcelImportModal from "../ExcelImportModal/ExcelImportModal";
 
 import * as XLSX from 'xlsx';
@@ -61,6 +62,7 @@ const RequestsTable = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [showBulkSMSModal, setShowBulkSMSModal] = useState(false);
   const [showExcelImportModal, setShowExcelImportModal] = useState(false);
@@ -106,9 +108,11 @@ const RequestsTable = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await requestsService.getCategories();
+      const response = await fetchAllCategoriesForDropdown();
       if (response.success) {
-        setCategories(["TÜMÜ", ...response.data]);
+        // Alt kategorileri çıkar ve benzersiz hale getir
+        const uniqueCategories = [...new Set(response.data.map(cat => cat.alt_kategori).filter(Boolean))];
+        setCategories(["TÜMÜ", ...uniqueCategories]);
       }
     } catch (error) {
       showError("Kategoriler yüklenirken hata oluştu");
@@ -380,6 +384,11 @@ const RequestsTable = () => {
     setShowDeleteModal(true);
   };
 
+  const handleDetailsRequest = (request) => {
+    setSelectedRequest(request);
+    setShowDetailsModal(true);
+  };
+
   const handleWhatsAppMessage = (request) => {
     const phones = [];
     if (request.phone1) phones.push(request.phone1);
@@ -629,6 +638,7 @@ const RequestsTable = () => {
     setShowViewModal(false);
     setShowEditModal(false);
     setShowDeleteModal(false);
+    setShowDetailsModal(false);
     setShowWhatsAppModal(false);
     setShowBulkSMSModal(false);
     setShowExcelImportModal(false);
@@ -742,31 +752,13 @@ const RequestsTable = () => {
       <div className="header-bar">
         <div className="header-left">
           <div className="header-icon">
-            <svg
-              width="39"
-              height="39"
-              viewBox="0 0 39 39"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M28.4375 7.86825C25.961 7.04763 22.9872 6.5 19.5 6.5C16.0144 6.5 13.039 7.04763 10.5625 7.86825M28.4375 7.86825C33.3466 9.49325 36.2944 12.1907 37.375 13.8125L33.3125 17.875L28.4375 14.625V7.86825ZM10.5625 7.86825C5.65338 9.49325 2.70563 12.1907 1.625 13.8125L5.6875 17.875L10.5625 14.625V7.86825ZM16.25 11.375V16.25M16.25 16.25L7.45225 25.0477C6.84271 25.6571 6.50018 26.4836 6.5 27.3455V29.25C6.5 30.112 6.84241 30.9386 7.4519 31.5481C8.0614 32.1576 8.88805 32.5 9.75 32.5H29.25C30.112 32.5 30.9386 32.1576 31.5481 31.5481C32.1576 30.9386 32.5 30.112 32.5 29.25V27.3455C32.4998 26.4836 32.1573 25.6571 31.5477 25.0477L22.75 16.25M16.25 16.25H22.75M22.75 16.25V11.375"
-                stroke="#4E0DCC"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M19.5 27.625C21.2949 27.625 22.75 26.1699 22.75 24.375C22.75 22.5801 21.2949 21.125 19.5 21.125C17.7051 21.125 16.25 22.5801 16.25 24.375C16.25 26.1699 17.7051 27.625 19.5 27.625Z"
-                stroke="#4E0DCC"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+       <svg width="22" height="31" viewBox="0 0 22 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20.1837 21.6114L17.761 19.1757C19.3247 16.2307 18.9283 12.5107 16.4616 10.0307C15.7467 9.30598 14.8957 8.73119 13.9581 8.33967C13.0205 7.94816 12.0149 7.74773 10.9996 7.75C10.9336 7.75 10.8675 7.77214 10.8014 7.77214L13.2021 10.1857L10.8675 12.5329L4.63468 6.26643L10.8675 0L13.2021 2.34714L11.0877 4.47286C13.8848 4.495 16.6598 5.53571 18.7962 7.66143C22.5403 11.4479 23.0028 17.3157 20.1837 21.6114ZM17.3646 24.7336L11.1318 31L8.79724 28.6529L10.8895 26.5493C8.01133 26.5267 5.25781 25.3653 3.22514 23.3164C1.43247 21.5122 0.313415 19.1417 0.0566492 16.6045C-0.200117 14.0674 0.421115 11.5188 1.8156 9.38857L4.23825 11.8243C2.67454 14.7693 3.07098 18.4893 5.53767 20.9693C7.07936 22.5193 9.1276 23.2721 11.1758 23.2057L8.79724 20.8143L11.1318 18.4671L17.3646 24.7336Z" fill="#3C02AA"/>
+</svg>
+
           </div>
           <h2 className="header-title">
-            {(userInfo.isAdmin || userInfo.isBaskan || userInfo.isBaskanDepartment) ? 'TALEPLER' : `${userInfo.department} - TALEPLER`}
+            {userInfo.department} - TALEPLER
           </h2>
         </div>
 
@@ -875,7 +867,7 @@ const RequestsTable = () => {
               <th>TARİH</th>
               <th>BAŞLIK</th>
               <th>TALEP EDEN</th>
-              <th>İLETİŞİM</th>
+              <th className="contact-header">İLETİŞİM</th>
               <th>İLGİLİ BİRİM</th>
               <th>DURUM</th>
               <th>TALEP SÜRESİ</th>
@@ -926,6 +918,7 @@ const RequestsTable = () => {
                     <RequestActionMenu
                       request={request}
                       onView={() => handleViewRequest(request)}
+                      onDetails={() => handleDetailsRequest(request)}
                       onEdit={() => handleEditRequest(request)}
                       onDelete={() => handleDeleteRequest(request)}
                     />
@@ -1085,7 +1078,12 @@ const RequestsTable = () => {
         onRequestDeleted={handleRequestDeleted}
       />
 
-
+      {/* Talep Detayları Modal */}
+      <RequestDetailsModal
+        show={showDetailsModal}
+        onHide={closeAllModals}
+        request={selectedRequest}
+      />
 
       {/* Toplu SMS Modal */}
       {showBulkSMSModal && (
@@ -1261,7 +1259,7 @@ const BulkSMSModal = ({ show, onHide, selectedCount, onSend, loading, showError 
 export default RequestsTable;
 
 // Portal menu similar to UsersTable ActionMenu
-const RequestActionMenu = ({ request, onView, onEdit, onDelete }) => {
+const RequestActionMenu = ({ request, onView, onEdit, onDelete, onDetails }) => {
   const [open, setOpen] = useState(false);
   const btnRef = React.useRef(null);
   const menuRef = React.useRef(null);
@@ -1291,6 +1289,7 @@ const RequestActionMenu = ({ request, onView, onEdit, onDelete }) => {
       <div className="dropdown-item" onClick={() => { setOpen(false); onClick(); }} style={{ cursor: 'pointer', display:'flex', alignItems:'center', gap:8 }}>
         <span style={{ width:14, height:14, display:'inline-flex' }}>
           {icon === 'view' && <svg width="14" height="14" viewBox="0 0 24 24" fill={color}><path d="M12 6a9.77 9.77 0 0 0-9 6 9.77 9.77 0 0 0 18 0 9.77 9.77 0 0 0-9-6Zm0 10a4 4 0 1 1 4-4 4.005 4.005 0 0 1-4 4Z"/></svg>}
+          {icon === 'info' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>}
           {icon === 'check' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/></svg>}
           {icon === 'message' && <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.334 8L2.927 4.375c-.118-1.036.89-1.773 1.847-1.35l8.06 3.558c1.06.468 1.06 1.889 0 2.357l-8.06 3.558c-.957.423-1.965-.314-1.847-1.35L3.334 8zm0 0h4.833" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
           {icon === 'edit' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M2 10.667V13.333H4.66667L11.7333 6.26667L9.06667 3.6L2 10.667ZM13.2667 4.73333C13.5333 4.46667 13.5333 4.06667 13.2667 3.8L11.8667 2.4C11.6 2.13333 11.2 2.13333 10.9333 2.4L9.8 3.53333L12.4667 6.2L13.2667 5.4V4.73333Z"/></svg>}
@@ -1306,6 +1305,7 @@ const RequestActionMenu = ({ request, onView, onEdit, onDelete }) => {
   const menu = (
     <div ref={menuRef} className="user-actions-menu" style={{ position:'fixed', top:pos.top, left:pos.left, zIndex:2147483647, minWidth:220, background:'#fff', border:'1px solid #e5e7eb', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,.12)'}}>
       <Item icon="view" color="#4E0DCC" label="Görüntüle" onClick={onView} />
+      <Item icon="info" color="#17a2b8" label="Talep Bilgileri" onClick={onDetails} hidden={!onDetails} />
       <Item icon="edit" color="#3B82F6" label="Düzenle" onClick={onEdit} hidden={!onEdit} />
       <div style={{height:1, background:'#f1f3f5', margin:'6px 0'}} />
       <Item icon="delete" color="#dc3545" label="Sil" onClick={onDelete} hidden={!onDelete} />

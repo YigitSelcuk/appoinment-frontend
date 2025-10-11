@@ -1442,3 +1442,46 @@ body.modal-open {
   width: 100px;
   min-width: 100px;
 }
+
+/* CV Ekle Butonu Stilleri */
+.add-cv-btn {
+  background: white;
+  border: 2px solid #12B423;
+  border-radius: 10px;
+  padding: 8px 16px;
+  color: #12B423;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(18, 180, 35, 0.15);
+  min-height: 40px;
+}
+
+.add-cv-btn:hover {
+  background: #f8fff9;
+  border-color: #0EA91C;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(18, 180, 35, 0.25);
+  color: #0EA91C;
+}
+
+.add-cv-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(18, 180, 35, 0.25);
+}
+
+.add-cv-btn svg {
+  flex-shrink: 0;
+}
+
+.add-cv-btn svg path {
+  fill: #12B423;
+}
+
+.add-cv-btn:hover svg path {
+  fill: #0EA91C;
+}

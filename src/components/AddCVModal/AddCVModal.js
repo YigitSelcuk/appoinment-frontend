@@ -68,8 +68,10 @@ const AddCVModal = ({ show, onHide, onSubmit }) => {
     }
 
     try {
+      console.log('TC No ile kişi bilgisi getiriliyor:', tcNo);
       // Önce kişi bilgilerini kontrol et
       const response = await contactsService.checkTCExists(tcNo);
+      console.log('checkTCExists response:', response);
       
       if (response.success && response.exists) {
         const contact = response.contact;
@@ -85,26 +87,48 @@ const AddCVModal = ({ show, onHide, onSubmit }) => {
         }));
         
         // Önce contact'tan avatar kontrolü yap
+        console.log('Contact avatar kontrolü:', contact.avatar);
         if (contact.avatar) {
-          // Contact.avatar zaten '/uploads/avatars/' ile başlıyor, sadece base URL ekle
-          const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
-          const avatarUrl = contact.avatar.startsWith('/uploads/') 
-            ? `${baseUrl}${contact.avatar}`
-            : `${baseUrl}/uploads/avatars/${contact.avatar}`;
-          console.log('Avatar URL oluşturuldu:', avatarUrl);
+          // Avatar dosya adını çıkar (sadece dosya adı)
+          let avatarFilename = contact.avatar;
+          
+          // Tam URL ise dosya adını çıkar
+          if (contact.avatar.includes('/uploads/avatars/')) {
+            avatarFilename = contact.avatar.split('/uploads/avatars/').pop();
+          }
+          
+          console.log('Avatar filename:', avatarFilename);
           console.log('Contact avatar:', contact.avatar);
-          setProfileImagePreview(avatarUrl);
-          setFiles(prev => ({
-            ...prev,
-            profilResmi: { name: contact.avatar, isExisting: true, isContactAvatar: true }
-          }));
+          
+          // getProfileImageUrl kullanarak resmi getir
+          try {
+            console.log('getProfileImageUrl çağrılıyor:', avatarFilename);
+            const imageUrl = await getProfileImageUrl(avatarFilename);
+            console.log('getProfileImageUrl sonucu:', imageUrl);
+            if (imageUrl) {
+              setProfileImagePreview(imageUrl);
+              setFiles(prev => ({
+                ...prev,
+                profilResmi: { name: avatarFilename, isExisting: true, isContactAvatar: true }
+              }));
+              console.log('Profil resmi preview set edildi');
+            } else {
+              console.log('getProfileImageUrl null döndü');
+            }
+          } catch (avatarError) {
+            console.log('Avatar resmi getirilemedi:', avatarError);
+          }
         } else {
+          console.log('Contact avatar yok, CV kontrolü yapılıyor');
           // Avatar yoksa CV bilgilerini kontrol et ve profil resmini getir
           try {
             const cvResponse = await cvsService.getCVs({ search: tcNo });
+            console.log('CV arama sonucu:', cvResponse);
             if (cvResponse.success && cvResponse.data && cvResponse.data.length > 0) {
               const existingCV = cvResponse.data[0];
+              console.log('Bulunan CV:', existingCV);
               if (existingCV.profil_resmi) {
+                console.log('CV profil resmi bulundu:', existingCV.profil_resmi);
                 const imageUrl = await getProfileImageUrl(existingCV.profil_resmi);
                 if (imageUrl) {
                   setProfileImagePreview(imageUrl);

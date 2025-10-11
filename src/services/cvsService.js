@@ -21,8 +21,10 @@ export const getCVs = async (params = {}) => {
 // CV detayını getir
 export const getCVById = async (id) => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axios.get(`${API_BASE_URL}/cvs/${id}`, {
-      withCredentials: true
+      withCredentials: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
   } catch (error) {
@@ -54,10 +56,12 @@ export const createCV = async (cvData) => {
       });
     }
 
+    const token = localStorage.getItem('token');
     const response = await axios.post(`${API_BASE_URL}/cvs`, formData, {
       withCredentials: true,
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
     });
     return response.data;
@@ -90,10 +94,12 @@ export const updateCV = async (id, cvData) => {
       });
     }
 
+    const token = localStorage.getItem('token');
     const response = await axios.put(`${API_BASE_URL}/cvs/${id}`, formData, {
       withCredentials: true,
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
     });
     return response.data;
@@ -106,8 +112,10 @@ export const updateCV = async (id, cvData) => {
 // CV sil
 export const deleteCV = async (id) => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axios.delete(`${API_BASE_URL}/cvs/${id}`, {
-      withCredentials: true
+      withCredentials: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
   } catch (error) {
@@ -119,8 +127,10 @@ export const deleteCV = async (id) => {
 // CV durumlarını getir
 export const getCVStatuses = async () => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axios.get(`${API_BASE_URL}/cvs/statuses`, {
-      withCredentials: true
+      withCredentials: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
   } catch (error) {
@@ -132,9 +142,11 @@ export const getCVStatuses = async () => {
 // CV dosyasını indir
 export const downloadCVFile = async (id, filename) => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axios.get(`${API_BASE_URL}/cvs/${id}/download`, {
       withCredentials: true,
-      responseType: 'blob'
+      responseType: 'blob',
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
 
     // Blob olarak al
@@ -160,7 +172,11 @@ export const downloadCVFile = async (id, filename) => {
 
 // Profil resmi URL'ini getir (Authentication ile)
 export const getProfileImageUrl = async (filename) => {
-  if (!filename) return null;
+  console.log('getProfileImageUrl çağrıldı, filename:', filename);
+  if (!filename) {
+    console.log('Filename boş, null döndürülüyor');
+    return null;
+  }
   
   try {
     // Eğer filename '/uploads/' ile başlıyorsa, sadece dosya adını al
@@ -169,15 +185,25 @@ export const getProfileImageUrl = async (filename) => {
       actualFilename = filename.split('/').pop(); // Son kısmı al (dosya adı)
     }
     
+    
+    
+    const token = localStorage.getItem('token');
     const response = await axios.get(`${API_BASE_URL}/cvs/profile-image/${actualFilename}`, {
       withCredentials: true,
-      responseType: 'blob'
+      responseType: 'blob',
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
 
+    console.log('API response status:', response.status);
+    console.log('API response data size:', response.data.size);
+    
     const blob = response.data;
-    return URL.createObjectURL(blob);
+    const objectUrl = URL.createObjectURL(blob);
+    console.log('Object URL oluşturuldu:', objectUrl);
+    return objectUrl;
   } catch (error) {
     console.error('Profil resmi getirme hatası:', error);
+    console.error('Error response:', error.response);
     return null;
   }
 };
@@ -191,12 +217,14 @@ export const getProfileImageUrlDirect = (filename) => {
 // CV durumunu güncelle
 export const updateCVStatus = async (id, durum) => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axios.put(`${API_BASE_URL}/cvs/${id}/status`, {
       durum
     }, {
       withCredentials: true,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
     });
     return response.data;

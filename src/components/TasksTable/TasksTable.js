@@ -1,14 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { createPortal } from 'react-dom';
-import {
-  Table,
-  Button,
-  Form,
-  Row,
-  Col,
-  Pagination,
-  Modal,
-} from "react-bootstrap";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { Table, Form, Pagination } from "react-bootstrap";
+import { FaCheck, FaTimes } from "react-icons/fa";
 import { getTasks, deleteTask, updateTaskApproval } from "../../services/tasksService";
 import AddTaskModal from "../AddTaskModal/AddTaskModal";
 import ViewTaskModal from "../ViewTaskModal/ViewTaskModal";
@@ -18,7 +11,6 @@ import { useSimpleToast } from "../../contexts/SimpleToastContext";
 import { useAuth } from "../../contexts/AuthContext";
 import "./TasksTable.css";
 
-// Debounce hook
 const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -65,9 +57,14 @@ const TasksTable = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const [approvalTask, setApprovalTask] = useState(null);
-  const [approvalLoading, setApprovalLoading] = useState(false);
+
+  // Scrollbar state'leri
+  const [scrollbarVisible, setScrollbarVisible] = useState(false);
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+  const [scrollbarLeft, setScrollbarLeft] = useState(0);
+  
+  // Ref'ler
+  const tableWrapperRef = useRef(null);
 
   // Backend'den görevleri getir
   const fetchTasksData = async () => {
@@ -114,12 +111,6 @@ const TasksTable = () => {
     setStatusFilter(status);
     setCurrentPage(1);
   };
-
-  // Sayfa değiştirme
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
-
   // Checkbox işlemleri
   const handleSelectAll = (e) => {
     const isChecked = e.target.checked;
@@ -199,43 +190,6 @@ const TasksTable = () => {
     setShowDeleteModal(true);
   };
 
-  const handleApprovalToggle = (task) => {
-    setApprovalTask(task);
-    setShowApprovalModal(true);
-  };
-
-  const confirmApprovalToggle = async () => {
-    if (!approvalTask) return;
-    
-    setApprovalLoading(true);
-    const newApprovalStatus = approvalTask.approval === "ONAYLANDI" ? "REDDEDİLDİ" : "ONAYLANDI";
-    
-    try {
-      const response = await updateTaskApproval(accessToken, approvalTask.id, newApprovalStatus);
-      
-      if (response.success) {
-        fetchTasksData();
-        setShowApprovalModal(false);
-        setApprovalTask(null);
-        const message = newApprovalStatus === "ONAYLANDI" ? 'Görev başarıyla onaylandı!' : 'Görev başarıyla reddedildi!';
-        showSuccess(message);
-      } else {
-        console.error("Onay durumu güncellenirken hata oluştu");
-        showError('Onay durumu güncellenirken hata oluştu!');
-      }
-    } catch (error) {
-      console.error("Onay durumu güncelleme hatası:", error);
-      showError('Onay durumu güncellenirken bir hata oluştu!');
-    } finally {
-      setApprovalLoading(false);
-    }
-  };
-
-  const handleCloseApprovalModal = () => {
-    setShowApprovalModal(false);
-    setApprovalTask(null);
-  };
-
   const handleCloseDeleteModal = () => {
     setShowDeleteModal(false);
     setSelectedTask(null);
@@ -245,185 +199,134 @@ const TasksTable = () => {
     fetchTasksData(); // Listeyi yenile
     setShowDeleteModal(false);
     setSelectedTask(null);
-    showSuccess('Görev başarıyla silindi!');
   };
 
-  const handleConfirmDelete = async () => {
-    if (!selectedTask) return;
-    
+
+
+  // Sayfa değiştirme
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Onay durumu değiştirme
+  const handleApprovalToggle = async (task) => {
     try {
-      const response = await deleteTask(accessToken, selectedTask.id);
-      
-      if (response.success) {
-        handleTaskDeleted();
-      } else {
-        console.error("Görev silinirken hata oluştu");
-        showError('Görev silinirken hata oluştu!');
-      }
+      const isCurrentlyApproved = task.approval === 'ONAYLANDI';
+      const newApprovalStatus = isCurrentlyApproved ? 'ONAY BEKLİYOR' : 'ONAYLANDI';
+      await updateTaskApproval(accessToken, task.id, newApprovalStatus);
+      fetchTasksData(); // Listeyi yenile
+      showSuccess(`Görev ${isCurrentlyApproved ? 'onayı kaldırıldı' : 'onaylandı'}!`);
     } catch (error) {
-      console.error("Görev silme hatası:", error);
-      showError('Görev silinirken bir hata oluştu!');
+      console.error('Onay durumu güncellenirken hata:', error);
+      showError('Onay durumu güncellenirken bir hata oluştu!');
     }
   };
 
-  // Durum badge'i için renk belirleme
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case "Beklemede":
-        return "beklemede";
-      case "Devam Ediyor":
-        return "devam-ediyor";
-      case "Tamamlandı":
-        return "tamamlandi";
-      case "İptal Edildi":
-        return "iptal-edildi";
-      default:
-        return "beklemede";
-    }
+  // Scrollbar fonksiyonları
+  const handleScrollbarTrackClick = (e) => {
+    if (!tableWrapperRef.current) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const trackWidth = rect.width;
+    const scrollRatio = clickX / trackWidth;
+    
+    const maxScrollLeft = tableWrapperRef.current.scrollWidth - tableWrapperRef.current.clientWidth;
+    tableWrapperRef.current.scrollLeft = scrollRatio * maxScrollLeft;
   };
 
-  // Onay badge'i için renk belirleme
-  const getApprovalBadgeClass = (approval) => {
-    switch (approval) {
-      case "ONAYLANDI":
-        return "onaylandi";
-      case "ONAY BEKLİYOR":
-        return "onay-bekliyor";
-      case "REDDEDİLDİ":
-        return "reddedildi";
-      default:
-        return "onay-bekliyor";
-    }
+  const handleScrollbarMouseDown = (e) => {
+    e.preventDefault();
+    // Scrollbar sürükleme işlevi - basit implementasyon
   };
+
+  // Scrollbar görünürlüğünü kontrol et
+  useEffect(() => {
+    const checkScrollbar = () => {
+      if (tableWrapperRef.current) {
+        const { scrollWidth, clientWidth, scrollLeft } = tableWrapperRef.current;
+        const isScrollable = scrollWidth > clientWidth;
+        setScrollbarVisible(isScrollable);
+        
+        if (isScrollable) {
+          const thumbWidth = (clientWidth / scrollWidth) * clientWidth;
+          const thumbLeft = (scrollLeft / (scrollWidth - clientWidth)) * (clientWidth - thumbWidth);
+          setScrollbarWidth(thumbWidth);
+          setScrollbarLeft(thumbLeft);
+        }
+      }
+    };
+
+    checkScrollbar();
+    window.addEventListener('resize', checkScrollbar);
+    
+    return () => window.removeEventListener('resize', checkScrollbar);
+  }, [tasks]);
 
   return (
     <div className="tasks-table-container">
-      {/* Header Bar */}
+      {/* Başlık Barı */}
       <div className="header-bar">
         <div className="header-left">
           <div className="header-icon">
-            <svg
-              width="37"
-              height="37"
-              viewBox="0 0 37 37"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g clip-path="url(#clip0_180_10761)">
-              <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
-                  d="M6.16602 6.16634C6.16602 5.34859 6.49087 4.56433 7.0691 3.9861C7.64734 3.40786 8.4316 3.08301 9.24935 3.08301H27.7493C28.5671 3.08301 29.3514 3.40786 29.9296 3.9861C30.5078 4.56433 30.8327 5.34859 30.8327 6.16634V15.4163H27.7493V6.16634H9.24935V30.833H16.9577V33.9163H9.24935C8.4316 33.9163 7.64734 33.5915 7.0691 33.0133C6.49087 32.435 6.16602 31.6508 6.16602 30.833V6.16634ZM12.3327 12.333C12.3327 11.9241 12.4951 11.532 12.7842 11.2429C13.0733 10.9538 13.4655 10.7913 13.8743 10.7913H23.1243C23.5332 10.7913 23.9254 10.9538 24.2145 11.2429C24.5036 11.532 24.666 11.9241 24.666 12.333C24.666 12.7419 24.5036 13.134 24.2145 13.4231C23.9254 13.7122 23.5332 13.8747 23.1243 13.8747H13.8743C13.4655 13.8747 13.0733 13.7122 12.7842 13.4231C12.4951 13.134 12.3327 12.7419 12.3327 12.333ZM12.3327 18.4997C12.3327 18.0908 12.4951 17.6987 12.7842 17.4096C13.0733 17.1204 13.4655 16.958 13.8743 16.958H15.416C15.8249 16.958 16.217 17.1204 16.5061 17.4096C16.7953 17.6987 16.9577 18.0908 16.9577 18.4997C16.9577 18.9086 16.7953 19.3007 16.5061 19.5898C16.217 19.8789 15.8249 20.0413 15.416 20.0413H13.8743C13.4655 20.0413 13.0733 19.8789 12.7842 19.5898C12.4951 19.3007 12.3327 18.9086 12.3327 18.4997ZM26.2077 21.583C24.9811 21.583 23.8047 22.0703 22.9373 22.9376C22.07 23.805 21.5827 24.9814 21.5827 26.208C21.5827 27.4346 22.07 28.611 22.9373 29.4784C23.8047 30.3457 24.9811 30.833 26.2077 30.833C27.4343 30.833 28.6107 30.3457 29.4781 29.4784C30.3454 28.611 30.8327 27.4346 30.8327 26.208C30.8327 24.9814 30.3454 23.805 29.4781 22.9376C28.6107 22.0703 27.4343 21.583 26.2077 21.583ZM18.4993 26.208C18.4993 24.1636 19.3115 22.203 20.7571 20.7574C22.2027 19.3118 24.1633 18.4997 26.2077 18.4997C28.2521 18.4997 30.2127 19.3118 31.6583 20.7574C33.1039 22.203 33.916 24.1636 33.916 26.208C33.916 28.2524 33.1039 30.213 31.6583 31.6586C30.2127 33.1042 28.2521 33.9163 26.2077 33.9163C24.1633 33.9163 22.2027 33.1042 20.7571 31.6586C19.3115 30.213 18.4993 28.2524 18.4993 26.208ZM26.2077 22.3538C26.6166 22.3538 27.0087 22.5163 27.2978 22.8054C27.5869 23.0945 27.7493 23.4866 27.7493 23.8955V24.6663C28.1582 24.6663 28.5504 24.8288 28.8395 25.1179C29.1286 25.407 29.291 25.7991 29.291 26.208C29.291 26.6169 29.1286 27.009 28.8395 27.2981C28.5504 27.5873 28.1582 27.7497 27.7493 27.7497H26.2077C25.7988 27.7497 25.4067 27.5873 25.1176 27.2981C24.8284 27.009 24.666 26.6169 24.666 26.208V23.8955C24.666 23.4866 24.8284 23.0945 25.1176 22.8054C25.4067 22.5163 25.7988 22.3538 26.2077 22.3538Z"
-                  fill="#3C02AA"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_180_10761">
-                  <rect width="37" height="37" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
+           <img style={{width: '35px', height: '35px'}} src="/assets/images/task.png" alt="task" />
           </div>
-          <h2 className="header-title">GÖREVLER</h2>
+          <h2 className="header-title">GÖREV</h2>
         </div>
+
+        {/* Status Filter - Ortada */}
         <div className="header-center">
-          <div className="search-input-container">
-            <Form.Control
-              type="text"
-              placeholder="Görevlerde ara..."
-              value={searchTerm}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="header-search-input"
-            />
-            </div>
-            {searchTerm && (
-              <button
-              onClick={() => handleSearchChange("")}
-                className="header-clear-btn"
-                title="Aramayı Temizle"
+          <div className="status-buttons">
+            {Object.keys(statusCounts).map((status, index) => (
+              <div
+                key={status}
+                className={`status-btn ${statusFilter === status ? 'active' : ''}`}
+                onClick={() => handleStatusFilterChange(status)}
               >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5"
-                    stroke="#6B7280"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            )}
+                <div className="status-number">{statusCounts[status]}</div>
+                <div className="status-name">{status}</div>
+                <div className={`status-line status-line-${index + 1}`}></div>
+              </div>
+            ))}
+          </div>
         </div>
+
         <div className="header-right">
-          <button className="header-btn add-btn" onClick={handleShowAddModal}>
+          <button
+            className="add-task-btn"
+            onClick={handleShowAddModal}
+            title="Görev Ekle"
+          >
             <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M0 10C0 4.477 4.477 0 10 0C15.523 0 20 4.477 20 10C20 15.523 15.523 20 10 20C4.477 20 0 15.523 0 10ZM10 2C7.87827 2 5.84344 2.84285 4.34315 4.34315C2.84285 5.84344 2 7.87827 2 10C2 12.1217 2.84285 14.1566 4.34315 15.6569C5.84344 17.1571 7.87827 18 10 18C12.1217 18 14.1566 17.1571 15.6569 15.6569C17.1571 14.1566 18 12.1217 18 10C18 7.87827 17.1571 5.84344 15.6569 4.34315C14.1566 2.84285 12.1217 2 10 2Z"
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22C6.477 22 2 17.523 2 12ZM12 4C9.87827 4 7.84344 4.84285 6.34315 6.34315C4.84285 7.84344 4 9.87827 4 12C4 14.1217 4.84285 16.1566 6.34315 17.6569C7.84344 19.1571 9.87827 20 12 20C14.1217 20 16.1566 19.1571 17.6569 17.6569C19.1571 16.1566 20 14.1217 20 12C20 9.87827 19.1571 7.84344 17.6569 6.34315C16.1566 4.84285 14.1217 4 12 4Z"
                 fill="#12B423"
               />
               <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M11 5C11 4.73478 10.8946 4.48043 10.7071 4.29289C10.5196 4.10536 10.2652 4 10 4C9.73478 4 9.48043 4.10536 9.29289 4.29289C9.10536 4.48043 9 4.73478 9 5V9H5C4.73478 9 4.48043 9.10536 4.29289 9.29289C4.10536 9.48043 4 9.73478 4 10C4 10.2652 4.10536 10.5196 4.29289 10.7071C4.48043 10.8946 4.73478 11 5 11H9V15C9 15.2652 9.10536 15.5196 9.29289 15.7071C9.48043 15.8946 9.73478 16 10 16C10.2652 16 10.5196 15.8946 10.7071 15.7071C10.8946 15.5196 11 15.2652 11 15V11H15C15.2652 11 15.5196 10.8946 15.7071 10.7071C15.8946 10.5196 16 10.2652 16 10C16 9.73478 15.8946 9.48043 15.7071 9.29289C15.5196 9.10536 15.2652 9 15 9H11V5Z"
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M13 7C13 6.73478 12.8946 6.48043 12.7071 6.29289C12.5196 6.10536 12.2652 6 12 6C11.7348 6 11.4804 6.10536 11.2929 6.29289C11.1054 6.48043 11 6.73478 11 7V11H7C6.73478 11 6.48043 11.1054 6.29289 11.2929C6.10536 11.4804 6 11.7348 6 12C6 12.2652 6.10536 12.5196 6.29289 12.7071C6.48043 12.8946 6.73478 13 7 13H11V17C11 17.2652 11.1054 17.5196 11.2929 17.7071C11.4804 17.8946 11.7348 18 12 18C12.2652 18 12.5196 17.8946 12.7071 17.7071C12.8946 17.5196 13 17.2652 13 17V13H17C17.2652 13 17.5196 12.8946 17.7071 12.7071C17.8946 12.5196 18 12.2652 18 12C18 11.7348 17.8946 11.4804 17.7071 11.2929C17.5196 11.1054 17.2652 11 17 11H13V7Z"
                 fill="#12B423"
               />
             </svg>
-
-            <span className="add-btn-text">Görev Ekle</span>
+            <span>GÖREV EKLE</span>
           </button>
+
         </div>
       </div>
 
-      {/* Filtre Göstergeleri */}
-      <div className="filter-bar">
-        <div className="filter-indicators">
-          <button 
-            className={`filter-indicator ${statusFilter === "Hepsi" ? "active" : ""}`}
-            onClick={() => handleStatusFilterChange("Hepsi")}
-          >
-            <span className="filter-label">Hepsi</span>
-            <span className="filter-count">{statusCounts['Hepsi'] || 0}</span>
-          </button>
-          <button 
-            className={`filter-indicator ${statusFilter === "Devam Ediyor" ? "active" : ""}`}
-            onClick={() => handleStatusFilterChange("Devam Ediyor")}
-          >
-            <span className="filter-label">Devam Ediyor</span>
-            <span className="filter-count">{statusCounts['Devam Ediyor'] || 0}</span>
-          </button>
-          <button 
-            className={`filter-indicator ${statusFilter === "Beklemede" ? "active" : ""}`}
-            onClick={() => handleStatusFilterChange("Beklemede")}
-          >
-            <span className="filter-label">Beklemede</span>
-            <span className="filter-count">{statusCounts['Beklemede'] || 0}</span>
-          </button>
-          <button 
-            className={`filter-indicator ${statusFilter === "Tamamlandı" ? "active" : ""}`}
-            onClick={() => handleStatusFilterChange("Tamamlandı")}
-          >
-            <span className="filter-label">Tamamlandı</span>
-            <span className="filter-count">{statusCounts['Tamamlandı'] || 0}</span>
-          </button>
-        </div>
-      </div>
+
 
       {/* Tablo */}
-      <div className="table-wrapper">
+      <div className="table-wrapper" ref={tableWrapperRef}>
         <Table className="tasks-table">
           <thead>
             <tr>
@@ -436,10 +339,9 @@ const TasksTable = () => {
                 />
               </th>
               <th>SIRA</th>
-              <th>BAŞLANGIÇ</th>
-              <th>BİTİŞ</th>
-              <th>YAPILACAK GÖREV</th>
-              <th>GÖREVLİ</th>
+              <th>BAŞLANGIÇ - BİTİŞ</th>
+              <th>AÇIKLAMA</th>
+              <th>ATANAN KİŞİ</th>
               <th>DURUM</th>
               <th>ONAY</th>
               <th>İŞLEM</th>
@@ -448,21 +350,21 @@ const TasksTable = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="9" className="text-center py-4">
+                <td colSpan="8" className="text-center py-4">
                   <div className="d-flex justify-content-center align-items-center">
                     <div className="spinner-border text-primary" role="status">
                       <span className="visually-hidden">Yükleniyor...</span>
                     </div>
-                    <span className="ms-2">Görevler yükleniyor...</span>
+                    <span className="ms-2">Veriler yükleniyor...</span>
                   </div>
                 </td>
               </tr>
             ) : tasks.length === 0 ? (
               <tr>
-                <td colSpan="9" className="text-center py-4">
+                <td colSpan="8" className="text-center py-4">
                   <div className="text-muted">
                     <i className="fas fa-search me-2"></i>
-                    Herhangi bir görev bulunamadı
+                    Herhangi bir kayıt bulunamadı
                   </div>
                 </td>
               </tr>
@@ -474,36 +376,43 @@ const TasksTable = () => {
                       type="checkbox"
                       checked={selectedTasks.includes(task.id)}
                       onChange={() => handleSelectTask(task.id)}
-                      className="task-checkbox"
+                      className="contact-checkbox"
                     />
                   </td>
                   <td>{(currentPage - 1) * tasksPerPage + index + 1}</td>
-                  <td>{task.start_date_display || "-"}</td>
-                  <td>{task.end_date_display || "-"}</td>
-                  <td className="task-title">{task.title}</td>
-                  <td className="task-assignee">{task.assignee_name || "-"}</td>
                   <td>
-                    <span
-                      className={`status-badge ${getStatusBadgeClass(
-                        task.status
-                      )}`}
-                    >
+                    <div className="date-range">
+                      <span className="start-date">
+                        {task.start_date ? new Date(task.start_date).toLocaleDateString('tr-TR') : '-'}
+                      </span>
+                      <span className="date-separator"> - </span>
+                      <span className="end-date">
+                        {task.end_date ? new Date(task.end_date).toLocaleDateString('tr-TR') : '-'}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="task-description">
+                      <div className="task-title">{task.title}</div>
+                      <div className="task-desc">{task.description}</div>
+                    </div>
+                  </td>
+                  <td>{task.assignee_full_name || task.assignee_name || '-'}</td>
+                  <td>
+                    <span className={`status-badge status-${task.status.toLowerCase()}`}>
                       {task.status}
                     </span>
                   </td>
                   <td>
-                    <div className="approval-status" onClick={() => handleApprovalToggle(task)} style={{cursor: 'pointer'}}>
-                      {task.approval === "ONAYLANDI" ? (
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <circle cx="10" cy="10" r="10" fill="#10B981"/>
-                          <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                    <div 
+                      className={`approval-icon ${task.approval === 'ONAYLANDI' ? 'approved' : 'not-approved'}`}
+                      onClick={() => handleApprovalToggle(task)}
+                      title={task.approval === 'ONAYLANDI' ? 'Onayı Kaldır' : 'Onayla'}
+                    >
+                      {task.approval === 'ONAYLANDI' ? (
+                        <FaCheck className="check-icon" />
                       ) : (
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <circle cx="10" cy="10" r="10" fill="#EF4444"/>
-                          <path d="M6 6L14 14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M14 6L6 14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                        <FaTimes className="times-icon" />
                       )}
                     </div>
                   </td>
@@ -521,16 +430,35 @@ const TasksTable = () => {
         </Table>
       </div>
 
+      {/* Özel Yatay Scrollbar */}
+      {scrollbarVisible && (
+        <div className="custom-scrollbar-container">
+          <div 
+            className="custom-scrollbar-track" 
+            onClick={handleScrollbarTrackClick}
+          >
+            <div
+              className="custom-scrollbar-thumb"
+              style={{
+                width: `${scrollbarWidth}px`,
+                left: `${scrollbarLeft}px`
+              }}
+              onMouseDown={handleScrollbarMouseDown}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Alt Bilgi ve Sayfalama */}
       <div className="table-footer">
-            <div className="total-records">
-          TOPLAM {totalRecords.toLocaleString("tr-TR")} GÖREV BULUNMAKTADIR
-            </div>
-              <div className="pagination-wrapper">
+        <div className="total-records">
+          TOPLAM {totalRecords.toLocaleString("tr-TR")} KİŞİ BULUNMAKTADIR
+        </div>
+        <div className="pagination-wrapper">
           <Pagination className="custom-pagination">
-                  <Pagination.First 
+            <Pagination.First
               disabled={currentPage === 1}
-                    onClick={() => handlePageChange(1)}
+              onClick={() => handlePageChange(1)}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path
@@ -548,9 +476,9 @@ const TasksTable = () => {
                 />
               </svg>
             </Pagination.First>
-                  <Pagination.Prev 
+            <Pagination.Prev
               disabled={currentPage === 1}
-                    onClick={() => handlePageChange(currentPage - 1)}
+              onClick={() => handlePageChange(currentPage - 1)}
             >
               <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
                 <path
@@ -563,32 +491,26 @@ const TasksTable = () => {
               </svg>
             </Pagination.Prev>
 
+            {/* Sayfa numaraları */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNumber;
-              if (totalPages <= 5) {
-                pageNumber = i + 1;
-              } else if (currentPage <= 3) {
-                pageNumber = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNumber = totalPages - 4 + i;
-              } else {
-                pageNumber = currentPage - 2 + i;
+              const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+              if (pageNum <= totalPages) {
+                return (
+                  <Pagination.Item
+                    key={pageNum}
+                    active={pageNum === currentPage}
+                    onClick={() => handlePageChange(pageNum)}
+                  >
+                    {pageNum}
+                  </Pagination.Item>
+                );
               }
+              return null;
+            })}
 
-                      return (
-                        <Pagination.Item
-                  key={pageNumber}
-                  active={pageNumber === currentPage}
-                  onClick={() => handlePageChange(pageNumber)}
-                >
-                  {pageNumber}
-                        </Pagination.Item>
-                      );
-                  })}
-                  
-                  <Pagination.Next 
+            <Pagination.Next
               disabled={currentPage === totalPages}
-                    onClick={() => handlePageChange(currentPage + 1)}
+              onClick={() => handlePageChange(currentPage + 1)}
             >
               <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
                 <path
@@ -600,9 +522,9 @@ const TasksTable = () => {
                 />
               </svg>
             </Pagination.Next>
-                  <Pagination.Last 
+            <Pagination.Last
               disabled={currentPage === totalPages}
-                    onClick={() => handlePageChange(totalPages)}
+              onClick={() => handlePageChange(totalPages)}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path
@@ -620,25 +542,25 @@ const TasksTable = () => {
                 />
               </svg>
             </Pagination.Last>
-                </Pagination>
-              </div>
+          </Pagination>
+        </div>
       </div>
 
-      {/* Add Task Modal */}
+      {/* Görev Ekleme Modal */}
       <AddTaskModal
         show={showAddModal}
         onHide={handleCloseAddModal}
         onTaskAdded={handleTaskAdded}
       />
 
-      {/* View Task Modal */}
+      {/* Görev Görüntüleme Modal */}
       <ViewTaskModal
         show={showViewModal}
         onHide={handleCloseViewModal}
         task={selectedTask}
       />
 
-      {/* Edit Task Modal */}
+      {/* Görev Düzenleme Modal */}
       <EditTaskModal
         show={showEditModal}
         onHide={handleCloseEditModal}
@@ -646,81 +568,18 @@ const TasksTable = () => {
         onTaskUpdated={handleTaskUpdated}
       />
 
-      {/* Approval Confirmation Modal */}
-      <Modal show={showApprovalModal} onHide={handleCloseApprovalModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Onay Durumu Değişikliği</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {approvalTask && (
-            <div className="approval-modal-content">
-              <div className="approval-icon">
-                {approvalTask.approval === "ONAYLANDI" ? (
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="24" cy="24" r="24" fill="#FEF2F2"/>
-                    <circle cx="24" cy="24" r="16" fill="#EF4444"/>
-                    <path d="M18 18L30 30" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M30 18L18 30" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                ) : (
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="24" cy="24" r="24" fill="#F0FDF4"/>
-                    <circle cx="24" cy="24" r="16" fill="#10B981"/>
-                    <path d="M16 24L20 28L32 16" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </div>
-              <div className="approval-text">
-                <h5>
-                  {approvalTask.approval === "ONAYLANDI" 
-                    ? "Görev Onayını Kaldır" 
-                    : "Görevi Onayla"}
-                </h5>
-                <p>
-                  <strong>{approvalTask.title}</strong> adlı görevin onay durumunu{" "}
-                  {approvalTask.approval === "ONAYLANDI" 
-                    ? "kaldırmak" 
-                    : "onaylamak"} istediğinizden emin misiniz?
-                </p>
-              </div>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseApprovalModal} disabled={approvalLoading}>
-            İptal
-          </Button>
-          <Button 
-            variant={approvalTask?.approval === "ONAYLANDI" ? "danger" : "success"} 
-            onClick={confirmApprovalToggle}
-            disabled={approvalLoading}
-          >
-            {approvalLoading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                İşleniyor...
-              </>
-            ) : (
-              approvalTask?.approval === "ONAYLANDI" ? "Onayı Kaldır" : "Onayla"
-            )}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Delete Task Modal */}
+      {/* Görev Silme Modal */}
       <DeleteTaskModal
-        isOpen={showDeleteModal}
-        onClose={handleCloseDeleteModal}
+        show={showDeleteModal}
+        onHide={handleCloseDeleteModal}
         task={selectedTask}
-        onConfirm={handleConfirmDelete}
+        onTaskDeleted={handleTaskDeleted}
       />
     </div>
   );
 };
 
-export default TasksTable;
-
-// Portal tabanlı aksiyon menüsü
+// Portal tabanlı aksiyon menüsü (ContactsTable ile aynı yaklaşım)
 const TaskActionMenu = ({ onView, onEdit, onDelete }) => {
   const [open, setOpen] = useState(false);
   const btnRef = React.useRef(null);
@@ -757,10 +616,10 @@ const TaskActionMenu = ({ onView, onEdit, onDelete }) => {
   );
 
   const menu = (
-    <div ref={menuRef} className="user-actions-menu" style={{ position:'fixed', top:pos.top, left:pos.left, zIndex:2147483647, minWidth:220, background:'#fff', border:'1px solid #e5e7eb', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,.12)'}}>
+    <div ref={menuRef} className="task-actions-menu" style={{ position:'fixed', top:pos.top, left:pos.left, zIndex:2147483647, minWidth:180, background:'#fff', border:'1px solid #e5e7eb', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,.12)'}}>
       <Item icon="view" color="#4E0DCC" label="Görüntüle" onClick={onView} />
-      <Item icon="edit" color="#3B82F6" label="Düzenle" onClick={onEdit} />
       <div style={{height:1, background:'#f1f3f5', margin:'6px 0'}} />
+      <Item icon="edit" color="#3B82F6" label="Düzenle" onClick={onEdit} />
       <Item icon="delete" color="#dc3545" label="Sil" onClick={onDelete} />
     </div>
   );
@@ -778,3 +637,5 @@ const TaskActionMenu = ({ onView, onEdit, onDelete }) => {
     </>
   );
 };
+
+export default TasksTable;

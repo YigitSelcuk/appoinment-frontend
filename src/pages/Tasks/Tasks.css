@@ -1,44 +1,8 @@
-/* Adjust page overflow to allow scrolling like Users page */
 .tasks-page {
   min-height: 100vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background-color: #E6E6E6;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.tasks-container {
-  display: flex;
-  height: calc(100vh - 80px);
-  gap: 12px;
-  padding: 8px 5px 8px 20px;
-  position: relative;
-  overflow: visible;
-}
-
-/* Sol Panel - Calendar */
-.left-panel {
-  width: 320px;
-  min-width: 320px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* Orta Panel - Tasks Table */
-.tasks-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: visible;
-  min-width: 0;
-  background-color: transparent;
-  padding: 0;
-  margin-right: 70px !important; /* FloatingChat için alan */
+  overflow: hidden;
 }
 
 /* Sağ Panel - FloatingChat */
@@ -55,311 +19,347 @@
   z-index: 10;
 }
 
-/* Mirror Users page Calendar behavior in Tasks page */
-.tasks-page .calendar-widget {
-  height: auto !important;
-  max-height: none !important;
-  overflow: hidden !important;
-  border-radius: 12px !important;
-}
-.tasks-page .today-section {
-  flex: 0 0 auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: visible !important;
-}
-.tasks-page .today-events {
-  max-height: 300px !important;
-  overflow-y: auto !important;
-  overflow-x: hidden;
+.tasks-page .floating-chat {
+  width: 100%;
+  height: 100%;
+  position: relative !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: 1 !important;
 }
 
-/* Responsive Design - Improved */
+.tasks-container {
+  display: flex;
+  height: calc(100vh - 80px); /* Navbar yüksekliği çıkarıldı */
+  min-height: 800px;
+  gap: 12px;
+  padding: 8px 5px 8px 20px;
+  position: relative;
+  overflow: visible;
+  z-index: 1;
+}
 
-/* Desktop Large (1400px+) */
-@media (min-width: 1400px) {
+/* Sol Panel - Calendar */
+.left-panel {
+  width: 320px; /* Normal boyut */
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 96px); /* Navbar ve padding için ayarlama */
+  min-height: 800px;
+  overflow: hidden;
+}
+
+/* Orta Panel - Tasks Table */
+.tasks-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 96px); /* Calendar ile aynı yükseklik */
+  overflow: visible; /* Pagination'ın görünmesi için visible yap */
+  min-width: 0; /* Flexbox shrinking için */
+  background-color: transparent;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+  margin-right: 70px !important; /* FloatingChat için minimal alan */
+}
+
+.page-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  margin-bottom: 1rem;
+}
+
+.page-title {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.page-title svg {
+  color: #28a745;
+}
+
+.page-header p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+}
+
+/* Modern Responsive Design */
+
+/* Tablet ve büyük ekranlar için düzenlemeler */
+@media (max-width: 1200px) {
   .tasks-container {
-    padding: 8px 5px 8px 20px;
+    padding: 16px;
     gap: 16px;
   }
   
   .left-panel {
-    width: 360px;
-    min-width: 360px;
+    min-width: 280px;
   }
   
   .tasks-content {
-    margin-right: 120px;
-  }
-}
-
-/* Desktop Medium (1200px - 1399px) */
-@media (max-width: 1399px) and (min-width: 1200px) {
-  .tasks-container {
-    padding: 8px 5px 8px 20px;
-    gap: 14px;
-  }
-  
-  .left-panel {
-    width: 340px;
-    min-width: 340px;
-  }
-  
-  .tasks-content {
-    margin-right: 110px;
-  }
-}
-
-/* Desktop Small (992px - 1199px) */
-@media (max-width: 1199px) and (min-width: 992px) {
-  .tasks-container {
-    padding: 8px 5px 8px 15px;
-    gap: 10px;
-  }
-  
-  .left-panel {
-    width: 300px;
-    min-width: 300px;
-    height: calc(100vh - 80px);
-  }
-  
-  .tasks-content {
-    margin-right: 100px;
+    min-width: 400px;
   }
   
   .right-panel {
-    width: 90px;
-    min-width: 90px;
+    min-width: 280px;
+  }
+}
+
+/* 990px'de calendar düzeni */
+@media (max-width: 990px) {
+  .tasks-page .left-panel {
+    height: 100% !important;
+    min-height: 100% !important;
+    overflow: hidden !important;
+    position: relative !important;
+    z-index: 2 !important;
   }
   
-  /* 990px'de calendar düzeni */
-  .tasks-page .calendar-widget {
+  .tasks-page .left-panel .calendar-widget {
     height: 100% !important;
     max-height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 2 !important;
   }
   
   .tasks-page .calendar-grid {
     flex: 0 0 auto !important;
-    min-height: 250px !important;
+    min-height: 300px !important;
   }
   
   .tasks-page .today-section {
     flex: 1 !important;
-    min-height: 250px !important;
-    max-height: none !important;
-    overflow: visible !important;
-    border-top: 1px solid #E5E7EB !important;
+    min-height: 300px !important;
+    overflow-y: auto !important;
   }
   
-  .tasks-page .today-events {
-    max-height: 200px !important;
-    overflow-y: auto !important;
+  /* Tasks content'in calendar'a müdahale etmemesi için */
+  .tasks-page .tasks-content {
+    z-index: 1 !important;
+    position: relative !important;
+  }
+  
+  .tasks-page .tasks-table-container {
+    z-index: 1 !important;
+    position: relative !important;
   }
 }
 
-/* Tablet (768px - 991px) */
-@media (max-width: 991px) and (min-width: 768px) {
-  .tasks-page {
+/* Tablet Portrait */
+@media (max-width: 1024px) {
+  .tasks-container {
+    flex-direction: column;
+    padding: 12px;
+    gap: 12px;
+    height: auto;
+    min-height: calc(100vh - 80px);
+  }
+  
+  .tasks-page .left-panel {
+    width: 100%;
+    min-width: unset;
+    height: 100% !important;
+    min-height: 900px !important;
+    order: 1;
+  }
+  
+  .tasks-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .tasks-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
     overflow-y: auto;
   }
   
-  .tasks-container {
-    flex-direction: column;
-    height: auto;
-    min-height: calc(100vh - 80px);
-    gap: 16px;
-    padding: 12px 20px;
-    overflow: visible;
-  }
-  
-  .left-panel {
-    width: 100%;
-    min-width: auto;
-    height: auto;
-    max-height: none;
-    order: 1;
-    overflow: visible;
+  .tasks-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
   }
   
   .tasks-content {
     width: 100%;
+    min-width: unset;
     height: auto;
     min-height: 500px;
     order: 2;
-    margin-right: 0;
   }
   
   .right-panel {
     width: 100%;
+    min-width: unset;
     height: auto;
-    position: relative;
-    right: auto;
-    top: auto;
+    min-height: 300px;
     order: 3;
-    margin-top: 16px;
-  }
-  
-  /* Calendar adjustments for tablet */
-  .tasks-page .calendar-widget {
-    height: auto !important;
-    max-height: none !important;
-    overflow: auto !important;
-  }
-  
-  .tasks-page .today-section {
-    max-height: none !important;
-    overflow-y: visible !important;
   }
 }
 
-/* Mobile Large (576px - 767px) */
-@media (max-width: 767px) and (min-width: 576px) {
-  .tasks-page {
-    overflow-y: auto;
-  }
-  
+/* Tablet ve Mobile geçiş */
+@media (max-width: 768px) {
   .tasks-container {
-    flex-direction: column;
-    height: auto;
-    min-height: calc(100vh - 70px);
-    gap: 12px;
-    padding: 8px 15px;
-  }
-  
-  .left-panel {
-    width: 100%;
-    min-width: auto;
-    height: auto;
-    max-height: 65vh;
-    order: 1;
-  }
-  
-  .tasks-content {
-    width: 100%;
-    height: auto;
-    min-height: 400px;
-    order: 2;
-    margin-right: 0;
-  }
-  
-  .right-panel {
-    width: 100%;
-    height: auto;
-    position: relative;
-    right: auto;
-    top: auto;
-    order: 3;
-    margin-top: 12px;
-  }
-  
-  /* Calendar adjustments for mobile large */
-  .tasks-page .calendar-widget {
-    height: auto !important;
-    max-height: 65vh !important;
-  }
-  
-  .tasks-page .today-section {
-    max-height: 140px !important;
-    overflow-y: auto !important;
-  }
-  
-  .tasks-page .today-events {
-    max-height: 120px !important;
-  }
-}
-
-/* Mobile Small (max 575px) */
-@media (max-width: 575px) {
-  .tasks-page {
-    overflow-y: auto;
-  }
-  
-  .tasks-container {
-    flex-direction: column;
-    height: auto;
-    min-height: calc(100vh - 60px);
+    padding: 8px;
     gap: 8px;
-    padding: 6px 10px;
   }
   
-  .left-panel {
-    width: 100%;
-    min-width: auto;
-    height: auto;
-    max-height: 300px;
-    order: 1;
+  .tasks-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
   }
   
-  .tasks-content {
-    width: 100%;
-    height: auto;
-    min-height: 350px;
-    order: 2;
-    margin-right: 0;
-  }
-  
-  .right-panel {
-    width: 100%;
-    height: auto;
-    position: relative;
-    right: auto;
-    top: auto;
-    order: 3;
-    margin-top: 8px;
-  }
-  
-  /* Calendar adjustments for mobile small */
   .tasks-page .calendar-widget {
-    max-height: 280px !important;
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .tasks-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
   }
   
   .tasks-page .today-section {
-    max-height: 100px !important;
-    overflow-y: auto !important;
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
   }
   
-  .tasks-page .today-events {
-    max-height: 80px !important;
+  .tasks-content {
+    min-height: 450px;
+  }
+  
+  .right-panel {
+    min-height: 250px;
   }
 }
 
-/* Additional fixes for TasksTable responsiveness on Tasks page */
-@media (max-width: 991px) {
-  .tasks-page .tasks-table-container {
-    max-height: none;
-    height: auto;
+/* Mobile Landscape */
+@media (max-width: 640px) {
+  .tasks-container {
+    padding: 6px;
+    gap: 6px;
+  }
+  
+  .tasks-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .tasks-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .tasks-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .tasks-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .tasks-content {
     min-height: 400px;
   }
   
-  .tasks-page .tasks-table-container .header-bar {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    text-align: center;
-  }
-  
-  .tasks-page .tasks-table-container .header-left,
-  .tasks-page .tasks-table-container .header-center,
-  .tasks-page .tasks-table-container .header-right {
-    justify-self: center;
+  .right-panel {
+    min-height: 220px;
   }
 }
 
-@media (max-width: 575px) {
-  .tasks-page .tasks-table-container .header-bar {
-    padding: 10px 8px;
+/* Mobile Portrait */
+@media (max-width: 480px) {
+  .tasks-container {
+    padding: 4px;
+    gap: 4px;
   }
   
-  .tasks-page .tasks-table-container .header-title {
-    font-size: 16px;
+  .tasks-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+    border-radius: 8px;
   }
   
-  .tasks-page .tasks-table-container .search-input-container {
-    max-width: 100%;
+  .tasks-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
   }
   
-  .tasks-page .tasks-table-container .add-btn-text {
-    font-size: 12px;
+  .tasks-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .tasks-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .tasks-content {
+    min-height: 350px;
+    border-radius: 8px;
+  }
+  
+  .right-panel {
+    min-height: 200px;
+    border-radius: 8px;
+  }
+}
+
+/* Very Small Mobile */
+@media (max-width: 360px) {
+  .tasks-container {
+    padding: 2px;
+    gap: 2px;
+  }
+  
+  .tasks-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .tasks-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .tasks-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .tasks-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .tasks-content {
+    min-height: 320px;
+  }
+  
+  .right-panel {
+    min-height: 180px;
   }
 }

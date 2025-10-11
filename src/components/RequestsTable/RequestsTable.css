@@ -540,6 +540,364 @@
   }
 }
 
+/* Tablo Stilleri - ContactsTable'dan kopyalandı */
+.table-wrapper {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 0;
+  position: relative;
+  height: auto;
+}
+
+.requests-table {
+  width: 100%;
+  min-width: 1400px;
+  border-collapse: collapse;
+  background: #ffffff;
+  transition: transform 0.1s ease;
+  margin-bottom: 0;
+  font-size: 13px;
+  background: #ffffff;
+  border: none;
+  width: 100%;
+  min-width: 950px;
+  border-radius: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: visible;
+  table-layout: auto;
+}
+
+.requests-table th,
+.requests-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.requests-table thead th {
+  border-bottom: 1px solid #e0e0e0;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  color: #495057;
+  font-weight: 600;
+  font-size: 12px;
+  text-align: center;
+  padding: 10px 4px;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  vertical-align: middle !important;
+  line-height: 1.4;
+  height: auto;
+}
+
+.requests-table tbody tr {
+  border-bottom: none;
+  min-height: 40px;
+  height: auto;
+}
+
+.requests-table-container .requests-table tbody tr:nth-child(odd),
+.requests-table-container .requests-table tbody tr:nth-child(odd) td {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.requests-table-container .requests-table tbody tr:nth-child(even),
+.requests-table-container .requests-table tbody tr:nth-child(even) td {
+  background-color: #f9f9f9 !important;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.requests-table-container .requests-table tbody tr:hover,
+.requests-table-container .requests-table tbody tr:hover td {
+  background-color: #e3f2fd !important;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.requests-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.requests-table tbody td {
+  padding: 8px 4px;
+  vertical-align: middle !important;
+  text-align: center;
+  font-size: 13px;
+  color: #495057;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  position: relative;
+  line-height: 1.4;
+  height: auto;
+}
+
+.requests-table tbody td:first-child {
+  padding-left: 12px;
+}
+
+.requests-table tbody td:last-child {
+  padding-right: 30px;
+}
+
+.requests-table thead th:first-child {
+  padding-left: 12px;
+}
+
+.requests-table thead th:last-child {
+  padding-right: 30px;
+}
+
+.requests-table tbody td:nth-child(2) {
+  font-weight: 600;
+  color: #007bff;
+}
+
+/* İletişim sütunu özel stilleri */
+.requests-table .contact-header {
+  text-align: center !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  vertical-align: middle !important;
+}
+
+.requests-table .contact-info {
+  text-align: center !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  vertical-align: middle !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+  line-height: 1.4;
+  display: table-cell;
+}
+
+/* Table Footer Stilleri - ContactsTable'dan kopyalandı */
+.requests-table-container .table-footer {
+  background: #ffffff;
+  padding: 20px 30px 20px 20px;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  position: relative;
+  z-index: 10;
+  min-height: 60px;
+}
+
+.requests-table-container .total-records {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  text-align: left;
+}
+
+/* Action Button Stilleri - ContactsTable'dan kopyalandı */
+.action-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  transition: all 0.2s ease;
+  border: 1px solid;
+  border-radius: 3px;
+  overflow: visible !important;
+  position: relative;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.8;
+}
+
+.action-btn.btn-outline-success {
+  border-color: #28a745 !important;
+  color: #28a745 !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-success:hover {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  color: white !important;
+}
+
+.action-btn.btn-outline-info {
+  border-color: #17a2b8 !important;
+  color: #17a2b8 !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-info:hover {
+  background-color: #17a2b8 !important;
+  border-color: #17a2b8 !important;
+  color: white !important;
+}
+
+.action-btn.btn-outline-danger {
+  border-color: #dc3545 !important;
+  color: #dc3545 !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-danger:hover {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: white !important;
+}
+
+.action-btn.btn-outline-primary {
+  border-color: #007bff !important;
+  color: #007bff !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-primary:hover {
+  background-color: #007bff !important;
+  border-color: #007bff !important;
+  color: white !important;
+}
+
+.action-btn i {
+  font-size: 12px;
+}
+
+.action-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  pointer-events: none;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+}
+
+.action-btn svg path {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+.action-btn svg g {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+/* SVG override için güçlü kurallar */
+.requests-table-container .action-btn svg,
+.requests-table .action-btn svg,
+.table .action-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.requests-table-container .action-btn svg path,
+.requests-table .action-btn svg path,
+.table .action-btn svg path {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+.requests-table-container .action-btn,
+.requests-table .action-btn,
+.table .action-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+}
+
+/* Sayfalama Stilleri - ContactsTable'dan kopyalandı */
+.requests-table-container .pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.requests-table-container .custom-pagination {
+  margin-bottom: 0;
+  gap: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.requests-table-container .custom-pagination .page-item {
+  margin: 0;
+}
+
+.requests-table-container .custom-pagination .page-link {
+  color: #9CA3AF;
+  border: none;
+  background: none !important;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.requests-table-container .custom-pagination .page-item.active .page-link {
+  color: #374151;
+  font-weight: 600;
+}
+
+.requests-table-container .custom-pagination .page-link:hover {
+  color: #374151;
+  text-decoration: none;
+}
+
+.requests-table-container .custom-pagination .page-item.disabled .page-link {
+  color: #D1D5DB;
+  cursor: not-allowed;
+}
+
+.requests-table-container .custom-pagination .page-item.disabled .page-link:hover {
+  color: #D1D5DB;
+}
+
+/* Pagination navigation buttons */
+.requests-table-container .custom-pagination .page-item:first-child .page-link,
+.requests-table-container .custom-pagination .page-item:last-child .page-link {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+/* Ellipsis styling */
+.requests-table-container .custom-pagination .page-item .page-link:contains("...") {
+  border: none;
+  color: #9CA3AF;
+}
+
 /* Mobil cihazlar için yatay kaydırma */
 /* 1400px altında scrollbar göster */
 @media (max-width: 1400px) {
@@ -626,7 +984,7 @@
   .requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 180px !important; }  /* Adı */
    .requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 180px !important; }  /* Soyadı */
    .requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 140px !important; }  /* Kategori */
-   .requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 150px !important; }  /* Telefon 1 */
+   .requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 160px !important; }  /* İletişim */
    .requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 150px !important; }  /* Telefon 2 */
    .requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 140px !important; }  /* Ünvan */
    .requests-table th:nth-child(9), .requests-table td:nth-child(9) { width: 140px !important; } /* Mahalle */
@@ -765,10 +1123,13 @@
  }
 
  .requests-table th:nth-child(6),
- .requests-table td:nth-child(6) { /* TELEFON 1 */
-   width: 100px;
-   min-width: 100px;
- }
+.requests-table td:nth-child(6) { /* İLETİŞİM */
+  width: 140px;
+  min-width: 140px;
+  text-align: left;
+  padding-left: 12px;
+  padding-right: 12px;
+}
 
  .requests-table th:nth-child(7),
  .requests-table td:nth-child(7) { /* TELEFON 2 */

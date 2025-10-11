@@ -109,11 +109,12 @@ const EditTaskModal = ({ show, onHide, task, onTaskUpdated }) => {
     setError(null);
 
     try {
-      // Tarihleri backend formatına çevir
+      // Tarihleri backend formatına çevir ve onay durumunu sıfırla
       const submissionData = {
         ...formData,
         start_date: convertDateForSubmit(formData.start_date),
-        end_date: convertDateForSubmit(formData.end_date)
+        end_date: convertDateForSubmit(formData.end_date),
+        approval: 'ONAY BEKLİYOR'
       };
 
       const response = await updateTask(accessToken, task.id, submissionData);

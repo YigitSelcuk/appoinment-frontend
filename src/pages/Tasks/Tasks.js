@@ -1,10 +1,20 @@
-import React from "react";
-import Calendar from "../../components/Calendar/Calendar";
-import TasksTable from "../../components/TasksTable/TasksTable";
-import FloatingChat from "../../components/FloatingChat/FloatingChat";
-import "./Tasks.css";
+import React, { useEffect } from 'react';
+import Calendar from '../../components/Calendar/Calendar';
+import TasksTable from '../../components/TasksTable/TasksTable';
+import FloatingChat from '../../components/FloatingChat/FloatingChat';
+import './Tasks.css';
 
 const Tasks = () => {
+  useEffect(() => {
+    // Tasks sayfasında body'ye class ekle
+    document.body.classList.add('tasks-page');
+    
+    // Component unmount olduğunda class'ı kaldır
+    return () => {
+      document.body.classList.remove('tasks-page');
+    };
+  }, []);
+
   return (
     <div className="tasks-page">
       <div className="tasks-container">
@@ -13,7 +23,7 @@ const Tasks = () => {
           <Calendar />
         </div>
         
-        {/* Orta Panel - Tasks Tablosu */}
+        {/* Orta Panel - Görev Tablosu */}
         <div className="tasks-content">
           <TasksTable />
         </div>
@@ -27,4 +37,4 @@ const Tasks = () => {
   );
 };
 
-export default Tasks; 
+export default Tasks;

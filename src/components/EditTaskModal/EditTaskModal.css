@@ -83,12 +83,39 @@
 .edit-task-modal .form-select {
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   font-size: 0.875rem;
   width: 100%;
   background: var(--background-primary);
   color: var(--text-primary);
   transition: all 0.2s ease;
+  line-height: 1.5;
+  vertical-align: middle;
+  height: auto;
+  min-height: 42px;
+}
+
+.edit-task-modal .form-select {
+  padding-right: 2.5rem;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
+.edit-task-modal .form-select option {
+  padding: 0.5rem;
+  line-height: 1.5;
+}
+
+/* Bootstrap override için daha güçlü kurallar */
+.edit-task-modal .form-group .form-select,
+.edit-task-modal .form-group .form-control {
+  padding: 0.75rem 1rem !important;
+  line-height: 1.5 !important;
+  vertical-align: middle !important;
+  display: flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
 }
 
 .edit-task-modal .form-control:focus,
