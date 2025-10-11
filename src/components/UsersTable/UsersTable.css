@@ -1,4 +1,9 @@
-/* Users Table Specific Styles */
+/* Bootstrap table override */
+.table-striped > tbody > tr:nth-of-type(odd) > td,
+.table-striped > tbody > tr:nth-of-type(odd) > th {
+  background-color: transparent !important;
+}
+
 .users-table-container {
   background: #ffffff;
   padding: 0;
@@ -8,17 +13,46 @@
   display: flex;
   flex-direction: column;
   border-radius: 12px;
+  /* Overflow'u hidden yaparak içeriğin taşmasını engelle */
   overflow: hidden;
   box-shadow: 0px 60px 120px rgba(38, 51, 77, 0.05);
   min-height: 800px;
-  max-height: calc(100vh - 100px);
+  /* Max-height kaldırıldı ki pagination görünsün */
   position: relative;
   z-index: 1;
 }
 
-/* Header Bar */
+/* Container için beyaz arka plan */
+.users-table-container {
+  background: #ffffff !important;
+}
+
 .users-table-container .header-bar {
-  background: #ffffff;
+  background: #ffffff !important;
+}
+
+.users-table-container .table-footer {
+  background: #ffffff !important;
+}
+
+/* Dropdown override */
+.users-table-container .header-btn.dropdown-toggle {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.users-table-container .header-btn.dropdown-toggle:hover {
+  background: #f8f9fa !important;
+  background-color: #f8f9fa !important;
+}
+
+.users-table-container .header-btn.dropdown-toggle:focus {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Başlık Barı */
+.users-table-container .header-bar {
   border-bottom: 1px solid #e0e0e0;
   padding: 15px 20px;
   display: grid;
@@ -43,11 +77,25 @@
   width: 100%;
 }
 
-.users-table-container .header-right {
+.users-table-container .header-icon {
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  justify-self: end;
+  justify-content: center;
+  padding: 4px;
+  background: transparent !important;
+}
+
+.users-table-container .header-icon svg {
+  width: 100%;
+  height: 100%;
+  max-width: 40px;
+  max-height: 40px;
+}
+
+.users-table-container .header-icon i {
+  font-size: 16px;
 }
 
 .users-table-container .header-title {
@@ -56,6 +104,13 @@
   font-weight: 600;
   color: #2c3e50;
   letter-spacing: 0.5px;
+}
+
+.users-table-container .header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
 }
 
 .users-table-container .header-btn {
@@ -77,6 +132,12 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.users-table-container .header-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 .users-table-container .header-btn:hover {
   border-color: #d0d0d0;
   background: #f8f9fa;
@@ -84,14 +145,296 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Search Input */
-.users-table-container .search-container {
+/* Dropdown button styling */
+.users-table-container .header-btn.dropdown-toggle {
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 50% !important;
+  color: #495057 !important;
+  box-shadow: none !important;
+  background: #ffffff !important;
+}
+
+.users-table-container .header-btn.dropdown-toggle:hover {
+  border-color: #d0d0d0 !important;
+  background: #f8f9fa !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.users-table-container .header-btn.dropdown-toggle:focus {
+  border-color: #e0e0e0 !important;
+  box-shadow: none !important;
+  background: #ffffff !important;
+}
+
+.users-table-container .header-btn.dropdown-toggle:active,
+.users-table-container .header-btn.dropdown-toggle.show {
+  border-color: #4E0DCC !important;
+  background: #f8f9fa !important;
+  box-shadow: 0 0 0 2px rgba(78, 13, 204, 0.1) !important;
+}
+
+.users-table-container .header-btn.dropdown-toggle::after {
+  display: none !important;
+}
+
+.users-table-container .header-btn i {
+  font-size: 15px;
+}
+
+.users-table-container .header-btn.bulk-sms-btn {
+  background-color: #28a745 !important;
+  border: 1px solid #28a745 !important;
+  color: white !important;
+  border-radius: 10px !important;
+  padding: 8px 16px !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.2s ease !important;
+  min-width: 100px !important;
+  height: 45px !important;
+  width: auto !important;
+}
+
+.header-btn.bulk-sms-btn:hover {
+  background-color: #218838 !important;
+  border-color: #1e7e34 !important;
+  color: white !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.25) !important;
+}
+
+.header-btn.bulk-sms-btn:focus {
+  background-color: #218838 !important;
+  border-color: #1e7e34 !important;
+  color: white !important;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+}
+
+.header-btn.bulk-sms-btn:active {
+  background-color: #1e7e34 !important;
+  border-color: #1c7430 !important;
+  color: white !important;
+}
+
+/* Action Menu Button Stilleri */
+.action-menu-btn {
+  border: 1px solid #dee2e6 !important;
+  padding: 6px 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: white !important;
+  color: #6c757d !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  margin: 0 auto !important;
+}
+
+.action-menu-btn:hover {
+  border-color: #4E0DCC !important;
+  background: #f8f9fa !important;
+  color: #4E0DCC !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(78, 13, 204, 0.15) !important;
+}
+
+.action-menu-btn:focus {
+  border-color: #4E0DCC !important;
+  box-shadow: 0 0 0 2px rgba(78, 13, 204, 0.1) !important;
+}
+
+.action-menu-btn:active,
+.action-menu-btn.show {
+  border-color: #4E0DCC !important;
+  background: #f8f9fa !important;
+  color: #4E0DCC !important;
+  box-shadow: 0 0 0 2px rgba(78, 13, 204, 0.1) !important;
+}
+
+.action-menu-btn::after {
+  display: none !important;
+}
+
+/* Dropdown Menu Stilleri - Yeniden yazıldı */
+.users-table-container .dropdown {
+  position: relative !important;
+}
+
+.users-table-container .dropdown-toggle {
+  background: transparent !important;
+  border: none !important;
+  padding: 4px !important;
+  color: #6c757d !important;
+}
+
+.users-table-container .dropdown-toggle:hover {
+  color: #495057 !important;
+  background: #f8f9fa !important;
+  border-radius: 4px !important;
+}
+
+.users-table-container .dropdown-toggle:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.users-table-container .dropdown-toggle::after {
+  display: none !important;
+}
+
+.users-table-container .dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  z-index: 99999 !important;
+  display: none !important;
+  min-width: 160px !important;
+  padding: 8px 0 !important;
+  margin: 2px 0 0 !important;
+  font-size: 14px !important;
+  color: #495057 !important;
+  text-align: left !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  background-clip: padding-box !important;
+  transform: translateZ(0) !important;
+}
+
+.users-table-container .dropdown-menu.show {
+  display: block !important;
+}
+
+.users-table-container .dropdown-menu[data-popper-placement] {
+  position: absolute !important;
+}
+
+/* Dropdown için ekstra güçlü kurallar */
+.users-table-container tbody tr td .dropdown {
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
+.users-table-container tbody tr td .dropdown .dropdown-menu {
+  position: absolute !important;
+  z-index: 99999 !important;
+  top: 100% !important;
+  left: -140px !important;
+  right: auto !important;
+  transform: none !important;
+  will-change: transform !important;
+}
+
+.users-table-container tbody tr:last-child td .dropdown .dropdown-menu {
+  top: auto !important;
+  bottom: 100% !important;
+}
+
+/* Bootstrap dropdown override */
+.dropdown-menu.show {
+  display: block !important;
+  z-index: 99999 !important;
+}
+
+.users-table-container .dropdown-item {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  padding: 8px 16px !important;
+  clear: both !important;
+  font-weight: 400 !important;
+  color: #495057 !important;
+  text-align: inherit !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.users-table-container .dropdown-item:hover {
+  color: #4E0DCC !important;
+  background-color: #f8f9fa !important;
+}
+
+.users-table-container .dropdown-item:focus {
+  color: #4E0DCC !important;
+  background-color: #f8f9fa !important;
+  outline: none !important;
+}
+
+.users-table-container .dropdown-item.text-danger {
+  color: #dc3545 !important;
+}
+
+.users-table-container .dropdown-item.text-danger:hover {
+  color: #dc3545 !important;
+  background-color: #fff5f5 !important;
+}
+
+.users-table-container .dropdown-item svg {
+  margin-right: 8px !important;
+  flex-shrink: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.users-table-container .dropdown-divider {
+  height: 0 !important;
+  margin: 4px 0 !important;
+  overflow: hidden !important;
+  border-top: 1px solid #e9ecef !important;
+}
+
+/* Tablo hücrelerinin hizalaması */
+th, td {
+  vertical-align: middle;
+}
+
+/* Checkbox sütunu ortalama */
+th:nth-child(1),
+td:nth-child(1) {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Sıra numarası sütunu ortalama */
+th:nth-child(2),
+td:nth-child(2) {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Resim sütunu ortalama */
+th:nth-child(3),
+td:nth-child(3) {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* İşlemler sütunu ortalama */
+th:last-child,
+td:last-child {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Header içindeki arama kutusu stilleri */
+.header-center .search-container {
   position: relative;
   width: 100%;
   max-width: 400px;
 }
 
-.users-table-container .search-input {
+.header-center .search-input {
   width: 100%;
   border: 2px solid #E5E7EB;
   border-radius: 20px;
@@ -103,48 +446,184 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.users-table-container .search-input::placeholder {
+.header-center .search-input::placeholder {
   color: #9CA3AF;
   font-weight: 400;
 }
 
-.users-table-container .search-input:focus {
+.header-center .search-input:focus {
   border-color: #4E0DCC;
   box-shadow: 0 0 0 3px rgba(78, 13, 204, 0.1);
   outline: none;
 }
 
-.users-table-container .search-icon {
+.header-center .search-icon {
   position: absolute;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  color: #9CA3AF;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Table Wrapper */
-.users-table-container .table-wrapper {
-  flex: 1;
-  overflow-x: auto;
-  overflow-y: auto;
-  background: #ffffff;
+/* Bulk SMS Modal Stilleri */
+.bulk-sms-modal {
+  padding: 0 !important;
+}
+
+.bulk-sms-modal .modal {
+  padding: 0 !important;
+}
+
+.bulk-sms-modal .modal-backdrop {
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.bulk-sms-modal .modal-dialog {
+  margin: 5vh auto;
+  padding: 0;
   width: 100%;
+  max-width: 700px;
 }
 
-/* Table Styles */
+.bulk-sms-modal .modal-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+/* Modal açıkken body scroll engellemesi */
+body.modal-open {
+  overflow: hidden !important;
+  padding-right: 0px !important;
+}
+
+/* Responsive modal */
+@media (max-width: 768px) {
+  .bulk-sms-modal .modal-dialog {
+    margin: 10px auto;
+    max-width: calc(100vw - 20px);
+    width: calc(100vw - 20px);
+    padding: 0;
+  }
+
+  .bulk-sms-modal {
+    padding: 0 !important;
+  }
+}
+
+/* Özel Yatay Scrollbar Stilleri */
+.custom-scrollbar-container {
+  position: relative;
+  width: 100%;
+  height: 12px;
+  margin-top: 8px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  z-index: 10;
+}
+
+.custom-scrollbar-track {
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  position: relative;
+  border-radius: 6px;
+}
+
+.custom-scrollbar-thumb {
+  height: 100%;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  border-radius: 6px;
+  cursor: grab;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+  position: absolute;
+  top: 0;
+  left: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.custom-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  box-shadow: 0 3px 6px rgba(0, 123, 255, 0.4);
+}
+
+.custom-scrollbar-thumb:active {
+  cursor: grabbing;
+  background: linear-gradient(135deg, #004085, #002752);
+}
+
+/* Responsive scrollbar */
+@media (max-width: 768px) {
+  .custom-scrollbar-container {
+    height: 8px;
+    margin-top: 6px;
+  }
+  
+  .custom-scrollbar-thumb {
+    border-radius: 4px;
+  }
+}
+
+/* Tablo Stilleri */
+.table-wrapper {
+  flex: 1;
+  /* Sadece yatay scroll, dikey scroll kaldırıldı */
+  overflow-x: auto;
+  overflow-y: visible;
+  background: #ffffff;
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  /* Alt köşelerde border-radius kaldırıldı, container'da zaten var */
+  border-radius: 0;
+  /* Max-height kaldırıldı ki pagination görünsün */
+  height: auto;
+}
+
 .users-table {
   width: 100%;
-  border-radius: 12px;
+  min-width: 1400px; /* Minimum genişlik belirle */
+  border-collapse: collapse;
+  background: #ffffff;
+  transition: transform 0.1s ease; /* Transform animasyonu ekle */
+  margin-bottom: 0;
+  font-size: 13px;
+  background: #ffffff;
+  border: none;
+  width: 100%;
+  min-width: 950px;
+  border-radius: 0; /* Border-radius kaldırıldı */
   border-collapse: separate;
   border-spacing: 0;
-  overflow: hidden;
-  table-layout: fixed;
+  overflow: visible; /* Table overflow'u visible yap */
+  table-layout: auto;
+}
+
+.users-table th,
+.users-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .users-table thead th {
-  background: #f8f9fa;
   border-bottom: 1px solid #e0e0e0;
   border-top: none;
   border-left: none;
@@ -153,7 +632,7 @@
   font-weight: 600;
   font-size: 12px;
   text-align: center;
-  padding: 10px 8px;
+  padding: 10px 4px;
   white-space: nowrap;
   letter-spacing: 0.2px;
   position: sticky;
@@ -165,16 +644,19 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
-.users-table tbody tr:nth-child(odd) {
-  background-color: #ffffff;
+.users-table-container .users-table tbody tr:nth-child(odd),
+.users-table-container .users-table tbody tr:nth-child(odd) td {
+  background-color: #ffffff !important;
 }
 
-.users-table tbody tr:nth-child(even) {
-  background-color: #f9f9f9;
+.users-table-container .users-table tbody tr:nth-child(even),
+.users-table-container .users-table tbody tr:nth-child(even) td {
+  background-color: #f9f9f9 !important;
 }
 
-.users-table tbody tr:hover {
-  background-color: #e3f2fd;
+.users-table-container .users-table tbody tr:hover,
+.users-table-container .users-table tbody tr:hover td {
+  background-color: #e3f2fd !important;
 }
 
 .users-table tbody tr:last-child {
@@ -182,64 +664,218 @@
 }
 
 .users-table tbody td {
-  padding: 8px;
+  padding: 8px 4px;
   vertical-align: middle;
   text-align: center;
   font-size: 13px;
   color: #495057;
   border-left: none;
   border-right: none;
-  border-top: none;
-  border-bottom: none;
+  position: relative;
 }
 
-/* Action Buttons */
-.users-table-container .action-buttons {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  align-items: center;
+.users-table tbody td:first-child {
+  padding-left: 12px;
 }
 
-.users-table-container .action-btn {
+.users-table tbody td:last-child {
+  padding-right: 30px;
+}
+
+.users-table thead th:first-child {
+  padding-left: 12px;
+}
+
+.users-table thead th:last-child {
+  padding-right: 30px;
+}
+
+.users-table tbody td:nth-child(2) {
+  font-weight: 600;
+  color: #007bff;
+}
+
+/* Checkbox Stilleri */
+.select-all-checkbox,
+.user-checkbox {
+  margin: 0;
+  transform: scale(1.1);
+}
+
+.select-all-checkbox .form-check-input,
+.user-checkbox .form-check-input {
+  border: 1px solid #d0d0d0;
+  border-radius: 3px;
+}
+
+.select-all-checkbox .form-check-input:checked,
+.user-checkbox .form-check-input:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Avatar Stilleri */
+.user-avatar {
   width: 28px;
   height: 28px;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  background: white;
-  color: #6c757d;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+
+/* İşlem Butonları */
+.action-buttons {
   display: flex;
+  gap: 1px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 200px;
+  width: 100%;
+}
+
+.action-btn {
+  width: 26px;
+  height: 26px;
+  padding: 0 !important;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  font-size: 10px;
   transition: all 0.2s ease;
+  border: 1px solid;
+  border-radius: 3px;
+  overflow: visible !important;
+  position: relative;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.8;
+}
+
+.action-btn.btn-outline-success {
+  border-color: #28a745 !important;
+  color: #28a745 !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-success:hover {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  color: white !important;
+}
+
+.action-btn.btn-outline-info {
+  border-color: #17a2b8 !important;
+  color: #17a2b8 !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-info:hover {
+  background-color: #17a2b8 !important;
+  border-color: #17a2b8 !important;
+  color: white !important;
+}
+
+.action-btn.btn-outline-danger {
+  border-color: #dc3545 !important;
+  color: #dc3545 !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-danger:hover {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: white !important;
+}
+
+.action-btn.btn-outline-primary {
+  border-color: #007bff !important;
+  color: #007bff !important;
+  background-color: transparent !important;
+}
+
+.action-btn.btn-outline-primary:hover {
+  background-color: #007bff !important;
+  border-color: #007bff !important;
+  color: white !important;
+}
+
+.action-btn i {
   font-size: 12px;
 }
 
-.users-table-container .action-btn:hover {
-  border-color: #4E0DCC;
-  background: #f8f9fa;
-  color: #4E0DCC;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(78, 13, 204, 0.15);
+.action-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  pointer-events: none;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 1;
 }
 
-.users-table-container .action-btn.view-btn:hover {
-  border-color: #17a2b8;
-  color: #17a2b8;
+.action-btn svg path {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
 }
 
-.users-table-container .action-btn.edit-btn:hover {
-  border-color: #ffc107;
-  color: #ffc107;
+.action-btn svg g {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
 }
 
-.users-table-container .action-btn.delete-btn:hover {
-  border-color: #dc3545;
-  color: #dc3545;
+/* SVG override için güçlü kurallar */
+.users-table-container .action-btn svg,
+.users-table .action-btn svg,
+.table .action-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-/* Table Footer */
+.users-table-container .action-btn svg path,
+.users-table .action-btn svg path,
+.table .action-btn svg path {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+.users-table-container .action-btn,
+.users-table .action-btn,
+.table .action-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+}
+
+
+
+.header-btn.bulk-sms-btn:disabled {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: white !important;
+  cursor: not-allowed !important;
+  opacity: 0.65 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.header-btn.bulk-sms-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Tablo Footer Stilleri */
 .users-table-container .table-footer {
   background: #ffffff;
   padding: 20px 30px 20px 20px;
@@ -251,6 +887,10 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 15px;
+  /* Footer'ın her zaman görünmesini sağla */
+  position: relative;
+  z-index: 10;
+  min-height: 60px;
 }
 
 .users-table-container .total-records {
@@ -268,7 +908,7 @@
   width: 100%;
 }
 
-/* Pagination Styles */
+/* Sayfalama Stilleri */
 .users-table-container .custom-pagination {
   margin-bottom: 0;
   gap: 4px;
@@ -276,60 +916,96 @@
   align-items: center;
 }
 
-.users-table-container .page-item {
+.users-table-container .custom-pagination .page-item {
   margin: 0;
 }
 
-.users-table-container .page-link {
-  border: 1px solid #dee2e6;
-  color: #495057;
+.users-table-container .custom-pagination .page-link {
+  color: #9CA3AF;
+  border: none;
+  background: none !important;
   padding: 8px 12px;
-  margin: 0;
-  background: white;
-  border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
-  transition: all 0.2s ease;
-  text-decoration: none;
+  border-radius: 6px;
+  min-width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
-  height: 40px;
+  text-decoration: none;
+  transition: all 0.2s ease;
 }
 
-.users-table-container .page-link:hover {
-  border-color: #4E0DCC;
-  background: #f8f9fa;
-  color: #4E0DCC;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(78, 13, 204, 0.15);
+.users-table-container .custom-pagination .page-item.active .page-link {
+  color: #374151;
+  font-weight: 600;
 }
 
-.users-table-container .page-item.active .page-link {
-  background: #4E0DCC;
-  border-color: #4E0DCC;
-  color: white;
-  box-shadow: 0 4px 12px rgba(78, 13, 204, 0.3);
+.users-table-container .custom-pagination .page-link:hover {
+  color: #374151;
+  text-decoration: none;
 }
 
-.users-table-container .page-item.disabled .page-link {
-  color: #6c757d;
-  background: #f8f9fa;
-  border-color: #dee2e6;
+.users-table-container .custom-pagination .page-item.disabled .page-link {
+  color: #D1D5DB;
   cursor: not-allowed;
 }
 
-.users-table-container .page-item.disabled .page-link:hover {
-  transform: none;
-  box-shadow: none;
+.users-table-container .custom-pagination .page-item.disabled .page-link:hover {
+  color: #D1D5DB;
 }
 
-/* Responsive Design */
+/* Pagination navigation buttons */
+.users-table-container .custom-pagination .page-item:first-child .page-link,
+.users-table-container .custom-pagination .page-item:last-child .page-link {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+/* Ellipsis styling */
+.users-table-container .custom-pagination .page-item .page-link:contains("...") {
+  border: none;
+  color: #9CA3AF;
+}
+
+/* Responsive Tasarım */
+@media (max-width: 1200px) {
+  .users-table {
+    min-width: 1200px;
+  }
+  
+  .users-table thead th,
+  .users-table tbody td {
+    padding: 8px 3px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 992px) {
+  .users-table-container .table-footer {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .users-table {
+    min-width: 1000px;
+  }
+  
+  .users-table thead th,
+  .users-table tbody td {
+    padding: 6px 2px;
+    font-size: 11px;
+  }
+}
+
 @media (max-width: 768px) {
   .users-table-container .header-bar {
     grid-template-columns: 1fr;
-    gap: 10px;
+    grid-template-rows: auto auto auto;
+    gap: 15px;
+    padding: 15px;
     text-align: center;
   }
   
@@ -339,38 +1015,208 @@
     justify-self: center;
   }
   
-  .users-table-container .table-footer {
-    flex-direction: column;
-    gap: 10px;
+  .users-table-container .header-center .search-container {
+    max-width: 100%;
   }
   
-  .users-table-container .pagination-wrapper {
-    width: auto;
+  .users-table-container .header-center .search-input {
+    font-size: 14px;
+    padding: 8px 35px 8px 12px;
+  }
+  
+  .users-table-container .table-footer {
+    padding: 15px 20px;
+  }
+  
+  .users-table {
+    font-size: 11px;
+  }
+  
+  .users-table thead th,
+  .users-table tbody td {
+    padding: 6px 4px;
+  }
+  
+  .action-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 8px;
+  }
+
+  .action-btn svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+  
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .total-records {
+    font-size: 12px;
+  }
+  
+  .custom-pagination .page-link {
+    padding: 4px 8px;
+    font-size: 12px;
   }
 }
 
 @media (max-width: 576px) {
-  .users-table-container .users-table {
-    font-size: 11px;
+  /* Header düzeni */
+  .users-table-container .header-bar {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 12px 15px !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+  }
+
+  .users-table-container .header-left {
+    justify-self: center !important;
+    order: 1 !important;
+  }
+
+  .users-table-container .header-center {
+    order: 2 !important;
+    width: 100% !important;
+  }
+
+  .users-table-container .header-right {
+    justify-self: center !important;
+    order: 3 !important;
+  }
+
+  /* Footer */
+  .table-footer {
+    padding: 12px 15px !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+  }
+
+  .total-records {
+    font-size: 12px !important;
+    text-align: center !important;
+  }
+
+  .pagination-wrapper {
+    justify-content: center !important;
+  }
+
+  /* Checkbox ve form elementleri */
+  .users-table input[type="checkbox"] {
+    transform: scale(1.2) !important;
+  }
+
+  /* Tablo başlıkları */
+  .users-table thead th {
+    background: #f8f9fa !important;
+    font-weight: 600 !important;
+    color: #495057 !important;
+    text-align: center !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+  }
+
+  /* Satır hover efekti */
+  .users-table tbody tr:hover {
+    background-color: #f8f9fa !important;
   }
   
-  .users-table-container .users-table thead th,
-  .users-table-container .users-table tbody td {
-    padding: 6px 4px;
+  .users-table th:nth-child(1),
+  .users-table td:nth-child(1) { /* CHECKBOX */
+    width: 50px !important;
   }
   
-  .users-table-container .action-btn {
-    width: 24px;
-    height: 24px;
-    font-size: 10px;
+  .users-table th:nth-child(2),
+  .users-table td:nth-child(2) { /* SIRA */
+    width: 50px !important;
   }
   
-  .users-table-container .custom-pagination .page-link {
-    padding: 6px 8px;
-    font-size: 12px;
-    min-width: 32px;
-    height: 32px;
+  .users-table th:nth-child(3),
+  .users-table td:nth-child(3) { /* KAYIT TARİHİ */
+    width: 120px !important;
+  }
+  
+  .users-table th:nth-child(4),
+  .users-table td:nth-child(4) { /* ADI */
+    width: 120px !important;
+  }
+  
+  .users-table th:nth-child(5),
+  .users-table td:nth-child(5) { /* ÜNVANI */
+    width: 100px !important;
+  }
+  
+  .users-table th:nth-child(6),
+  .users-table td:nth-child(6) { /* TELEFON */
+    width: 120px !important;
+  }
+  
+  .users-table th:nth-child(7),
+  .users-table td:nth-child(7) { /* EMAIL */
+    width: 150px !important;
+  }
+  
+  .users-table th:nth-child(8),
+  .users-table td:nth-child(8) { /* ROLÜ */
+    width: 100px !important;
+  }
+  
+  .users-table th:nth-child(9),
+  .users-table td:nth-child(9) { /* İŞLEMLER */
+    width: 100px !important;
   }
 }
 
+/* Koyu tema desteği */
+@media (prefers-color-scheme: dark) {
+  .users-table-container {
+    background: #1a1a1a;
+    color: #ffffff;
+  }
+  
+  .users-table-container .header-bar {
+    background: #fff !important;
+    border-bottom-color: #dee2e6;
+  }
+  
+  .users-table-container .header-left {
+    color: #ffffff;
+  }
+  
+  .users-table-container .header-center {
+    color: #ffffff;
+  }
+  
+  .users-table-container .header-right {
+    color: #ffffff;
+  }
+}
 
+/* Print stilleri */
+@media print {
+  .users-table-container .header-bar {
+    display: none;
+  }
+  
+  .users-table-container .table-footer {
+    display: none;
+  }
+  
+  .users-table {
+    font-size: 10px;
+  }
+  
+  .users-table th,
+  .users-table td {
+    padding: 4px 2px;
+    border: 1px solid #000;
+  }
+}

@@ -22,10 +22,9 @@
   min-width: 320px;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
+  height: calc(100vh - 96px); /* Navbar ve padding için ayarlama */
+  min-height: 800px;
+  overflow: hidden;
 }
 
 /* Orta Panel - WeeklyCalendar - Maksimum genişletildi */
@@ -550,6 +549,44 @@
   }
 }
 
+/* 990px'de calendar düzeni */
+@media (max-width: 990px) {
+  .appointments-page .left-panel {
+    height: 100% !important;
+    min-height: 100% !important;
+    overflow: hidden !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  
+  .appointments-page .left-panel .calendar-widget {
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  
+  .appointments-page .calendar-grid {
+    flex: 0 0 auto !important;
+    min-height: 300px !important;
+  }
+  
+  .appointments-page .today-section {
+    flex: 1 !important;
+    min-height: 300px !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Weekly calendar content'in calendar'a müdahale etmemesi için */
+  .appointments-page .weekly-calendar-section {
+    z-index: 1 !important;
+    position: relative !important;
+  }
+}
+
 /* Tablet (768px - 991px) */
 @media (max-width: 991px) and (min-width: 768px) {
   .appointments-container {
@@ -560,27 +597,47 @@
     padding: 12px 20px;
   }
   
-  .left-panel {
+  .appointments-page .left-panel {
     width: 100%;
-    min-width: auto;
-    height: 100vh;
-    min-height: 500px;
-    order: 3; /* Calendar bileşenini en aşağı al */
-    overflow: visible;
+    min-width: unset;
+    height: 100% !important;
+    min-height: 900px !important;
+    order: 1;
+  }
+  
+  .appointments-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .appointments-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .appointments-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
   }
   
   .weekly-calendar-section {
-    height: 600px;
-    order: 1; /* WeeklyCalendar en üstte */
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    min-height: 500px;
+    order: 2;
     margin-right: 0;
     margin-top: 0;
   }
   
   .right-panel {
     width: 100%;
-    min-width: auto;
-    height: 120px;
-    order: 2; /* Chat ortada */
+    min-width: unset;
+    height: auto;
+    min-height: 300px;
+    order: 3;
     position: relative; /* Tablet'te relative position */
     right: auto;
     top: auto;
@@ -624,25 +681,46 @@
     padding: 8px 15px; /* Navbar mobile padding ile eşitlenmiş */
   }
   
-  .left-panel {
+  .appointments-page .left-panel {
     width: 100%;
-    min-width: auto;
-    height: 80vh;
-    min-height: 400px;
-    order: 3; /* Calendar bileşenini en aşağı al */
+    min-width: unset;
+    height: 100% !important;
+    min-height: 900px !important;
+    order: 1;
+  }
+  
+  .appointments-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .appointments-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .appointments-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
   }
   
   .weekly-calendar-section {
-    height: 500px;
-    order: 1; /* WeeklyCalendar en üstte */
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    min-height: 450px;
+    order: 2;
     margin-right: 0;
   }
   
   .right-panel {
     width: 100%;
-    min-width: auto;
-    height: 100px;
-    order: 2; /* Chat ortada */
+    min-width: unset;
+    height: auto;
+    min-height: 250px;
+    order: 3;
     position: relative; /* Mobile'de relative position */
     right: auto;
     top: auto;
@@ -725,29 +803,53 @@
     padding: 6px 10px; /* Çok küçük ekranlar için daha az padding */
   }
   
-  .left-panel {
+  .appointments-page .left-panel {
     width: 100%;
-    min-width: auto;
-    height: 70vh;
-    min-height: 350px;
-    order: 3; /* Calendar bileşenini en aşağı al */
+    min-width: unset;
+    height: 100% !important;
+    min-height: 900px !important;
+    order: 1;
+    border-radius: 8px;
+  }
+  
+  .appointments-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .appointments-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .appointments-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
   }
   
   .weekly-calendar-section {
-    height: 450px;
-    order: 1; /* WeeklyCalendar en üstte */
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    min-height: 350px;
+    order: 2;
     margin-right: 0;
+    border-radius: 8px;
   }
   
   .right-panel {
     width: 100%;
-    min-width: auto;
-    height: 80px;
-    order: 2; /* Chat ortada */
+    min-width: unset;
+    height: auto;
+    min-height: 200px;
+    order: 3;
     position: relative; /* Mobile'de relative position */
     right: auto;
     top: auto;
     z-index: auto;
+    border-radius: 8px;
   }
   
   .messaging-section {
@@ -831,5 +933,43 @@
   .attendee-avatar {
     width: 16px;
     height: 16px;
+  }
+}
+
+/* Very Small Mobile */
+@media (max-width: 360px) {
+  .appointments-container {
+    padding: 2px;
+    gap: 2px;
+  }
+  
+  .appointments-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .appointments-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .appointments-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .appointments-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .weekly-calendar-section {
+    min-height: 320px;
+  }
+  
+  .right-panel {
+    min-height: 180px;
   }
 }

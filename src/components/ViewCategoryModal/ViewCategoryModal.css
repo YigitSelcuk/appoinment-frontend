@@ -1,0 +1,190 @@
+/* Modal boyutunu zorla genişlet */
+.view-category-modal .modal-dialog {
+  max-width: 90vw !important;
+  width: 90vw !important;
+  margin: 1.75rem auto;
+}
+
+@media (min-width: 1200px) {
+  .view-category-modal .modal-dialog {
+    max-width: 1200px !important;
+    width: 1200px !important;
+  }
+}
+
+.view-category-modal .modal-content {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.view-category-modal .modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  border: none;
+  padding: 1.5rem;
+}
+
+.view-category-modal .header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.view-category-modal .header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.view-category-modal .header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.view-category-modal .modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.view-category-modal .category-name {
+  margin: 0.25rem 0 0 0;
+  font-size: 1rem;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+.view-category-modal .close-btn {
+  color: white;
+  border: none;
+  background: none;
+  font-size: 1.2rem;
+  padding: 0.5rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.view-category-modal .close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.view-category-modal .modal-body {
+  padding: 2.5rem;
+  max-height: 75vh;
+  overflow-y: auto;
+  min-height: 400px;
+}
+
+.view-category-modal .category-details {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.view-category-modal .detail-item {
+  margin-bottom: 2rem;
+}
+
+.view-category-modal .detail-label {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.view-category-modal .detail-value {
+  background-color: #f8f9fa;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+  font-size: 1.1rem;
+  color: #212529;
+  min-height: 55px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.view-category-modal .detail-value.description {
+  min-height: 80px;
+  align-items: flex-start;
+  padding-top: 1rem;
+  line-height: 1.5;
+}
+
+
+
+
+
+.view-category-modal .modal-footer {
+  border-top: 1px solid #dee2e6;
+  padding: 1rem 2rem;
+  background-color: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+.view-category-modal .modal-footer .btn {
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .view-category-modal .modal-header {
+    padding: 1rem;
+  }
+  
+  .view-category-modal .modal-body {
+    padding: 1.5rem;
+  }
+  
+  .view-category-modal .header-left {
+    gap: 0.75rem;
+  }
+  
+  .view-category-modal .category-color-circle {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .view-category-modal .modal-title {
+    font-size: 1.1rem;
+  }
+  
+  .view-category-modal .category-name {
+    font-size: 0.9rem;
+  }
+}
+
+/* Kişi sayısı özel stilleri */
+.view-category-modal .contact-count {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.view-category-modal .contact-count:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}

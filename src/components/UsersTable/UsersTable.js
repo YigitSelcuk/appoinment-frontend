@@ -1,38 +1,615 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Table, Button, Form, Row, Col, Pagination, Modal } from "react-bootstrap";
 import { createPortal } from 'react-dom';
-import { Pagination, Form } from 'react-bootstrap';
-import '../TasksTable/TasksTable.css';
-import './UsersTable.css';
+import { useNavigate } from "react-router-dom";
+import { useSimpleToast } from "../../contexts/SimpleToastContext";
+import { getUsers, createUser, updateUser, deleteUser } from "../../services/usersService";
+import { fetchAllCategoriesForDropdown } from "../../services/categoriesService";
+import { smsService } from "../../services/smsService";
 
-const UsersTable = ({ 
-  users = [], 
-  onClickAdd, 
-  onSearchChange, 
-  onView, 
-  onEdit, 
-  onDelete,
-  currentPage = 1,
-  totalPages = 1,
-  totalRecords = 0,
-  usersPerPage = 14,
-  onPageChange,
-  searchTerm = ""
-}) => {
-  const handlePageChange = (page) => {
-    if (onPageChange) {
-      onPageChange(page);
+import AddUserModal from "../AddUserModal/AddUserModal";
+import ViewUserModal from "../ViewUserModal/ViewUserModal";
+import EditUserModal from "../EditUserModal/EditUserModal";
+import DeleteUserModal from "../DeleteUserModal/DeleteUserModal";
+
+import ExcelImportModal from "../ExcelImportModal/ExcelImportModal";
+import * as XLSX from 'xlsx';
+import "./UsersTable.css";
+
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+const UsersTable = () => {
+  const navigate = useNavigate();
+  const { showSuccess, showError, showWarning } = useSimpleToast();
+  
+  const tableWrapperRef = useRef(null);
+  
+  const [users, setUsers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(14);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [categories, setCategories] = useState([]);
+
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  const [scrollbarVisible, setScrollbarVisible] = useState(false);
+  const [scrollbarLeft, setScrollbarLeft] = useState(0);
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const [showBulkSMSModal, setShowBulkSMSModal] = useState(false);
+  const [showExcelImportModal, setShowExcelImportModal] = useState(false);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [bulkSMSLoading, setBulkSMSLoading] = useState(false);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await getUsers(token);
+
+      if (response.success) {
+        let filteredUsers = response.data || [];
+        
+        // Arama filtresi uygula
+        if (debouncedSearchTerm) {
+          const searchLower = debouncedSearchTerm.toLowerCase();
+          filteredUsers = filteredUsers.filter(user => 
+            user.name?.toLowerCase().includes(searchLower) ||
+            user.surname?.toLowerCase().includes(searchLower) ||
+            user.email?.toLowerCase().includes(searchLower) ||
+            user.department?.toLowerCase().includes(searchLower)
+          );
+        }
+
+        // Sayfalama hesapla
+        const totalRecords = filteredUsers.length;
+        const totalPages = Math.ceil(totalRecords / usersPerPage);
+        const startIndex = (currentPage - 1) * usersPerPage;
+        const endIndex = startIndex + usersPerPage;
+        const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+        setUsers(paginatedUsers);
+        setTotalPages(totalPages);
+        setTotalRecords(totalRecords);
+      }
+    } catch (error) {
+      showError("Kullanıcılar yüklenirken hata oluştu");
+      setUsers([]);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const response = await fetchAllCategoriesForDropdown();
+      if (response.success) {
+        setCategories(["TÜMÜ", ...response.data]);
+      }
+    } catch (error) {
+      showError("Kategoriler yüklenirken hata oluştu");
+      setCategories(["TÜMÜ"]);
+    }
+  };
+
+
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // Sayfa veya debounced arama terimi değiştiğinde kullanıcıları yükle
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, debouncedSearchTerm]);
+
+  // Özel scrollbar logic'i
+  useEffect(() => {
+    const updateScrollbar = () => {
+      if (!tableWrapperRef.current) return;
+
+      const wrapper = tableWrapperRef.current;
+      const table = wrapper.querySelector('.users-table');
+      
+      if (!table) return;
+
+      const wrapperWidth = wrapper.clientWidth;
+      const tableWidth = table.scrollWidth;
+      const scrollLeft = wrapper.scrollLeft;
+      const maxScroll = tableWidth - wrapperWidth;
+
+      console.log('Scrollbar Debug:', {
+        wrapperWidth,
+        tableWidth,
+        scrollLeft,
+        maxScroll,
+        shouldShow: tableWidth > wrapperWidth
+      });
+
+      // Scrollbar görünürlüğü
+      const shouldShow = tableWidth > wrapperWidth;
+      setScrollbarVisible(shouldShow);
+
+      if (shouldShow) {
+        // Scrollbar genişliği (wrapper genişliğinin oranı)
+        const thumbWidth = Math.max(30, (wrapperWidth / tableWidth) * wrapperWidth);
+        setScrollbarWidth(thumbWidth);
+
+        // Scrollbar pozisyonu - Bu kısım çok önemli!
+        const thumbLeft = maxScroll > 0 ? (scrollLeft / maxScroll) * (wrapperWidth - thumbWidth) : 0;
+        console.log('Updating thumb position:', {
+          scrollLeft,
+          maxScroll,
+          thumbLeft,
+          thumbWidth,
+          wrapperWidth
+        });
+        setScrollbarLeft(thumbLeft);
+      }
+    };
+
+    // Scroll event listener'ı ekle
+    const handleScroll = () => {
+      updateScrollbar();
+    };
+
+    const wrapper = tableWrapperRef.current;
+    if (wrapper) {
+      wrapper.addEventListener('scroll', handleScroll, { passive: true });
+      window.addEventListener('resize', updateScrollbar);
+      
+      // İlk yükleme - biraz gecikme ile
+      setTimeout(updateScrollbar, 100);
+      
+      // Tablo içeriği değiştiğinde de güncelle
+      const observer = new MutationObserver(() => {
+        setTimeout(updateScrollbar, 50);
+      });
+      observer.observe(wrapper, { childList: true, subtree: true });
+
+      return () => {
+        wrapper.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('resize', updateScrollbar);
+        observer.disconnect();
+      };
+    }
+  }, [users]);
+
+  // Scrollbar thumb drag işlemleri
+  const handleScrollbarMouseDown = (e) => {
+    console.log('Scrollbar mousedown triggered');
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const startX = e.clientX;
+    const startLeft = scrollbarLeft;
+    const wrapper = tableWrapperRef.current;
+    
+    if (!wrapper) {
+      console.log('No wrapper found');
+      return;
+    }
+
+    const wrapperWidth = wrapper.clientWidth;
+    const table = wrapper.querySelector('.users-table');
+    
+    if (!table) {
+      console.log('No table found');
+      return;
+    }
+    
+    const maxScroll = table.scrollWidth - wrapperWidth;
+    const maxThumbLeft = wrapperWidth - scrollbarWidth;
+
+    console.log('Drag values:', {
+      startX,
+      startLeft,
+      wrapperWidth,
+      maxScroll,
+      maxThumbLeft,
+      scrollbarWidth
+    });
+
+    const handleMouseMove = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const deltaX = e.clientX - startX;
+      const newThumbLeft = Math.max(0, Math.min(maxThumbLeft, startLeft + deltaX));
+      
+      console.log('Mouse move:', {
+        deltaX,
+        newThumbLeft,
+        clientX: e.clientX
+      });
+      
+      if (maxThumbLeft > 0) {
+        const scrollRatio = newThumbLeft / maxThumbLeft;
+        const newScrollLeft = scrollRatio * maxScroll;
+        console.log('Setting scroll to:', newScrollLeft);
+        
+        // Scroll işlemini zorla yap
+        wrapper.scrollLeft = newScrollLeft;
+        
+        // Eğer scroll çalışmıyorsa, table'ı transform ile kaydır
+        const table = wrapper.querySelector('.users-table');
+        if (table && wrapper.scrollLeft !== newScrollLeft) {
+          console.log('Fallback: Using transform');
+          table.style.transform = `translateX(-${newScrollLeft}px)`;
+          
+          // Transform kullanıldığında scrollbar pozisyonunu manuel güncelle
+          const wrapperWidth = wrapper.clientWidth;
+          const maxThumbLeft = wrapperWidth - scrollbarWidth;
+          const newThumbLeft = maxThumbLeft > 0 ? (newScrollLeft / maxScroll) * maxThumbLeft : 0;
+          console.log('Manual thumb update:', newThumbLeft);
+          setScrollbarLeft(newThumbLeft);
+        } else if (table) {
+          // Normal scroll çalışıyorsa transform'u temizle
+          table.style.transform = '';
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      console.log('Mouse up');
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Scrollbar track click işlemi
+  const handleScrollbarTrackClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const wrapper = tableWrapperRef.current;
+    if (!wrapper) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const wrapperWidth = wrapper.clientWidth;
+    const table = wrapper.querySelector('.users-table');
+    
+    if (!table) return;
+    
+    const maxScroll = table.scrollWidth - wrapperWidth;
+    const maxThumbLeft = wrapperWidth - scrollbarWidth;
+    
+    if (maxThumbLeft > 0) {
+      const targetThumbLeft = Math.max(0, Math.min(maxThumbLeft, clickX - scrollbarWidth / 2));
+      const scrollRatio = targetThumbLeft / maxThumbLeft;
+      const newScrollLeft = scrollRatio * maxScroll;
+      
+      console.log('Track click - Setting scroll to:', newScrollLeft);
+      wrapper.scrollLeft = newScrollLeft;
+      
+      // Eğer scroll çalışmıyorsa, table'ı transform ile kaydır
+       if (wrapper.scrollLeft !== newScrollLeft) {
+         console.log('Track click - Fallback: Using transform');
+         table.style.transform = `translateX(-${newScrollLeft}px)`;
+         
+         // Transform kullanıldığında scrollbar pozisyonunu manuel güncelle
+         const maxThumbLeft = wrapperWidth - scrollbarWidth;
+         const newThumbLeft = maxThumbLeft > 0 ? (newScrollLeft / maxScroll) * maxThumbLeft : 0;
+         console.log('Track click - Manual thumb update:', newThumbLeft);
+         setScrollbarLeft(newThumbLeft);
+       } else {
+         // Normal scroll çalışıyorsa transform'u temizle
+         table.style.transform = '';
+       }
+    }
+  };
+
+  // Arama terimi değiştiğinde sayfa numarasını sıfırla
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Arama değiştiğinde hemen ilk sayfaya dön
+  };
+
+  // Mevcut sayfa kullanıcıları (API'den gelen veriler zaten sayfalanmış)
+  const currentUsers = users;
+
+  // Modal işlemleri
+  const handleShowAddModal = () => {
+    setShowAddModal(true);
+  };
+
+  const handleCloseAddModal = () => {
+    setShowAddModal(false);
+  };
+
+  const handleUserAdded = async (userData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await createUser(userData, token);
+      
+      if (response.success) {
+        showSuccess('Kullanıcı başarıyla eklendi.');
+        fetchUsers(); // Yeni kullanıcı eklendikten sonra listeyi yenile
+      } else {
+        showError(response.message || 'Kullanıcı eklenirken bir hata oluştu.');
+      }
+    } catch (error) {
+      showError('Kullanıcı eklenirken bir hata oluştu.');
+    }
+  };
+
+  // Modal işlem fonksiyonları
+  const handleViewContact = (contact) => {
+    setSelectedContact(contact);
+    setShowViewModal(true);
+  };
+
+  const handleEditContact = (contact) => {
+    setSelectedContact(contact);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteContact = (contact) => {
+    setSelectedContact(contact);
+    setShowDeleteModal(true);
+  };
+
+
+
+  // Excel export fonksiyonu
+  const handleExportToExcel = async () => {
+    try {
+      setLoading(true);
+      
+      // Tüm kullanıcıları al (sayfalama olmadan)
+      const token = localStorage.getItem('token');
+      const response = await getUsers(token);
+
+      if (!response.success || !response.data) {
+        showError('Veriler alınırken bir hata oluştu.');
+        return;
+      }
+
+      // Excel için veri formatını hazırla
+      const excelData = users.map((user, index) => ({
+        'SIRA': index + 1,
+        'KAYIT TARİHİ': user.created_at || '',
+        'ADI': user.name || '',
+        'ÜNVANI': user.role || '',
+        'TELEFON': user.phone || '',
+        'EMAIL': user.email || '',
+        'ROLÜ': user.department || ''
+      }));
+
+      // Excel workbook oluştur
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Kişiler');
+
+      // Sütun genişliklerini ayarla
+      const columnWidths = [
+        { wch: 8 },  // SIRA
+        { wch: 18 }, // KAYIT TARİHİ
+        { wch: 15 }, // ADI
+        { wch: 20 }, // ÜNVANI
+        { wch: 15 }, // TELEFON
+        { wch: 25 }, // EMAIL
+        { wch: 20 }  // ROLÜ
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Dosya adını oluştur
+      const fileName = `Telefon_Rehberi_${new Date().toLocaleDateString('tr-TR').replace(/\./g, '_')}.xlsx`;
+      
+      // Excel dosyasını indir
+      XLSX.writeFile(workbook, fileName);
+      
+      showSuccess(`${response.data.length} kişi başarıyla Excel dosyasına aktarıldı.`);
+      
+    } catch (error) {
+      showError('Excel dosyası oluşturulurken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Dropdown state kaldırıldı (portal menü kullanılıyor)
+
+
+
+  const handleUserUpdated = async (userData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await updateUser(userData.id, userData, token);
+      
+      if (response.success) {
+        showSuccess('Kullanıcı başarıyla güncellendi.');
+        fetchUsers(); // Kullanıcı güncellendikten sonra listeyi yenile
+      } else {
+        showError(response.message || 'Kullanıcı güncellenirken bir hata oluştu.');
+      }
+    } catch (error) {
+      showError('Kullanıcı güncellenirken bir hata oluştu.');
+    }
+  };
+
+  const handleUserDeleted = async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await deleteUser(userId, token);
+      
+      if (response.success) {
+        showSuccess('Kullanıcı başarıyla silindi.');
+        fetchUsers(); // Kullanıcı silindikten sonra listeyi yenile
+      } else {
+        showError(response.message || 'Kullanıcı silinirken bir hata oluştu.');
+      }
+    } catch (error) {
+      showError('Kullanıcı silinirken bir hata oluştu.');
+    }
+  };
+
+  // User action handlers
+  const handleViewUser = (user) => {
+    setSelectedContact(user);
+    setShowViewModal(true);
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedContact(user);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteUser = (user) => {
+    setSelectedContact(user);
+    setShowDeleteModal(true);
+  };
+
+  const closeAllModals = () => {
+    setShowViewModal(false);
+    setShowEditModal(false);
+    setShowDeleteModal(false);
+
+    setShowBulkSMSModal(false);
+    setShowExcelImportModal(false);
+    setSelectedContact(null);
+  };
+
+  // Excel import modal fonksiyonları
+  const handleShowExcelImportModal = () => {
+    setShowExcelImportModal(true);
+  };
+
+  const handleExcelImportComplete = () => {
+    fetchUsers(); // Yeni veriler eklendikten sonra listeyi yenile
+  };
+
+  // Toplu SMS gönderim modalını aç
+  const handleShowBulkSMSModal = () => {
+    if (selectedUsers.length === 0) {
+      showWarning('Lütfen SMS göndermek için en az bir kişi seçin.');
+      return;
+    }
+    setShowBulkSMSModal(true);
+  };
+
+  // Toplu SMS gönder
+  const handleBulkSMSSend = async (smsData) => {
+    setBulkSMSLoading(true);
+    try {
+      // Seçili kişilerin telefon numaralarını topla
+      const phoneNumbers = [];
+      selectedUsers.forEach(userId => {
+        const user = users.find(c => c.id === userId);
+        if (user) {
+          if (user.phone1) phoneNumbers.push(user.phone1);
+          if (user.phone2) phoneNumbers.push(user.phone2);
+        }
+      });
+
+      if (phoneNumbers.length === 0) {
+        showWarning('Seçili kişilerde geçerli telefon numarası bulunamadı.');
+        return;
+      }
+
+      const bulkSmsData = {
+        phones: phoneNumbers,
+        message: smsData.message,
+        listName: smsData.listName || 'Toplu SMS',
+        sendingTitle: smsData.sendingTitle || 'Rehber SMS',
+        categoryName: 'Toplu Gönderim'
+      };
+
+      const result = await smsService.sendBulkSMS(bulkSmsData);
+
+      if (result.success) {
+        showSuccess(`Başarıyla ${result.data.sentCount} numaraya SMS gönderildi.`);
+        setSelectedUsers([]); // Seçimleri temizle
+        setSelectAll(false);
+        closeAllModals();
+      } else {
+        showError('SMS gönderilemedi: ' + (result.error || result.message));
+      }
+    } catch (error) {
+      showError('SMS gönderilirken bir hata oluştu: ' + error.message);
+    } finally {
+      setBulkSMSLoading(false);
+    }
+  };
+
+  // Sayfa değiştirme
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Checkbox işlemleri
+  const handleSelectAll = (e) => {
+    const isChecked = e.target.checked;
+    setSelectAll(isChecked);
+    if (isChecked) {
+      setSelectedUsers(currentUsers.map((user) => user.id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  const handleSelectUser = (userId) => {
+    setSelectedUsers((prev) => {
+      if (prev.includes(userId)) {
+        return prev.filter((id) => id !== userId);
+      } else {
+        return [...prev, userId];
+      }
+    });
+  };
+
+  // SelectAll checkbox durumunu güncelle
+  useEffect(() => {
+    if (selectedUsers.length === 0) {
+      setSelectAll(false);
+    } else if (selectedUsers.length === currentUsers.length) {
+      setSelectAll(true);
+    } else {
+      setSelectAll(false);
+    }
+  }, [selectedUsers, currentUsers]);
+
+
+
   return (
-    <div className="contacts-table-container">
+    <div className="users-table-container">
       {/* Başlık Barı */}
       <div className="header-bar">
         <div className="header-left">
           <div className="header-icon">
-            <svg width="35" height="35" viewBox="0 0 24 24" fill="none">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#4E0DCC"/>
-            </svg>
+           <img style={{width: '35px', height: '35px'}} src="/assets/images/phone.png" alt="contact" />
           </div>
           <h2 className="header-title">YÖNETİM</h2>
         </div>
@@ -42,9 +619,9 @@ const UsersTable = ({
           <div className="search-container">
             <Form.Control
               type="text"
-              placeholder="Ad, soyad, email veya telefon ile ara..."
+              placeholder="Ad, soyad, telefon veya kategori ile ara..."
               value={searchTerm}
-              onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="search-input"
             />
           </div>
@@ -53,8 +630,8 @@ const UsersTable = ({
         <div className="header-right">
           <button
             className="header-btn"
-            onClick={onClickAdd}
-            title="Kullanıcı Ekle"
+            onClick={handleShowAddModal}
+            title="Kişi Ekle"
           >
             <svg
               width="21"
@@ -69,64 +646,141 @@ const UsersTable = ({
               />
             </svg>
           </button>
+
+          {selectedUsers.length > 0 && (
+            <button
+              className="header-btn bulk-sms-btn"
+              onClick={handleShowBulkSMSModal}
+              title={`${selectedUsers.length} kişiye SMS gönder`}
+              disabled={bulkSMSLoading}
+              style={{
+                backgroundColor: bulkSMSLoading ? '#ccc' : '#28a745',
+                color: 'white',
+                marginLeft: '10px'
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 18 18"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M1.5 6L8.5 9.5L15.5 6M1.5 12L8.5 15.5L15.5 12M1.5 6L8.5 2.5L15.5 6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {bulkSMSLoading ? 'Gönderiliyor...' : `SMS (${selectedUsers.length})`}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Tablo Wrapper */}
-      <div className="table-container">
-        <div className="table-wrapper">
-          <table className="contacts-table">
-            <thead>
+
+
+      {/* Tablo */}
+      <div className="table-wrapper" ref={tableWrapperRef}>
+        <Table className="users-table">
+          <thead>
+            <tr>
+              <th>
+                <Form.Check
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={handleSelectAll}
+                  className="select-all-checkbox"
+                />
+              </th>
+              <th>SIRA</th>
+              <th>KAYIT TARİHİ</th>
+              <th>ADI</th>
+              <th>ÜNVANI</th>
+              <th>TELEFON</th>
+              <th>EMAIL</th>
+              <th>ROLÜ</th>
+              <th>İŞLEMLER</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
               <tr>
-                <th><input type="checkbox" disabled /></th>
-                <th>SIRA</th>
-                <th>KAYIT</th>
-                <th>ADI</th>
-                <th>SOYADI</th>
-                <th>ÜNVANI</th>
-                <th>TELEFON</th>
-                <th>EMAİL</th>
-                <th>YETKİ</th>
-                <th>İŞLEM</th>
+                <td colSpan="11" className="text-center py-4">
+                  <div className="d-flex justify-content-center align-items-center">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Yükleniyor...</span>
+                    </div>
+                    <span className="ms-2">Veriler yükleniyor...</span>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {users.map((u, idx) => {
-                const [firstName, ...rest] = (u.name || '').split(' ');
-                const lastName = rest.join(' ');
-                const roleChip = u.role === 'admin' ? 'ADMİN' : 'KULLANICI';
-                return (
-                  <tr key={u.id}>
-                    <td><Form.Check type="checkbox" /></td>
-                    <td>{(currentPage - 1) * usersPerPage + idx + 1}</td>
-                    <td>{u.created_at ? new Date(u.created_at).toLocaleDateString('tr-TR') : ''}</td>
-                    <td className="text-primary">{firstName}</td>
-                    <td className="text-muted">{lastName}</td>
-                    <td className="text-link">{u.title || '-'}</td>
-                    <td>{u.phone || '-'}</td>
-                    <td className="email">{u.email}</td>
-                    <td>
-                      <div className={`chip ${u.role === 'admin' ? 'chip--purple' : 'chip--gray'}`}>{roleChip}</div>
-                    </td>
-                    <td>
-                      <ActionMenu
-                        onView={() => onView && onView(u)}
-                        onEdit={() => onEdit && onEdit(u)}
-                        onDelete={() => onDelete && onDelete(u)}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+            ) : currentUsers.length === 0 ? (
+              <tr>
+                <td colSpan="11" className="text-center py-4">
+                  <div className="text-muted">
+                    <i className="fas fa-search me-2"></i>
+                    Herhangi bir kayıt bulunamadı
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              currentUsers.map((user, index) => (
+                <tr key={user.id}>
+                  <td>
+                    <Form.Check
+                      type="checkbox"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={() => handleSelectUser(user.id)}
+                      className="user-checkbox"
+                    />
+                  </td>
+                  <td>{(currentPage - 1) * usersPerPage + index + 1}</td>
+                  <td>{user.created_at || "-"}</td>
+                  <td>{user.name || "-"}</td>
+                  <td>{user.role || "-"}</td>
+                  <td>{user.phone || "-"}</td>
+                  <td>{user.email || "-"}</td>
+                  <td>{user.department || "-"}</td>
+                  <td>
+                    <UserActionMenu
+                      onView={() => handleViewUser(user)}
+                      onEdit={() => handleEditUser(user)}
+                      onDelete={() => handleDeleteUser(user)}
+                    />
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </Table>
       </div>
+
+      {/* Özel Yatay Scrollbar */}
+      {scrollbarVisible && (
+        <div className="custom-scrollbar-container">
+          <div 
+            className="custom-scrollbar-track" 
+            onClick={handleScrollbarTrackClick}
+          >
+            <div
+              className="custom-scrollbar-thumb"
+              style={{
+                width: `${scrollbarWidth}px`,
+                left: `${scrollbarLeft}px`
+              }}
+              onMouseDown={handleScrollbarMouseDown}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Alt Bilgi ve Sayfalama */}
       <div className="table-footer">
         <div className="total-records">
-          TOPLAM {totalRecords.toLocaleString("tr-TR")} KULLANICI BULUNMAKTADIR
+          TOPLAM {totalRecords.toLocaleString("tr-TR")} KİŞİ BULUNMAKTADIR
         </div>
         <div className="pagination-wrapper">
           <Pagination className="custom-pagination">
@@ -219,66 +873,265 @@ const UsersTable = ({
           </Pagination>
         </div>
       </div>
+
+      {/* Kullanıcı Ekleme Modal */}
+      <AddUserModal
+        show={showAddModal}
+        onHide={handleCloseAddModal}
+        onSave={handleUserAdded}
+      />
+
+      {/* Kullanıcı Görüntüleme Modal */}
+      <ViewUserModal
+        show={showViewModal}
+        onHide={closeAllModals}
+        user={selectedContact}
+      />
+
+      {/* Kullanıcı Düzenleme Modal */}
+      <EditUserModal
+        show={showEditModal}
+        onHide={closeAllModals}
+        user={selectedContact}
+        onSave={handleUserUpdated}
+      />
+
+      {/* Kullanıcı Silme Modal */}
+      <DeleteUserModal
+        show={showDeleteModal}
+        onHide={closeAllModals}
+        user={selectedContact}
+        onDelete={handleUserDeleted}
+      />
+
+
+
+      {/* Toplu SMS Modal */}
+      {showBulkSMSModal && (
+        <BulkSMSModal
+          show={showBulkSMSModal}
+          onHide={closeAllModals}
+          selectedCount={selectedUsers.length}
+          onSend={handleBulkSMSSend}
+          loading={bulkSMSLoading}
+          showError={showError}
+        />
+      )}
+
+      {/* Excel Import Modal */}
+      <ExcelImportModal
+        show={showExcelImportModal}
+        onHide={closeAllModals}
+        onImportComplete={handleExcelImportComplete}
+      />
     </div>
+  );
+};
+
+// Toplu SMS Modal Bileşeni
+const BulkSMSModal = ({ show, onHide, selectedCount, onSend, loading, showError }) => {
+  const [message, setMessage] = useState('');
+  const [listName, setListName] = useState('');
+  const [sendingTitle, setSendingTitle] = useState('');
+
+  const handleSend = () => {
+    if (!message.trim()) {
+      showError('Lütfen mesaj yazın.');
+      return;
+    }
+    if (!listName.trim()) {
+      showError('Lütfen liste adını girin.');
+      return;
+    }
+    if (!sendingTitle.trim()) {
+      showError('Lütfen gönderim başlığını girin.');
+      return;
+    }
+
+    onSend({
+      message: message.trim(),
+      listName: listName.trim(),
+      sendingTitle: sendingTitle.trim()
+    });
+  };
+
+  const handleClose = () => {
+    setMessage('');
+    setListName('');
+    setSendingTitle('');
+    onHide();
+  };
+
+  // Modal açıldığında body scroll'unu engelle
+  React.useEffect(() => {
+    if (show) {
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px';
+    } else {
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0px';
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0px';
+    };
+  }, [show]);
+
+  if (!show) return null;
+
+  return (
+    <Modal show={show} onHide={handleClose} size="lg" className="bulk-sms-modal">
+      <Modal.Header closeButton>
+        <Modal.Title>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="me-2">
+            <path
+              d="M2 6L10 11L18 6M2 14L10 19L18 14M2 6L10 1L18 6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Toplu SMS Gönder ({selectedCount} kişi)
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="mb-3">
+          <label htmlFor="listName" className="form-label">Liste Adı</label>
+          <input
+            type="text"
+            className="form-control"
+            id="listName"
+            value={listName}
+            onChange={(e) => setListName(e.target.value)}
+            placeholder="Örn: Müşteri Listesi"
+            disabled={loading}
+          />
+        </div>
+
+        <div className="mb-3">
+          <label htmlFor="sendingTitle" className="form-label">Gönderim Başlığı</label>
+          <input
+            type="text"
+            className="form-control"
+            id="sendingTitle"
+            value={sendingTitle}
+            onChange={(e) => setSendingTitle(e.target.value)}
+            placeholder="Örn: Kampanya Duyurusu"
+            disabled={loading}
+          />
+        </div>
+
+        <div className="mb-3">
+          <label htmlFor="message" className="form-label">
+            Mesaj İçeriği
+            <span className="text-muted">({message.length}/160 karakter)</span>
+          </label>
+          <textarea
+            className="form-control"
+            id="message"
+            rows="4"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="SMS mesajınızı buraya yazın..."
+            maxLength="160"
+            disabled={loading}
+          />
+        </div>
+
+
+      </Modal.Body>
+      <Modal.Footer>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={handleClose}
+          disabled={loading}
+        >
+          İptal
+        </button>
+        <button
+          type="button"
+          className="btn btn-success"
+          onClick={handleSend}
+          disabled={loading || !message.trim() || !listName.trim() || !sendingTitle.trim()}
+        >
+          {loading ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+              Gönderiliyor...
+            </>
+          ) : (
+            `SMS Gönder (${selectedCount} kişi)`
+          )}
+        </button>
+      </Modal.Footer>
+    </Modal>
   );
 };
 
 export default UsersTable;
 
-// Lightweight custom dropdown rendered to body to avoid clipping
-const ActionMenu = ({ onView, onEdit, onDelete }) => {
+// Portal tabanlı aksiyon menüsü (Users/Requests ile aynı yaklaşım)
+const UserActionMenu = ({ onView, onEdit, onDelete }) => {
   const [open, setOpen] = useState(false);
-  const btnRef = useRef(null);
-  const menuRef = useRef(null);
+  const btnRef = React.useRef(null);
+  const menuRef = React.useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const onDoc = (e) => {
       if (!open) return;
       if (menuRef.current && !menuRef.current.contains(e.target) && btnRef.current && !btnRef.current.contains(e.target)) {
         setOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
   }, [open]);
 
-  const [pos, setPos] = useState({ top: 0, left: 0 });
   const toggle = () => {
     if (!btnRef.current) return;
-    const rect = btnRef.current.getBoundingClientRect();
-    setPos({ top: rect.bottom + 4, left: rect.right - 180 });
+    const r = btnRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + 4, left: Math.max(8, r.right - 220) });
     setOpen((p) => !p);
   };
 
+  const Item = ({ icon, color, label, onClick }) => (
+    <div className="dropdown-item" onClick={() => { setOpen(false); onClick && onClick(); }} style={{ cursor: 'pointer', display:'flex', alignItems:'center', gap:8 }}>
+      <span style={{ width:14, height:14, display:'inline-flex' }}>
+        {icon === 'view' && <svg width="14" height="14" viewBox="0 0 24 24" fill={color}><path d="M12 6a9.77 9.77 0 0 0-9 6 9.77 9.77 0 0 0 18 0 9.77 9.77 0 0 0-9-6Zm0 10a4 4 0 1 1 4-4 4.005 4.005 0 0 1-4 4Z"/></svg>}
+
+        {icon === 'edit' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M2 10.667V13.333H4.66667L11.7333 6.26667L9.06667 3.6L2 10.667ZM13.2667 4.73333C13.5333 4.46667 13.5333 4.06667 13.2667 3.8L11.8667 2.4C11.6 2.13333 11.2 2.13333 10.9333 2.4L9.8 3.53333L12.4667 6.2L13.2667 5.4V4.73333Z"/></svg>}
+        {icon === 'delete' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M6 2.66667H10C10.3667 2.66667 10.6667 2.96667 10.6667 3.33333V4H5.33333V3.33333C5.33333 2.96667 5.63333 2.66667 6 2.66667ZM4 4.66667V12.6667C4 13.4 4.6 14 5.33333 14H10.6667C11.4 14 12 13.4 12 12.6667V4.66667H4Z"/></svg>}
+      </span>
+      {label}
+    </div>
+  );
+
   const menu = (
-    <div
-      ref={menuRef}
-      className="user-actions-menu"
-      style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 2147483647, minWidth: 180, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}
-    >
-      <div className="dropdown-item" onClick={() => { setOpen(false); onView && onView(); }} style={{ cursor: 'pointer' }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="#4E0DCC" style={{ marginRight: 8 }}><path d="M12 6a9.77 9.77 0 0 0-9 6 9.77 9.77 0 0 0 18 0 9.77 9.77 0 0 0-9-6Zm0 10a4 4 0 1 1 4-4 4.005 4.005 0 0 1-4 4Z"/></svg>
-        Görüntüle
-      </div>
-      <div className="dropdown-item" onClick={() => { setOpen(false); onEdit && onEdit(); }} style={{ cursor: 'pointer' }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="#28a745" style={{ marginRight: 8 }}><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82Z"/></svg>
-        Düzenle
-      </div>
-      <div className="dropdown-item text-danger" onClick={() => { setOpen(false); onDelete && onDelete(); }} style={{ cursor: 'pointer' }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="#dc3545" style={{ marginRight: 8 }}><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6Zm12-13h-3.5l-1-1h-3l-1 1H6v2h12Z"/></svg>
-        Sil
-      </div>
+    <div ref={menuRef} className="user-actions-menu" style={{ position:'fixed', top:pos.top, left:pos.left, zIndex:2147483647, minWidth:220, background:'#fff', border:'1px solid #e5e7eb', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,.12)'}}>
+      <Item icon="view" color="#4E0DCC" label="Görüntüle" onClick={onView} />
+      <Item icon="edit" color="#3B82F6" label="Düzenle" onClick={onEdit} />
+      <Item icon="delete" color="#dc3545" label="Sil" onClick={onDelete} />
     </div>
   );
 
   return (
     <>
-      <button ref={btnRef} className="action-menu-btn btn btn-light" onClick={toggle}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="#6b7280"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+      <button ref={btnRef} onClick={toggle} className="action-menu-btn btn btn-outline-secondary btn-sm">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="8" cy="3" r="1.5" fill="currentColor" />
+          <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+          <circle cx="8" cy="13" r="1.5" fill="currentColor" />
+        </svg>
       </button>
       {open && createPortal(menu, document.body)}
     </>
   );
 };
-
-

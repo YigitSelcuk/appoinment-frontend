@@ -1,468 +1,365 @@
-/* Management page UI */
-.users-admin {
-  padding: 16px 24px;
-}
-.users-admin__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-.users-admin__title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  color: #5c6576;
-}
-.users-admin__actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.users-admin .search {
-  position: relative;
-}
-.users-admin .search input {
-  width: 440px;
-  height: 36px;
-  border-radius: 18px;
-  border: 1px solid #e7e9ee;
-  padding: 0 40px 0 16px;
-  background: #fff;
-}
-.users-admin .icon-search {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  background: #9aa3b2;
-  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23fff" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5ZM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z"/></svg>')
-    center / contain no-repeat;
-}
-.users-admin .btn-add {
-  height: 36px;
-  background: #4e0dcc;
-  color: #fff;
-  border: none;
-  border-radius: 18px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-}
-.users-admin .icon-plus {
-  width: 14px;
-  height: 14px;
-  background: #fff;
-  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23fff" d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2Z"/></svg>')
-    center / contain no-repeat;
-}
-.users-admin .icon-gear {
-  width: 18px;
-  height: 18px;
-  background: #5c6576;
-  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235c6576" d="M19.14,12.94a7.43,7.43,0,0,0,.05-.94,7.43,7.43,0,0,0-.05-.94l2.11-1.65a.5.5,0,0,0,.12-.64l-2-3.46a.5.5,0,0,0-.6-.22l-2.49,1a7.62,7.62,0,0,0-1.63-.94l-.38-2.65A.5.5,0,0,0,13.57,2H10.43a.5.5,0,0,0-.49.41L9.56,5.06a7.62,7.62,0,0,0-1.63.94l-2.49-1a.5.5,0,0,0-.6.22l-2,3.46a.5.5,0,0,0,.12.64L5,11.06a7.43,7.43,0,0,0-.05.94,7.43,7.43,0,0,0,.05.94L2.89,14.59a.5.5,0,0,0-.12.64l2,3.46a.5.5,0,0,0,.6.22l2.49-1a7.62,7.62,0,0,0,1.63.94l.38,2.65a.5.5,0,0,0,.49.41h3.14a.5.5,0,0,0,.49-.41l.38-2.65a7.62,7.62,0,0,0,1.63-.94l2.49,1a.5.5,0,0,0,.6-.22l2-3.46a.5.5,0,0,0-.12-.64ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/></svg>')
-    center / contain no-repeat;
-}
-
-.users-admin__table .table-wrapper {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.06);
-  overflow-x: auto;
-  width: 100%;
-}
-
-/* Users table container border-radius */
-.users-admin .users-admin__table.tasks-like {
-  border-radius: 12px;
+.users-page {
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: #E6E6E6;
   overflow: hidden;
-  width: 100%;
-}
-.users-admin__table table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-.users-admin__table thead tr {
-  background: #f9fafc;
-  height: 56px;
-}
-.users-admin__table th,
-.users-admin__table td {
-  padding: 14px 16px;
-  text-align: left;
-  font-size: 14px;
-  color: #5c6576;
-}
-.users-admin__table tbody tr {
-  border-top: 1px solid #eef1f6;
-}
-.users-admin__table td.text-primary {
-  color: #3c02aa;
-  font-weight: 600;
-}
-.users-admin__table td.text-muted {
-  color: #9aa3b2;
-}
-.users-admin__table td.text-link {
-  color: #3c02aa;
-  cursor: pointer;
-}
-.users-admin__table td.email {
-  color: #808a9b;
 }
 
-/* 3 kolonlu layout: sol takvim, orta tablo, sağ chat */
-.users-admin__content {
-  display: grid;
-  grid-template-columns: 320px 1fr 50px;
+/* Sağ Panel - FloatingChat */
+.right-panel {
+  width: 100px;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: absolute;
+  right: 0px;
+  top: 8px;
+  z-index: 10;
+}
+
+.users-page .floating-chat {
+  width: 100%;
+  height: 100%;
+  position: relative !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: 1 !important;
+}
+
+.users-container {
+  display: flex;
+  height: calc(100vh - 80px); /* Navbar yüksekliği çıkarıldı */
+  min-height: 800px;
   gap: 12px;
-  align-items: start;
-}
-.left-calendar {
-  position: sticky;
-  top: 16px;
-}
-
-/* Calendar border-radius */
-.users-admin .left-calendar .calendar-widget {
-  border-radius: 12px;
-}
-.right-float-chat {
-  position: sticky;
-  top: 16px;
+  padding: 8px 5px 8px 20px;
+  position: relative;
+  overflow: visible;
+  z-index: 1;
 }
 
-/* Takvimde iç scroll'u kapat, yükseklik sınırlamasını kaldır */
-.users-admin .calendar-widget { 
-  height: auto !important; 
-  max-height: none !important; 
-  overflow: hidden !important; /* border-radius için hidden gerekli */
-  border-radius: 12px !important; /* border-radius'u güçlendir */
-}
-.users-admin .today-section { 
-  min-height: auto !important; 
-  max-height: 40vh !important; 
-  overflow-y: auto !important; 
-}
-.users-admin .today-events { 
-  max-height: 100% !important; 
-  overflow-y: auto !important; 
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 0 14px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 12px;
-}
-.chip--purple {
-  background: #ede7ff;
-  color: #4e0dcc;
-}
-.chip--gray {
-  background: #eff2f7;
-  color: #5c6576;
-}
-
-.row-actions {
+/* Sol Panel - Calendar */
+.left-panel {
+  width: 320px; /* Normal boyut */
+  min-width: 320px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.icon-btn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-.icon-close {
-  width: 18px;
-  height: 18px;
-  background: #9aa3b2;
-  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23fff" d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>')
-    center / contain no-repeat;
-  display: inline-block;
-}
-.icon-edit {
-  width: 18px;
-  height: 18px;
-  background: #3c02aa;
-  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23fff" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82Z"/></svg>')
-    center / contain no-repeat;
-  display: inline-block;
-}
-.icon-view {
-  width: 18px;
-  height: 18px;
-  background: #9aa3b2;
-  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23fff" d="M12 6a9.77 9.77 0 0 0-9 6 9.77 9.77 0 0 0 18 0 9.77 9.77 0 0 0-9-6Zm0 10a4 4 0 1 1 4-4 4.005 4.005 0 0 1-4 4Z"/></svg>')
-    center / contain no-repeat;
-  display: inline-block;
-}
-.icon-delete {
-  width: 18px;
-  height: 18px;
-  background: #e74c3c;
-  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23fff" d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6Zm12-13h-3.5l-1-1h-3l-1 1H6v2h12Z"/></svg>')
-    center / contain no-repeat;
-  display: inline-block;
+  flex-direction: column;
+  height: calc(100vh - 96px); /* Navbar ve padding için ayarlama */
+  min-height: 800px;
+  overflow: hidden;
 }
 
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(20, 24, 31, 0.45);
+/* Orta Panel - Users Table */
+.users-content {
+  flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal-card {
-   width: 720px;
-   max-width: 90vw;
-   height: 95vh;
-   max-height: 95vh;
-   background: #fff;
-   border-radius: 12px;
-   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-   overflow: hidden;
-   margin: 1rem auto;
-}
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #eef1f6;
-}
-.modal-header .title {
-  font-weight: 700;
-  color: #5c6576;
-}
-.modal-body {
-  padding: 16px 20px;
-  max-height: calc(95vh - 120px);
-  overflow-y: auto;
-}
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 12px 20px;
-  border-top: 1px solid #eef1f6;
-}
-.btn-primary {
-  background: #4e0dcc;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-}
-.btn-secondary {
-  background: #eff2f7;
-  color: #5c6576;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-}
-.perm-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px 12px;
-}
-.perm-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #5c6576;
+  flex-direction: column;
+  height: calc(100vh - 96px); /* Calendar ile aynı yükseklik */
+  overflow: visible; /* Pagination'ın görünmesi için visible yap */
+  min-width: 0; /* Flexbox shrinking için */
+  background-color: transparent;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+  margin-right: 70px !important; /* FloatingChat için minimal alan */
 }
 
-/* Delete User Modal Styles */
-.delete-user-modal .modal-dialog {
-  max-width: 500px;
-}
-
-.delete-user-modal .modal-content {
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.delete-user-modal .modal-header {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+.page-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.delete-user-modal .modal-header .warning-icon {
-  color: #dc3545;
-  font-size: 1.25rem;
-}
-
-.delete-user-modal .modal-title {
-  color: #212529;
-  font-weight: 600;
-  font-size: 1.25rem;
-  margin: 0;
-}
-
-.delete-user-modal .modal-body {
-  padding: 2rem;
-}
-
-.delete-user-modal .delete-confirmation {
-  text-align: center;
-}
-
-.delete-user-modal .delete-confirmation .warning-icon {
-  color: #dc3545;
-  font-size: 3rem;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
   margin-bottom: 1rem;
 }
 
-.delete-user-modal .confirmation-text {
-  margin-bottom: 1.5rem;
-}
-
-.delete-user-modal .confirmation-text h5 {
-  color: #212529;
+.page-title {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
 }
 
-.delete-user-modal .confirmation-text p {
-  color: #6c757d;
-  margin-bottom: 0;
+.page-title svg {
+  color: #28a745;
+}
+
+.page-header p {
+  margin: 0.5rem 0 0 0;
   font-size: 0.9rem;
 }
 
-.delete-user-modal .user-info {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 1rem;
-  text-align: left;
-}
+/* Modern Responsive Design */
 
-.delete-user-modal .user-info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.delete-user-modal .user-info-item:last-child {
-  border-bottom: none;
-}
-
-.delete-user-modal .user-info-item strong {
-  color: #495057;
-  font-weight: 600;
-  min-width: 80px;
-}
-
-.delete-user-modal .user-info-item span {
-  color: #6c757d;
-  text-align: right;
-  flex: 1;
-}
-
-.delete-user-modal .modal-footer {
-  background-color: #f8f9fa;
-  border-top: 1px solid #e9ecef;
-  padding: 1rem 1.5rem;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.delete-user-modal .btn {
-  border-radius: 6px;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  transition: all 0.2s ease;
-}
-
-.delete-user-modal .btn-secondary {
-  background-color: #6c757d;
-  border-color: #6c757d;
-}
-
-.delete-user-modal .btn-secondary:hover {
-  background-color: #5a6268;
-  border-color: #545b62;
-}
-
-.delete-user-modal .btn-danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
-}
-
-.delete-user-modal .btn-danger:hover {
-  background-color: #c82333;
-  border-color: #bd2130;
-}
-
-/* Responsive Design */
-@media (max-width: 576px) {
-  .delete-user-modal .modal-dialog {
-    margin: 1rem;
+/* Tablet ve büyük ekranlar için düzenlemeler */
+@media (max-width: 1200px) {
+  .users-container {
+    padding: 16px;
+    gap: 16px;
   }
   
-  .delete-user-modal .modal-header,
-  .delete-user-modal .modal-body,
-  .delete-user-modal .modal-footer {
-    padding: 1rem;
+  .left-panel {
+    min-width: 280px;
   }
   
-  .delete-user-modal .modal-title {
-    font-size: 1.1rem;
+  .users-content {
+    min-width: 400px;
   }
   
-  .delete-user-modal .confirmation-text h5 {
-    font-size: 1rem;
+  .right-panel {
+    min-width: 280px;
+  }
+}
+
+/* 990px'de calendar düzeni */
+@media (max-width: 990px) {
+  .users-page .left-panel {
+    height: 100% !important;
+    min-height: 100% !important;
+    overflow: hidden !important;
+    position: relative !important;
+    z-index: 2 !important;
   }
   
-  .delete-user-modal .modal-footer {
+  .users-page .left-panel .calendar-widget {
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  
+  .users-page .calendar-grid {
+    flex: 0 0 auto !important;
+    min-height: 300px !important;
+  }
+  
+  .users-page .today-section {
+    flex: 1 !important;
+    min-height: 300px !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Users content'in calendar'a müdahale etmemesi için */
+  .users-page .users-content {
+    z-index: 1 !important;
+    position: relative !important;
+  }
+  
+  .users-page .users-table-container {
+    z-index: 1 !important;
+    position: relative !important;
+  }
+}
+
+/* Tablet Portrait */
+@media (max-width: 1024px) {
+  .users-container {
     flex-direction: column;
+    padding: 12px;
+    gap: 12px;
+    height: auto;
+    min-height: calc(100vh - 80px);
   }
   
-  .delete-user-modal .btn {
+  .users-page .left-panel {
     width: 100%;
+    min-width: unset;
+    height: 100% !important;
+    min-height: 900px !important;
+    order: 1;
   }
   
-  .delete-user-modal .user-info-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
+  .users-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
   }
   
-  .delete-user-modal .user-info-item span {
-    text-align: left;
+  .users-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .users-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .users-content {
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    min-height: 500px;
+    order: 2;
+  }
+  
+  .right-panel {
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    min-height: 300px;
+    order: 3;
   }
 }
 
-/* Animation */
-.delete-user-modal .modal.fade .modal-dialog {
-  transition: transform 0.3s ease-out;
-  transform: translate(0, -50px);
+/* Tablet ve Mobile geçiş */
+@media (max-width: 768px) {
+  .users-container {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .users-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .users-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .users-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .users-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .users-content {
+    min-height: 450px;
+  }
+  
+  .right-panel {
+    min-height: 250px;
+  }
 }
 
-.delete-user-modal .modal.show .modal-dialog {
-  transform: none;
+/* Mobile Landscape */
+@media (max-width: 640px) {
+  .users-container {
+    padding: 6px;
+    gap: 6px;
+  }
+  
+  .users-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .users-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .users-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .users-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .users-content {
+    min-height: 400px;
+  }
+  
+  .right-panel {
+    min-height: 220px;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 480px) {
+  .users-container {
+    padding: 4px;
+    gap: 4px;
+  }
+  
+  .users-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+    border-radius: 8px;
+  }
+  
+  .users-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .users-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .users-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .users-content {
+    min-height: 350px;
+    border-radius: 8px;
+  }
+  
+  .right-panel {
+    min-height: 200px;
+    border-radius: 8px;
+  }
+}
+
+/* Very Small Mobile */
+@media (max-width: 360px) {
+  .users-container {
+    padding: 2px;
+    gap: 2px;
+  }
+  
+  .users-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .users-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .users-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .users-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .users-content {
+    min-height: 320px;
+  }
+  
+  .right-panel {
+    min-height: 180px;
+  }
 }

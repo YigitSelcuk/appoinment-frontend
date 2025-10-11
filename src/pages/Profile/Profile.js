@@ -318,74 +318,7 @@ const Profile = () => {
                     </div>
                   </div>
                   
-                  {/* Account Information */}
-                  <div className="row mb-4">
-                    <div className="col-12">
-                      <h5 className="section-title">
-                        <i className="fas fa-id-card me-2 text-primary"></i>
-                        Hesap Bilgileri
-                      </h5>
-                    </div>
-                  </div>
-                  
-                  <div className="row mb-3">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">
-                        <i className="fas fa-hashtag me-2"></i>Kullanıcı ID
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={profile.id || 'Yükleniyor...'}
-                        disabled
-                        style={{backgroundColor: '#f8f9fa'}}
-                      />
-                    </div>
-
-                  </div>
-                  
-                  <div className="row mb-3">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">
-                        <i className="fas fa-calendar-plus me-2"></i>Kayıt Tarihi
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={profile.created_at ? new Date(profile.created_at).toLocaleDateString('tr-TR') : 'Bilinmiyor'}
-                        disabled
-                        style={{backgroundColor: '#f8f9fa'}}
-                      />
-                    </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">
-                        <i className="fas fa-clock me-2"></i>Son Görülme
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={profile.last_seen ? new Date(profile.last_seen).toLocaleString('tr-TR') : 'Bilinmiyor'}
-                        disabled
-                        style={{backgroundColor: '#f8f9fa'}}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="row mb-4">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">
-                        <i className="fas fa-edit me-2"></i>Son Güncelleme
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={profile.updated_at ? new Date(profile.updated_at).toLocaleDateString('tr-TR') : 'Bilinmiyor'}
-                        disabled
-                        style={{backgroundColor: '#f8f9fa'}}
-                      />
-                    </div>
-                  </div>
-                  
+             
                   {/* Personal Information */}
                   <div className="row mb-4">
                     <div className="col-12">

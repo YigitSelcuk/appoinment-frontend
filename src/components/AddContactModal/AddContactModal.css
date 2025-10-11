@@ -4,7 +4,7 @@
   height: 90vh;
   margin: 5vh auto;
   max-height: 90vh;
-  width: 100%;
+  width: calc(100% - 2rem);
   padding: 0;
 }
 
@@ -14,6 +14,7 @@
 
 .add-contact-modal .modal {
   padding: 0 !important;
+  overflow-x: hidden !important;
 }
 
 .add-contact-modal .modal-content {
@@ -28,6 +29,7 @@
   padding: 0 !important;
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Modal Header */
@@ -38,6 +40,7 @@
   border: none;
   position: relative;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .header-content {
@@ -104,8 +107,9 @@
   align-items: center;
   gap: 15px;
   margin: 20px 0 30px 0;
-  padding: 0 20px;
+  padding: 0 30px;
   position: static;
+  box-sizing: border-box;
 }
 
 .gender-toggle-container {
@@ -164,10 +168,12 @@
 
 /* Form Stilleri */
 .form-content {
-  padding: 0 30px;
+  padding: 0 30px !important;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   margin-top: -15px;
+  box-sizing: border-box;
 }
 
 /* TC input sonrası boşluğu azalt */
@@ -427,8 +433,9 @@
 .modal-footer-custom {
   background: #F8FAFC;
   border: none;
-  padding: 25px 30px;
+  padding: 20px;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .footer-buttons {
@@ -484,14 +491,15 @@
 /* Responsive */
 @media (max-width: 768px) {
   .add-contact-modal .modal-dialog {
-    max-width: 95%;
+    max-width: calc(100% - 1rem);
+    width: calc(100% - 1rem);
     height: 95vh;
     margin: 2.5vh auto;
   }
   
   .gender-selector {
     gap: 10px;
-    padding: 0 10px;
+    padding: 0 15px;
   }
   
   .gender-toggle-container {
@@ -517,7 +525,7 @@
   }
   
   .form-content {
-    padding: 0 20px;
+    padding: 0 15px;
   }
   
   .modal-header-custom {
@@ -544,6 +552,7 @@
   border-radius: 8px;
   border: none;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .add-contact-modal .alert-danger {

@@ -1,50 +1,48 @@
 import React, { useState } from 'react';
 import { Modal, Button, Spinner } from 'react-bootstrap';
-import { useAuth } from '../../contexts/AuthContext';
-import { useSimpleToast } from '../../contexts/SimpleToastContext';
-import './DeleteAppointmentModal.css';
+import './DeleteUserModal.css';
 
-const DeleteAppointmentModal = ({ isOpen, onClose, onConfirm, appointmentData }) => {
-  const { user } = useAuth();
-  const { showError } = useSimpleToast();
+const DeleteUserModal = ({ show, onHide, user, onDelete }) => {
   const [loading, setLoading] = useState(false);
-  
-  if (!isOpen) return null;
 
-  const handleConfirm = async () => {
+  const handleDelete = async () => {
     setLoading(true);
+    
     try {
-      await onConfirm(appointmentData?.id);
+      await onDelete(user.id);
+      onHide();
     } catch (error) {
-      console.error('Error deleting appointment:', error);
+      console.error('Error deleting user:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  if (!user) return null;
+
   return (
     <Modal
-      show={isOpen}
-      onHide={onClose}
+      show={show}
+      onHide={onHide}
       size="sm"
       centered
-      className="delete-appointment-modal"
+      className="delete-user-modal"
     >
       <Modal.Body className="text-center p-4">
         <div className="mb-3">
           <i className="fas fa-trash-alt text-danger" style={{ fontSize: '2.5rem' }}></i>
         </div>
         
-        <h5 className="mb-3">Randevuyu Sil</h5>
+        <h5 className="mb-3">Kullanıcıyı Sil</h5>
         
         <p className="text-muted mb-3">
-          <strong>{appointmentData?.title}</strong> adlı randevuyu silmek istediğinizden emin misiniz?
+          <strong>{user.name}</strong> adlı kullanıcıyı silmek istediğinizden emin misiniz?
         </p>
         
         <div className="d-flex gap-2 justify-content-center">
           <Button 
             variant="outline-secondary" 
-            onClick={onClose} 
+            onClick={onHide} 
             disabled={loading}
             size="sm"
           >
@@ -52,7 +50,7 @@ const DeleteAppointmentModal = ({ isOpen, onClose, onConfirm, appointmentData })
           </Button>
           <Button 
             variant="danger" 
-            onClick={handleConfirm} 
+            onClick={handleDelete} 
             disabled={loading}
             size="sm"
           >
@@ -71,4 +69,4 @@ const DeleteAppointmentModal = ({ isOpen, onClose, onConfirm, appointmentData })
   );
 };
 
-export default DeleteAppointmentModal;
+export default DeleteUserModal;

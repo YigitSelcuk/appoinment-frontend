@@ -1,0 +1,118 @@
+/* Modal boyutunu genişlet */
+.delete-category-modal .modal-dialog {
+  max-width: 600px !important;
+  width: 600px !important;
+}
+
+@media (max-width: 768px) {
+  .delete-category-modal .modal-dialog {
+    max-width: 90vw !important;
+    width: 90vw !important;
+    margin: 1rem auto;
+  }
+}
+
+.delete-category-modal .modal-content {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  width: 100%;
+}
+
+.delete-category-modal .modal-body {
+  padding: 2.5rem;
+}
+
+.delete-category-modal h5 {
+  color: #dc3545;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
+}
+
+.delete-category-modal .text-muted {
+  color: #6c757d !important;
+  line-height: 1.6;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.delete-category-modal .alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.delete-category-modal .btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.delete-category-modal .btn-outline-secondary {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.delete-category-modal .btn-outline-secondary:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: white;
+}
+
+.delete-category-modal .btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.delete-category-modal .btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+.delete-category-modal .btn-danger:disabled {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  opacity: 0.7;
+}
+
+.delete-category-modal .fas.fa-trash-alt {
+  color: #dc3545;
+  margin-bottom: 1rem;
+}
+
+/* Animation for modal entrance */
+.delete-category-modal .modal-dialog {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+  .delete-category-modal .modal-body {
+    padding: 1.5rem;
+  }
+  
+  .delete-category-modal .d-flex {
+    flex-direction: column;
+  }
+  
+  .delete-category-modal .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}

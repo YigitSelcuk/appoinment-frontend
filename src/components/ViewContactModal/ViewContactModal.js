@@ -85,7 +85,7 @@ const ViewContactModal = ({ show, onHide, contact }) => {
                   <span className="info-label">Cinsiyet</span>
                 </div>
                 <div className="info-value">
-                  <span className={`gender-indicator ${contact.gender?.toLowerCase() === 'erkek' ? 'gender-male' : 'gender-female'}`}>
+                  <span className={`gender-indicator ${contact.gender === 'ERKEK' ? 'gender-male' : 'gender-female'}`}>
                     {contact.gender === 'ERKEK' ? (
                       <>
                         <i className="fas fa-mars"></i>

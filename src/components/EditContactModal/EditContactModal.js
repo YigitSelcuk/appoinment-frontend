@@ -688,4 +688,4 @@ const EditContactModal = ({ show, onHide, contact, onContactUpdated }) => {
   );
 };
 
-export default EditContactModal; 
+export default EditContactModal;

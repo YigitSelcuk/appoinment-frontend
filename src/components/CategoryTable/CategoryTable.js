@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Table, Button, Form, Row, Col, Pagination, Modal } from "react-bootstrap";
+import * as XLSX from "xlsx";
 import { useSimpleToast } from "../../contexts/SimpleToastContext";
 import { fetchCategoriesWithStats } from "../../services/categoriesService";
 import AddCategoryModal from "../AddCategoryModal/AddCategoryModal";
 import EditCategoryModal from "../EditCategoryModal/EditCategoryModal";
+import ViewCategoryModal from "../ViewCategoryModal/ViewCategoryModal";
+import DeleteCategoryModal from "../DeleteCategoryModal/DeleteCategoryModal";
 import "./CategoryTable.css";
 
-// Debounce hook
 const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -85,27 +87,6 @@ const CategoryTable = ({ onShowMessagingModal }) => {
     setCurrentPage(pageNumber);
   };
 
-  // Checkbox işlemleri
-  const handleSelectAll = (e) => {
-    const isChecked = e.target.checked;
-    setSelectAll(isChecked);
-    if (isChecked) {
-      setSelectedCategories(categories.map((category) => category.id));
-    } else {
-      setSelectedCategories([]);
-    }
-  };
-
-  const handleSelectCategory = (categoryId) => {
-    setSelectedCategories((prev) => {
-      if (prev.includes(categoryId)) {
-        return prev.filter((id) => id !== categoryId);
-      } else {
-        return [...prev, categoryId];
-      }
-    });
-  };
-
   // SelectAll checkbox durumunu güncelle
   useEffect(() => {
     if (selectedCategories.length === 0) {
@@ -117,7 +98,7 @@ const CategoryTable = ({ onShowMessagingModal }) => {
     }
   }, [selectedCategories, categories]);
 
-  // Modal fonksiyonları
+  // Modal işlemleri
   const handleShowAddModal = () => {
     setShowAddModal(true);
   };
@@ -133,12 +114,8 @@ const CategoryTable = ({ onShowMessagingModal }) => {
 
   // İşlem fonksiyonları
   const handleMessageSend = (category) => {
-    if (onShowMessagingModal) {
-      onShowMessagingModal(category);
-    } else {
-      setSelectedCategory(category);
-      setShowMessageModal(true);
-    }
+    setSelectedCategory(category);
+    setShowMessageModal(true);
   };
 
   const handleViewCategory = (category) => {
@@ -162,62 +139,74 @@ const CategoryTable = ({ onShowMessagingModal }) => {
     setShowMoveModal(true);
   };
 
-  // Kişileri taşı ve kategoriyi sil
-  const confirmMoveAndDelete = async () => {
-    if (!targetCategory) {
-      showWarning('Lütfen hedef kategori seçin!');
-      return;
-    }
-
+  // Excel export fonksiyonu
+  const handleExportToExcel = async () => {
     try {
-      const token = localStorage.getItem('token');
+      setLoading(true);
       
-      // Önce kişileri taşı
-      const moveResponse = await fetch(`${process.env.REACT_APP_API_URL}/contacts/move-category`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fromCategory: selectedCategory.alt_kategori,
-          toCategory: targetCategory
-        })
-      });
+      // Tüm kategorileri al (sayfalama olmadan)
+      const response = await fetchCategoriesWithStats(1, 10000, debouncedSearchTerm);
 
-      const moveData = await moveResponse.json();
-
-      if (moveData.success) {
-        // Sonra kategoriyi sil
-        const deleteResponse = await fetch(`${process.env.REACT_APP_API_URL}/contacts/categories/${selectedCategory.id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        const deleteData = await deleteResponse.json();
-
-        if (deleteData.success) {
-          fetchCategories(); // Listeyi yenile
-          closeAllModals();
-          setTargetCategory('');
-          console.log('✅ Kişiler taşındı ve kategori silindi');
-        } else {
-          console.error('❌ Kategori silinirken hata:', deleteData.message);
-          showError(`Kategori silinirken hata: ${deleteData.message}`);
-        }
-      } else {
-        console.error('❌ Kişiler taşınırken hata:', moveData.message);
-        showError(`Kişiler taşınırken hata: ${moveData.message}`);
+      if (!response.success || !response.data) {
+        showError('Veriler alınırken bir hata oluştu.');
+        return;
       }
+
+      // Excel için veri formatını hazırla
+      const excelData = response.data.map((category, index) => ({
+        'SIRA': index + 1,
+        'ADI': category.name || '',
+        'AÇIKLAMA': category.description || '',
+        'DURUM': category.status || '',
+        'RENK': category.color || '',
+        'OLUŞTURMA TARİHİ': category.created_at ? new Date(category.created_at).toLocaleDateString('tr-TR') : ''
+      }));
+
+      // Excel workbook oluştur
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Kategoriler');
+
+      // Sütun genişliklerini ayarla
+      const columnWidths = [
+        { wch: 8 },  // SIRA
+        { wch: 20 }, // ADI
+        { wch: 30 }, // AÇIKLAMA
+        { wch: 15 }, // DURUM
+        { wch: 15 }, // RENK
+        { wch: 18 }  // OLUŞTURMA TARİHİ
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Dosya adını oluştur
+      const fileName = `Kategoriler_${new Date().toLocaleDateString('tr-TR').replace(/\./g, '_')}.xlsx`;
+      
+      // Excel dosyasını indir
+      XLSX.writeFile(workbook, fileName);
+      
+      showSuccess(`${response.data.length} kategori başarıyla Excel dosyasına aktarıldı.`);
+      
     } catch (error) {
-      console.error('❌ Bağlantı hatası:', error);
-      showError('Bağlantı hatası oluştu.');
+      showError('Excel dosyası oluşturulurken bir hata oluştu.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Modal kapatma fonksiyonları
+  // Dropdown state kaldırıldı (portal menü kullanılıyor)
+
+
+
+  const handleCategoryUpdated = () => {
+    // Kategori güncellendikten sonra listeyi yenile
+    fetchCategories();
+  };
+
+  const handleCategoryDeleted = () => {
+    // Kategori silindikten sonra listeyi yenile
+    fetchCategories();
+  };
+
   const closeAllModals = () => {
     setShowViewModal(false);
     setShowEditModal(false);
@@ -225,123 +214,100 @@ const CategoryTable = ({ onShowMessagingModal }) => {
     setShowMessageModal(false);
     setShowMoveModal(false);
     setSelectedCategory(null);
-    setTargetCategory('');
   };
 
-  // Silme işlemini gerçekleştir
-  const confirmDeleteCategory = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/contacts/categories/${selectedCategory.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        fetchCategories(); // Listeyi yenile
-        closeAllModals();
-        console.log('✅ Başarı:', data.message);
-      } else {
-        console.error('❌ Hata:', data.message);
-        showError(`Hata: ${data.message}`);
-      }
-    } catch (error) {
-      console.error('❌ Bağlantı hatası:', error);
-      showError('Bağlantı hatası oluştu.');
+  // Checkbox işlemleri
+  const handleSelectAll = (e) => {
+    const isChecked = e.target.checked;
+    setSelectAll(isChecked);
+    if (isChecked) {
+      setSelectedCategories(categories.map((category) => category.id));
+    } else {
+      setSelectedCategories([]);
     }
   };
 
+  const handleSelectCategory = (categoryId) => {
+    setSelectedCategories((prev) => {
+      if (prev.includes(categoryId)) {
+        return prev.filter((id) => id !== categoryId);
+      } else {
+        return [...prev, categoryId];
+      }
+    });
+  };
+
   return (
-    <div className="category-table-container">
+    <div className="categories-table-container">
       {/* Başlık Barı */}
       <div className="header-bar">
         <div className="header-left">
           <div className="header-icon">
-            <svg
-              width="39"
-              height="39"
-              viewBox="0 0 39 39"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M28.4375 7.86825C25.961 7.04763 22.9872 6.5 19.5 6.5C16.0144 6.5 13.039 7.04763 10.5625 7.86825M28.4375 7.86825C33.3466 9.49325 36.2944 12.1907 37.375 13.8125L33.3125 17.875L28.4375 14.625V7.86825ZM10.5625 7.86825C5.65338 9.49325 2.70563 12.1907 1.625 13.8125L5.6875 17.875L10.5625 14.625V7.86825ZM16.25 11.375V16.25M16.25 16.25L7.45225 25.0477C6.84271 25.6571 6.50018 26.4836 6.5 27.3455V29.25C6.5 30.112 6.84241 30.9386 7.4519 31.5481C8.0614 32.1576 8.88805 32.5 9.75 32.5H29.25C30.112 32.5 30.9386 32.1576 31.5481 31.5481C32.1576 30.9386 32.5 30.112 32.5 29.25V27.3455C32.4998 26.4836 32.1573 25.6571 31.5477 25.0477L22.75 16.25M16.25 16.25H22.75M22.75 16.25V11.375"
-                stroke="#4E0DCC"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M19.5 27.625C21.2949 27.625 22.75 26.1699 22.75 24.375C22.75 22.5801 21.2949 21.125 19.5 21.125C17.7051 21.125 16.25 22.5801 16.25 24.375C16.25 26.1699 17.7051 27.625 19.5 27.625Z"
-                stroke="#4E0DCC"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+           <img style={{width: '35px', height: '35px'}} src="/assets/images/category.png" alt="category" />
           </div>
-          <h2 className="header-title">KATEGORİ</h2>
+          <h2 className="header-title">KATEGORİLER</h2>
         </div>
+
+        {/* Arama Kutusu - Ortada */}
         <div className="header-center">
-          <div className="search-input-container">
+          <div className="search-container">
             <Form.Control
               type="text"
-              placeholder="Kategorilerde ara..."
+              placeholder="Kategori adı ile ara..."
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="header-search-input"
+              className="search-input"
             />
           </div>
-          {searchTerm && (
-            <button
-              onClick={() => handleSearchChange("")}
-              className="header-clear-btn"
-              title="Aramayı Temizle"
-            >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 14 14"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5"
-                  stroke="#6B7280"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          )}
         </div>
+
         <div className="header-right">
-          <button className="header-btn add-btn" onClick={handleShowAddModal}>
+          <button
+            className="header-btn"
+            onClick={handleShowAddModal}
+            title="Kategori Ekle"
+          >
             <svg
-              width="17"
-              height="18"
-              viewBox="0 0 17 18"
+              width="21"
+              height="22"
+              viewBox="0 0 21 22"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M11.9105 11.8016C12.4068 11.5223 12.9749 11.3633 13.5798 11.3633H13.5819C13.6434 11.3633 13.6721 11.2859 13.627 11.243C12.9979 10.6515 12.2792 10.1737 11.5003 9.8293C11.4921 9.825 11.4839 9.82285 11.4757 9.81855C12.7493 8.84961 13.5778 7.2748 13.5778 5.49805C13.5778 2.55469 11.3055 0.169922 8.5021 0.169922C5.69868 0.169922 3.42847 2.55469 3.42847 5.49805C3.42847 7.2748 4.25698 8.84961 5.53257 9.81855C5.52437 9.82285 5.51616 9.825 5.50796 9.8293C4.59126 10.2354 3.7689 10.8176 3.06138 11.5609C2.35795 12.2965 1.79792 13.1685 1.41255 14.1283C1.03339 15.0682 0.828758 16.0752 0.809622 17.0953C0.809074 17.1182 0.812913 17.1411 0.820913 17.1624C0.828912 17.1838 0.84091 17.2032 0.8562 17.2196C0.871489 17.2361 0.889761 17.2491 0.909938 17.258C0.930115 17.2669 0.95179 17.2715 0.973684 17.2715H2.2021C2.29029 17.2715 2.36411 17.1963 2.36616 17.1039C2.40718 15.4453 3.04087 13.892 4.16265 12.7146C5.32134 11.4965 6.86353 10.8262 8.50415 10.8262C9.66695 10.8262 10.7826 11.1635 11.7444 11.7951C11.7691 11.8114 11.7975 11.8205 11.8266 11.8217C11.8558 11.8228 11.8847 11.8159 11.9105 11.8016ZM8.50415 9.19336C7.5649 9.19336 6.68101 8.80879 6.0145 8.11055C5.68657 7.76789 5.4266 7.36065 5.24956 6.91227C5.07252 6.4639 4.98192 5.98326 4.98296 5.49805C4.98296 4.51191 5.35005 3.58379 6.0145 2.88555C6.67896 2.1873 7.56284 1.80273 8.50415 1.80273C9.44546 1.80273 10.3273 2.1873 10.9938 2.88555C11.3217 3.2282 11.5817 3.63545 11.7587 4.08382C11.9358 4.53219 12.0264 5.01283 12.0253 5.49805C12.0253 6.48418 11.6583 7.4123 10.9938 8.11055C10.3273 8.80879 9.44341 9.19336 8.50415 9.19336ZM16.0469 14.3066H14.3243V12.502C14.3243 12.4074 14.2504 12.3301 14.1602 12.3301H13.0118C12.9215 12.3301 12.8477 12.4074 12.8477 12.502V14.3066H11.1251C11.0348 14.3066 10.961 14.384 10.961 14.4785V15.6816C10.961 15.7762 11.0348 15.8535 11.1251 15.8535H12.8477V17.6582C12.8477 17.7527 12.9215 17.8301 13.0118 17.8301H14.1602C14.2504 17.8301 14.3243 17.7527 14.3243 17.6582V15.8535H16.0469C16.1372 15.8535 16.211 15.7762 16.211 15.6816V14.4785C16.211 14.384 16.1372 14.3066 16.0469 14.3066Z"
-                fill="currentColor"
+                d="M13.9105 13.8016C14.4068 13.5223 14.9749 13.3633 15.5798 13.3633H15.5819C15.6434 13.3633 15.6721 13.2859 15.627 13.243C14.9979 12.6515 14.2792 12.1737 13.5003 11.8293C13.4921 11.825 13.4839 11.8229 13.4757 11.8186C14.7493 10.8496 15.5778 9.2748 15.5778 7.49805C15.5778 4.55469 13.3055 2.16992 10.5021 2.16992C7.69868 2.16992 5.42847 4.55469 5.42847 7.49805C5.42847 9.2748 6.25698 10.8496 7.53257 11.8186C7.52437 11.8229 7.51616 11.825 7.50796 11.8293C6.59126 12.2354 5.7689 12.8176 5.06138 13.5609C4.35795 14.2965 3.79792 15.1685 3.41255 16.1283C3.03339 17.0682 2.82876 18.0752 2.80962 19.0953C2.80907 19.1182 2.81291 19.1411 2.82091 19.1624C2.82891 19.1838 2.84091 19.2032 2.8562 19.2196C2.87149 19.2361 2.88976 19.2491 2.90994 19.258C2.93012 19.2669 2.95179 19.2715 2.97368 19.2715H4.2021C4.29029 19.2715 4.36411 19.1963 4.36616 19.1039C4.40718 17.4453 5.04087 15.892 6.16265 14.7146C7.32134 13.4965 8.86353 12.8262 10.5042 12.8262C11.6669 12.8262 12.7826 13.1635 13.7444 13.7951C13.7691 13.8114 13.7975 13.8205 13.8266 13.8217C13.8558 13.8228 13.8847 13.8159 13.9105 13.8016ZM10.5042 11.1934C9.5649 11.1934 8.68101 10.8088 8.0145 10.1105C7.68657 9.76789 7.4266 9.36065 7.24956 8.91227C7.07252 8.4639 6.98192 7.98326 6.98296 7.49805C6.98296 6.51191 7.35005 5.58379 8.0145 4.88555C8.67896 4.1873 9.56284 3.80273 10.5042 3.80273C11.4455 3.80273 12.3273 4.1873 12.9938 4.88555C13.3217 5.2282 13.5817 5.63545 13.7587 6.08382C13.9358 6.53219 14.0264 7.01283 14.0253 7.49805C14.0253 8.48418 13.6583 9.4123 12.9938 10.1105C12.3273 10.8088 11.4434 11.1934 10.5042 11.1934ZM18.0469 16.3066H16.3243V14.502C16.3243 14.4074 16.2504 14.3301 16.1602 14.3301H15.0118C14.9215 14.3301 14.8477 14.4074 14.8477 14.502V16.3066H13.1251C13.0348 16.3066 12.961 16.384 12.961 16.4785V17.6816C12.961 17.7762 13.0348 17.8535 13.1251 17.8535H14.8477V19.6582C14.8477 19.7527 14.9215 19.8301 15.0118 19.8301H16.1602C16.2504 19.8301 16.3243 19.7527 16.3243 19.6582V17.8535H18.0469C18.1372 17.8535 18.211 17.7762 18.211 17.6816V16.4785C18.211 16.384 18.1372 16.3066 18.0469 16.3066Z"
+                fill="#F66700"
               />
             </svg>
-            <span className="add-text">Yeni Kategori Ekle</span>
           </button>
+
+          <button className="header-btn" onClick={handleExportToExcel} title="Excel'e Aktar">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6.61935 7.51463C6.57273 7.45587 6.51483 7.40703 6.44906 7.37099C6.38329 7.33494 6.31097 7.31241 6.23636 7.30472C6.16175 7.29703 6.08635 7.30435 6.01461 7.32623C5.94287 7.34811 5.87623 7.38412 5.81861 7.43213C5.76099 7.48015 5.71355 7.53921 5.67909 7.60583C5.64463 7.67245 5.62384 7.74528 5.61795 7.82006C5.61206 7.89483 5.62118 7.97003 5.64477 8.04122C5.66837 8.11242 5.70597 8.17818 5.75535 8.23463L8.26748 11.2496L5.75535 14.2646C5.66408 14.3797 5.62141 14.5258 5.63646 14.6719C5.65151 14.818 5.72308 14.9524 5.83589 15.0464C5.9487 15.1404 6.0938 15.1866 6.2402 15.175C6.38659 15.1635 6.52266 15.0952 6.61935 14.9846L8.99985 12.1283L11.3804 14.9858C11.476 15.1003 11.6132 15.1722 11.7618 15.1856C11.8354 15.1923 11.9096 15.1843 11.9802 15.1623C12.0507 15.1403 12.1162 15.1045 12.1729 15.0572C12.2296 15.0098 12.2765 14.9518 12.3108 14.8863C12.3451 14.8209 12.3661 14.7493 12.3728 14.6757C12.3794 14.6021 12.3715 14.5279 12.3495 14.4574C12.3274 14.3869 12.2917 14.3214 12.2444 14.2646L9.73223 11.2496L12.2444 8.23463C12.3356 8.11959 12.3783 7.97343 12.3632 7.82735C12.3482 7.68128 12.2766 7.54688 12.1638 7.45288C12.051 7.35887 11.9059 7.3127 11.7595 7.32424C11.6131 7.33578 11.477 7.40411 11.3804 7.51463L8.99985 10.371L6.61935 7.51463Z"
+                fill="#E84E0F"
+              />
+              <path
+                d="M15.75 15.75V5.0625L10.6875 0H4.5C3.90326 0 3.33097 0.237053 2.90901 0.65901C2.48705 1.08097 2.25 1.65326 2.25 2.25V15.75C2.25 16.3467 2.48705 16.919 2.90901 17.341C3.33097 17.7629 3.90326 18 4.5 18H13.5C14.0967 18 14.669 17.7629 15.091 17.341C15.5129 16.919 15.75 16.3467 15.75 15.75ZM10.6875 3.375C10.6875 3.82255 10.8653 4.25178 11.1818 4.56824C11.4982 4.88471 11.9274 5.0625 12.375 5.0625H14.625V15.75C14.625 16.0484 14.5065 16.3345 14.2955 16.5455C14.0845 16.7565 13.7984 16.875 13.5 16.875H4.5C4.20163 16.875 3.91548 16.7565 3.7045 16.5455C3.49353 16.3345 3.375 16.0484 3.375 15.75V2.25C3.375 1.95163 3.49353 1.66548 3.7045 1.4545C3.91548 1.24353 4.20163 1.125 4.5 1.125H10.6875V3.375Z"
+                fill="#09C71D"
+              />
+            </svg>
+          </button>
+     
         </div>
       </div>
 
+
+
       {/* Tablo */}
       <div className="table-wrapper">
-        <Table className="category-table">
+        <Table className="categories-table">
           <thead>
             <tr>
               <th>
@@ -353,8 +319,9 @@ const CategoryTable = ({ onShowMessagingModal }) => {
                 />
               </th>
               <th>SIRA</th>
+              <th>KATEGORİ ADI</th>
               <th>ALT KATEGORİ</th>
-              <th>ANA KATEGORİ</th>
+              <th>AÇIKLAMA</th>
               <th>KİŞİ SAYISI</th>
               <th>İŞLEM</th>
             </tr>
@@ -362,52 +329,48 @@ const CategoryTable = ({ onShowMessagingModal }) => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className="text-center py-4">
+                <td colSpan="7" className="text-center py-4">
                   <div className="d-flex justify-content-center align-items-center">
                     <div className="spinner-border text-primary" role="status">
                       <span className="visually-hidden">Yükleniyor...</span>
                     </div>
-                    <span className="ms-2">Kategoriler yükleniyor...</span>
+                    <span className="ms-2">Veriler yükleniyor...</span>
                   </div>
                 </td>
               </tr>
             ) : categories.length === 0 ? (
               <tr>
-                <td colSpan="6" className="text-center py-4">
+                <td colSpan="7" className="text-center py-4">
                   <div className="text-muted">
                     <i className="fas fa-search me-2"></i>
-                    Herhangi bir kategori bulunamadı
+                    Herhangi bir kayıt bulunamadı
                   </div>
                 </td>
               </tr>
             ) : (
-              categories.map((category) => (
-              <tr key={category.id}>
-                <td>
-                  <Form.Check
-                    type="checkbox"
-                    checked={selectedCategories.includes(category.id)}
-                    onChange={() => handleSelectCategory(category.id)}
-                    className="category-checkbox"
-                  />
-                </td>
-                <td>{category.sira}</td>
-                <td className="sub-category">{category.alt_kategori || "-"}</td>
-                <td className="category-name">{category.name}</td>
-                <td className="person-count">
-                  {category.kisiSayisi.toLocaleString("tr-TR")}
-                </td>
-                <td>
-                  <div className="action-buttons">
+              categories.map((category, index) => (
+                <tr key={category.id}>
+                  <td>
+                    <Form.Check
+                      type="checkbox"
+                      checked={selectedCategories.includes(category.id)}
+                      onChange={() => handleSelectCategory(category.id)}
+                      className="category-checkbox"
+                    />
+                  </td>
+                  <td>{(currentPage - 1) * categoriesPerPage + index + 1}</td>
+                  <td>{category.name}</td>
+                  <td>{category.alt_kategori || '-'}</td>
+                  <td>{category.description || '-'}</td>
+                  <td>{category.contact_count || 0}</td>
+                  <td>
                     <CategoryActionMenu
                       onView={() => handleViewCategory(category)}
-                      onSendMessage={() => handleMessageSend(category)}
                       onEdit={() => handleEditCategory(category)}
                       onDelete={() => handleDeleteCategory(category)}
                     />
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                </tr>
               ))
             )}
           </tbody>
@@ -417,11 +380,11 @@ const CategoryTable = ({ onShowMessagingModal }) => {
       {/* Alt Bilgi ve Sayfalama */}
       <div className="table-footer">
         <div className="total-records">
-          TOPLAM {totalRecords.toLocaleString("tr-TR")} KİŞİ BULUNMAKTADIR
+          TOPLAM {totalRecords.toLocaleString("tr-TR")} KATEGORİ BULUNMAKTADIR
         </div>
         <div className="pagination-wrapper">
           <Pagination className="custom-pagination">
-            <Pagination.First 
+            <Pagination.First
               disabled={currentPage === 1}
               onClick={() => handlePageChange(1)}
             >
@@ -441,7 +404,7 @@ const CategoryTable = ({ onShowMessagingModal }) => {
                 />
               </svg>
             </Pagination.First>
-            <Pagination.Prev 
+            <Pagination.Prev
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
             >
@@ -455,13 +418,13 @@ const CategoryTable = ({ onShowMessagingModal }) => {
                 />
               </svg>
             </Pagination.Prev>
-            
+
             {/* Sayfa numaraları */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
               if (pageNum <= totalPages) {
                 return (
-                  <Pagination.Item 
+                  <Pagination.Item
                     key={pageNum}
                     active={pageNum === currentPage}
                     onClick={() => handlePageChange(pageNum)}
@@ -472,8 +435,8 @@ const CategoryTable = ({ onShowMessagingModal }) => {
               }
               return null;
             })}
-            
-            <Pagination.Next 
+
+            <Pagination.Next
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
             >
@@ -487,7 +450,7 @@ const CategoryTable = ({ onShowMessagingModal }) => {
                 />
               </svg>
             </Pagination.Next>
-            <Pagination.Last 
+            <Pagination.Last
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(totalPages)}
             >
@@ -511,264 +474,43 @@ const CategoryTable = ({ onShowMessagingModal }) => {
         </div>
       </div>
 
-      {/* Kategori Ekleme Modalı */}
+      {/* Kategori Ekleme Modal */}
       <AddCategoryModal
         show={showAddModal}
         onHide={handleCloseAddModal}
         onCategoryAdded={handleCategoryAdded}
       />
 
-      {/* Kategori Düzenleme Modalı */}
+      {/* Kategori Düzenleme Modal */}
       <EditCategoryModal
         show={showEditModal}
         onHide={closeAllModals}
         category={selectedCategory}
-        onCategoryUpdated={fetchCategories}
+        onCategoryUpdated={handleCategoryUpdated}
       />
 
-      {/* Kategori Görüntüleme Modalı */}
-      <Modal show={showViewModal} onHide={closeAllModals} size="lg" centered>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className="fas fa-eye me-2 text-info"></i>
-            Kategori Detayları
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedCategory && (
-            <div className="category-details">
-              <Row>
-                <Col md={6}>
-                  <div className="detail-item mb-3">
-                    <label className="detail-label">Ana Kategori:</label>
-                    <div className="detail-value">{selectedCategory.name}</div>
-                  </div>
-                </Col>
-                <Col md={6}>
-                  <div className="detail-item mb-3">
-                    <label className="detail-label">Alt Kategori:</label>
-                    <div className="detail-value">{selectedCategory.alt_kategori}</div>
-                  </div>
-                </Col>
-              </Row>
-              <Row>
-                <Col md={6}>
-                  <div className="detail-item mb-3">
-                    <label className="detail-label">Kişi Sayısı:</label>
-                    <div className="detail-value text-success fw-bold">
-                      {selectedCategory.kisiSayisi.toLocaleString("tr-TR")} kişi
-                    </div>
-                  </div>
-                </Col>
-                <Col md={6}>
-                  <div className="detail-item mb-3">
-                    <label className="detail-label">Sıra No:</label>
-                    <div className="detail-value">{selectedCategory.sira}</div>
-                  </div>
-                </Col>
-              </Row>
-              <Row>
-                <Col md={12}>
-                  <div className="detail-item mb-3">
-                    <label className="detail-label">Açıklama:</label>
-                    <div className="detail-value">
-                      {selectedCategory.description || "Açıklama bulunmamaktadır."}
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={closeAllModals}>
-            <i className="fas fa-times me-2"></i>
-            Kapat
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      {/* Kategori Görüntüleme Modal */}
+      <ViewCategoryModal
+        show={showViewModal}
+        onHide={closeAllModals}
+        category={selectedCategory}
+      />
 
-
-
-      {/* Mesaj Gönderme Modalı */}
-      <Modal show={showMessageModal} onHide={closeAllModals} size="lg" centered>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className="fas fa-envelope me-2 text-primary"></i>
-            Mesaj Gönder
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedCategory && (
-            <div className="message-send">
-              <div className="alert alert-info">
-                <i className="fas fa-info-circle me-2"></i>
-                <strong>{selectedCategory.name} - {selectedCategory.alt_kategori}</strong> kategorisindeki 
-                <strong> {selectedCategory.kisiSayisi} kişiye</strong> mesaj gönderilecek.
-              </div>
-              <Form.Group className="mb-3">
-                <Form.Label>Konu:</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Mesaj konusu..."
-                  className="category-input"
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Mesaj İçeriği:</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={5}
-                  placeholder="Mesajınızı buraya yazın..."
-                  className="category-input"
-                />
-              </Form.Group>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={closeAllModals}>
-            <i className="fas fa-times me-2"></i>
-            İptal
-          </Button>
-          <Button variant="primary">
-            <i className="fas fa-paper-plane me-2"></i>
-            Mesaj Gönder
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Silme Onay Modalı */}
-      <Modal show={showDeleteModal} onHide={closeAllModals} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className="fas fa-exclamation-triangle me-2 text-danger"></i>
-            Kategori Sil
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedCategory && (
-            <div className="delete-confirmation">
-              <div className="category-details mb-4">
-                <h6 className="mb-2">Silinecek Kategori:</h6>
-                <div className="category-item">
-                  <span className="category-main">{selectedCategory.name}</span>
-                  <span className="category-separator">•</span>
-                  <span className="category-sub">{selectedCategory.alt_kategori}</span>
-                </div>
-                <div className="person-count mt-2">
-                  <i className="fas fa-users me-2 text-primary"></i>
-                  <span>{selectedCategory.kisiSayisi} kişi</span>
-                </div>
-              </div>
-              
-              <div className="confirmation-question mb-3">
-                <p className="text-center mb-0">Bu kategoriyi silmek istediğinizden emin misiniz?</p>
-              </div>
-              
-                             <div className="alert alert-warning">
-                 <i className="fas fa-exclamation-triangle me-2"></i>
-                 <strong>Uyarı:</strong> Bu kategorideki kişiler "Kategori Yok" kategorisine taşınacaktır.
-               </div>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer className="justify-content-between">
-          <Button variant="secondary" onClick={closeAllModals}>
-            <i className="fas fa-times me-2"></i>
-            İptal
-          </Button>
-          <div className="action-buttons-group">
-            <Button 
-              variant="info" 
-              onClick={() => handleMoveContacts(selectedCategory)}
-              className="me-2"
-            >
-              <i className="fas fa-exchange-alt me-2"></i>
-              Kişileri Taşı
-            </Button>
-            <Button variant="danger" onClick={confirmDeleteCategory}>
-              <i className="fas fa-trash me-2"></i>
-              Evet, Sil
-            </Button>
-          </div>
-        </Modal.Footer>
-              </Modal>
-
-      {/* Kişi Taşıma Modalı */}
-      <Modal show={showMoveModal} onHide={closeAllModals} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className="fas fa-exchange-alt me-2 text-info"></i>
-            Kişileri Taşı
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedCategory && (
-            <div className="move-contacts">
-              <div className="source-category mb-4">
-                <h6 className="mb-2">Kaynak Kategori:</h6>
-                <div className="category-item">
-                  <span className="category-main">{selectedCategory.name}</span>
-                  <span className="category-separator">•</span>
-                  <span className="category-sub">{selectedCategory.alt_kategori}</span>
-                </div>
-                <div className="person-count mt-2">
-                  <i className="fas fa-users me-2 text-primary"></i>
-                  <span>{selectedCategory.kisiSayisi} kişi taşınacak</span>
-                </div>
-              </div>
-              
-                             <div className="target-category mb-4">
-                 <Form.Group>
-                   <Form.Label>Hedef Kategori Seçin:</Form.Label>
-                   <Form.Select 
-                     className="category-input"
-                     value={targetCategory}
-                     onChange={(e) => setTargetCategory(e.target.value)}
-                   >
-                     <option value="">Kategori seçin...</option>
-                     {categories
-                       .filter(cat => cat.id !== selectedCategory.id)
-                       .map(category => (
-                         <option key={category.id} value={category.alt_kategori}>
-                           {category.name} - {category.alt_kategori}
-                         </option>
-                       ))
-                     }
-                     <option value="Kategori Yok">Kategori Yok</option>
-                   </Form.Select>
-                 </Form.Group>
-               </div>
-              
-              <div className="alert alert-info">
-                <i className="fas fa-info-circle me-2"></i>
-                Kişiler seçilen kategoriye taşındıktan sonra kaynak kategori silinecektir.
-              </div>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={closeAllModals}>
-            <i className="fas fa-times me-2"></i>
-            İptal
-          </Button>
-                     <Button 
-             variant="success" 
-             onClick={confirmMoveAndDelete}
-             disabled={!targetCategory}
-           >
-             <i className="fas fa-check me-2"></i>
-             Taşı ve Sil
-           </Button>
-        </Modal.Footer>
-      </Modal>
+      {/* Kategori Silme Modal */}
+      <DeleteCategoryModal
+        show={showDeleteModal}
+        onHide={closeAllModals}
+        category={selectedCategory}
+        onCategoryDeleted={handleCategoryDeleted}
+      />
     </div>
   );
 };
 
-// Category actions dropdown component (portal-based)
-const CategoryActionMenu = ({ onView, onSendMessage, onEdit, onDelete }) => {
+export default CategoryTable;
+
+// Portal tabanlı aksiyon menüsü (Users/Requests ile aynı yaklaşım)
+const CategoryActionMenu = ({ onView, onEdit, onDelete }) => {
   const [open, setOpen] = useState(false);
   const btnRef = React.useRef(null);
   const menuRef = React.useRef(null);
@@ -777,89 +519,36 @@ const CategoryActionMenu = ({ onView, onSendMessage, onEdit, onDelete }) => {
   useEffect(() => {
     const onDoc = (e) => {
       if (!open) return;
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(e.target) &&
-        btnRef.current &&
-        !btnRef.current.contains(e.target)
-      ) {
+      if (menuRef.current && !menuRef.current.contains(e.target) && btnRef.current && !btnRef.current.contains(e.target)) {
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
   }, [open]);
 
   const toggle = () => {
     if (!btnRef.current) return;
     const r = btnRef.current.getBoundingClientRect();
-    const left = Math.max(8, Math.min(window.innerWidth - 232, r.right - 220));
-    const top = Math.min(window.innerHeight - 240, r.bottom + 6);
-    setPos({ top, left });
+    setPos({ top: r.bottom + 4, left: Math.max(8, r.right - 220) });
     setOpen((p) => !p);
   };
 
   const Item = ({ icon, color, label, onClick }) => (
-    <div
-      className="dropdown-item"
-      onClick={() => {
-        setOpen(false);
-        onClick && onClick();
-      }}
-      style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
-    >
-      <span style={{ width: 14, height: 14, display: "inline-flex" }}>
-        {icon === "view" && (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill={color}>
-            <path d="M12 6a9.77 9.77 0 0 0-9 6 9.77 9.77 0 0 0 18 0 9.77 9.77 0 0 0-9-6Zm0 10a4 4 0 1 1 4-4 4.005 4.005 0 0 1-4 4Z" />
-          </svg>
-        )}
-        {icon === "message" && (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M3.334 8L2.927 4.375c-.118-1.036.89-1.773 1.847-1.35l8.06 3.558c1.06.468 1.06 1.889 0 2.357l-8.06 3.558c-.957.423-1.965-.314-1.847-1.35L3.334 8zm0 0h4.833"
-              stroke="#F66700"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-        {icon === "edit" && (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill={color}>
-            <path d="M2 10.667V13.333H4.66667L11.7333 6.26667L9.06667 3.6L2 10.667ZM13.2667 4.73333C13.5333 4.46667 13.5333 4.06667 13.2667 3.8L11.8667 2.4C11.6 2.13333 11.2 2.13333 10.9333 2.4L9.8 3.53333L12.4667 6.2L13.2667 5.4V4.73333Z" />
-          </svg>
-        )}
-        {icon === "delete" && (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill={color}>
-            <path d="M6 2.66667H10C10.3667 2.66667 10.6667 2.96667 10.6667 3.33333V4H5.33333V3.33333C5.33333 2.96667 5.63333 2.66667 6 2.66667ZM4 4.66667V12.6667C4 13.4 4.6 14 5.33333 14H10.6667C11.4 14 12 13.4 12 12.6667V4.66667H4Z" />
-          </svg>
-        )}
+    <div className="dropdown-item" onClick={() => { setOpen(false); onClick && onClick(); }} style={{ cursor: 'pointer', display:'flex', alignItems:'center', gap:8 }}>
+      <span style={{ width:14, height:14, display:'inline-flex' }}>
+        {icon === 'view' && <svg width="14" height="14" viewBox="0 0 24 24" fill={color}><path d="M12 6a9.77 9.77 0 0 0-9 6 9.77 9.77 0 0 0 18 0 9.77 9.77 0 0 0-9-6Zm0 10a4 4 0 1 1 4-4 4.005 4.005 0 0 1-4 4Z"/></svg>}
+        {icon === 'edit' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M2 10.667V13.333H4.66667L11.7333 6.26667L9.06667 3.6L2 10.667ZM13.2667 4.73333C13.5333 4.46667 13.5333 4.06667 13.2667 3.8L11.8667 2.4C11.6 2.13333 11.2 2.13333 10.9333 2.4L9.8 3.53333L12.4667 6.2L13.2667 5.4V4.73333Z"/></svg>}
+        {icon === 'delete' && <svg width="14" height="14" viewBox="0 0 16 16" fill={color}><path d="M6 2.66667H10C10.3667 2.66667 10.6667 2.96667 10.6667 3.33333V4H5.33333V3.33333C5.33333 2.96667 5.63333 2.66667 6 2.66667ZM4 4.66667V12.6667C4 13.4 4.6 14 5.33333 14H10.6667C11.4 14 12 13.4 12 12.6667V4.66667H4Z"/></svg>}
       </span>
       {label}
     </div>
   );
 
   const menu = (
-    <div
-      ref={menuRef}
-      className="user-actions-menu"
-      style={{
-        position: "fixed",
-        top: pos.top,
-        left: pos.left,
-        zIndex: 2147483647,
-        minWidth: 220,
-        background: "#fff",
-        border: "1px solid #e5e7eb",
-        borderRadius: 8,
-        boxShadow: "0 8px 24px rgba(0,0,0,.12)",
-        padding: 6,
-      }}
-    >
+    <div ref={menuRef} className="user-actions-menu" style={{ position:'fixed', top:pos.top, left:pos.left, zIndex:2147483647, minWidth:220, background:'#fff', border:'1px solid #e5e7eb', borderRadius:8, boxShadow:'0 8px 24px rgba(0,0,0,.12)'}}>
       <Item icon="view" color="#4E0DCC" label="Görüntüle" onClick={onView} />
-      <Item icon="message" color="#F66700" label="İleti Gönder" onClick={onSendMessage} />
-      <div style={{ height: 1, background: "#f1f3f5", margin: "6px 0" }} />
+      <div style={{height:1, background:'#f1f3f5', margin:'6px 0'}} />
       <Item icon="edit" color="#3B82F6" label="Düzenle" onClick={onEdit} />
       <Item icon="delete" color="#dc3545" label="Sil" onClick={onDelete} />
     </div>
@@ -867,19 +556,8 @@ const CategoryActionMenu = ({ onView, onSendMessage, onEdit, onDelete }) => {
 
   return (
     <>
-      <button
-        ref={btnRef}
-        onClick={toggle}
-        className="action-menu-btn btn btn-outline-secondary btn-sm"
-        title="İşlemler"
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
+      <button ref={btnRef} onClick={toggle} className="action-menu-btn btn btn-outline-secondary btn-sm">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="8" cy="3" r="1.5" fill="currentColor" />
           <circle cx="8" cy="8" r="1.5" fill="currentColor" />
           <circle cx="8" cy="13" r="1.5" fill="currentColor" />
@@ -889,6 +567,3 @@ const CategoryActionMenu = ({ onView, onSendMessage, onEdit, onDelete }) => {
     </>
   );
 };
-
-export default CategoryTable;
- 
