@@ -935,12 +935,31 @@ const WeeklyCalendar = ({
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateAppointment = async () => {
-    // Randevu güncellendikten sonra listeyi yenile
-    await loadAppointments();
-    setIsEditModalOpen(false);
-    setSelectedAppointment(null);
-    // Toast kaldırıldı - gereksiz bildirim
+  const handleUpdateAppointment = async (appointmentData) => {
+    if (!accessToken) {
+      console.error('Erişim token\'ı bulunamadı!');
+      return;
+    }
+
+    try {
+      console.log('🔄 Randevu güncelleniyor...', appointmentData);
+      console.log('🔄 selectedAppointment.id:', selectedAppointment?.id);
+      
+      // Backend'e güncelleme isteği gönder
+      const response = await updateAppointment(accessToken, selectedAppointment.id, appointmentData);
+      console.log('✅ Randevu güncelleme response:', response);
+      
+      // Randevu güncellendikten sonra listeyi yenile
+      await loadAppointments();
+      setIsEditModalOpen(false);
+      setSelectedAppointment(null);
+      
+      return response;
+    } catch (error) {
+      console.error('❌ Randevu güncelleme hatası:', error);
+      showError('Randevu güncellenemedi: ' + error.message);
+      throw error;
+    }
   };
 
   const handleDeleteAppointment = async (appointmentId) => {

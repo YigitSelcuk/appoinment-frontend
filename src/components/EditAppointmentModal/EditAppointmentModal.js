@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { updateAppointment, checkAppointmentConflict, getInviteePreviousAppointments, resendReminder, updateReminderTime, getAppointmentById } from '../../services/appointmentsService';
+import { checkAppointmentConflict, getInviteePreviousAppointments } from '../../services/appointmentsService';
 import { contactsService } from '../../services/contactsService';
 import { getUsers, getCurrentUser } from '../../services/usersService';
 import { sendNotificationCombo } from '../../services/emailService';
@@ -11,7 +11,9 @@ import googleCalendarService from '../../services/googleCalendarService';
 import './EditAppointmentModal.css';
 
 const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
+  // Toast hook'u
   const { showSuccess, showError, showWarning, showInfo } = useSimpleToast();
+  // Auth hook'u
   const { accessToken, user } = useAuth();
   
   const [formData, setFormData] = useState({
@@ -21,145 +23,221 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
     endTime: '',
     description: '',
     color: '#3C02AA',
-    location: '',
-    status: 'scheduled',
     isAllDay: false,
     repeat: 'TEKRARLANMAZ',
     assignedTo: 'YAKIP',
+    location: '',
     startOffice: '',
     notification: false,
     reminderBefore: false,
-    reminderDateTime: '',
-    notificationSMS: false,
-    notificationEmail: false,
-    visibleToUsers: [],
-    visibleToAll: false
+    reminderValue: 1,
+    reminderUnit: 'hours',
+    notificationSMS: false, // SMS bildirimi
+    notificationEmail: false, // EPOSTA bildirimi
+    visibleToUsers: [], // Randevunun hangi kullanıcılarda gözükeceği
+    visibleToAll: false, // Tüm kullanıcılara görünür mü?
+    status: 'SCHEDULED' // Randevu durumu
   });
 
-  const [errors, setErrors] = useState({});
-  const [conflicts, setConflicts] = useState([]);
-  const [isCheckingConflict, setIsCheckingConflict] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // Orijinal değerleri saklamak için (tarih/saat değişikliği algılamak için)
+  const [originalValues, setOriginalValues] = useState({
+    date: '',
+    startTime: '',
+    endTime: ''
+  });
 
-  // Kişiler ve kullanıcılar için state'ler
-  const [contacts, setContacts] = useState([]);
-  const [filteredContacts, setFilteredContacts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showContactDropdown, setShowContactDropdown] = useState(false);
-  const [selectedContacts, setSelectedContacts] = useState([]);
-  const [showAddContactModal, setShowAddContactModal] = useState(false);
-
-  // Kullanıcılar için state'ler
+  // Diğer state'ler
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  
 
-  // Önceki randevular için state'ler
-  const [previousAppointments, setPreviousAppointments] = useState([]);
-  const [showPreviousAppointments, setShowPreviousAppointments] = useState(false);
-  const [loadingPreviousAppointments, setLoadingPreviousAppointments] = useState(false);
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
-  // Toolbar state'leri
-  const [activeToolbarButtons, setActiveToolbarButtons] = useState([]);
-
-  // Hatırlatma kontrolleri
-  const [appointmentDetails, setAppointmentDetails] = useState(null);
-  const [loadingDetails, setLoadingDetails] = useState(false);
-  const [showReminderControls, setShowReminderControls] = useState(false);
-  const [resendingReminder, setResendingReminder] = useState(false);
-  const [showManualTime, setShowManualTime] = useState(false);
-  const [manualReminderDateTime, setManualReminderDateTime] = useState('');
-  const [showReminderEdit, setShowReminderEdit] = useState(false);
-  const [newReminderValue, setNewReminderValue] = useState('');
-  const [newReminderUnit, setNewReminderUnit] = useState('MINUTES');
-  const [updatingReminder, setUpdatingReminder] = useState(false);
-
-  // Modal açıldığında form verilerini doldur
-  useEffect(() => {
-    if (isOpen && appointmentData) {
-      // Yetki kontrolü kaldırıldı - herkes düzenleyebilir
+  // appointmentData değiştiğinde form verilerini güncelle
+  React.useEffect(() => {
+    if (appointmentData && isOpen) {
+      console.log('appointmentData:', appointmentData);
+      console.log('appointmentData.repeat_type:', appointmentData.repeat_type);
+      console.log('appointmentData.visible_to_all:', appointmentData.visible_to_all);
+      console.log('appointmentData.notification_email:', appointmentData.notification_email);
+      console.log('appointmentData.notification_sms:', appointmentData.notification_sms);
+      console.log('appointmentData.reminder_value:', appointmentData.reminder_value);
+      console.log('appointmentData.reminder_unit:', appointmentData.reminder_unit);
+      console.log('appointmentData.attendees:', appointmentData.attendees);
+      console.log('appointmentData.invitees:', appointmentData.invitees);
+      console.log('appointmentData.date:', appointmentData.date);
+      console.log('appointmentData.date type:', typeof appointmentData.date);
       
-      // JSON parsing için yardımcı fonksiyon
-      const safeJsonParse = (input, defaultValue = []) => {
-        if (input === null || input === undefined || input === '') {
-          return defaultValue;
-        }
-        if (Array.isArray(input)) {
-          return input;
-        }
-        if (typeof input === 'string') {
-          try {
-            return JSON.parse(input);
-          } catch {
-            return defaultValue;
+      // Tarih formatını düzelt (YYYY-MM-DD formatına çevir)
+      let formattedDate = '';
+      if (appointmentData.date) {
+        console.log('Original date value:', appointmentData.date);
+        
+        // Eğer zaten YYYY-MM-DD formatındaysa direkt kullan
+        if (typeof appointmentData.date === 'string' && appointmentData.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          formattedDate = appointmentData.date;
+          console.log('Date already in YYYY-MM-DD format:', formattedDate);
+        } else {
+          // Diğer durumlarda Date objesine çevir
+          const dateObj = new Date(appointmentData.date);
+          console.log('Date object:', dateObj);
+          console.log('Date object valid:', !isNaN(dateObj.getTime()));
+          
+          if (!isNaN(dateObj.getTime())) {
+            // Timezone sorununu önlemek için yerel tarih formatlaması kullan
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            formattedDate = `${year}-${month}-${day}`;
+            console.log('Converted to YYYY-MM-DD:', formattedDate);
           }
         }
-        // Nesne gelirse olduğu gibi döndür (beklenen yapıdaysa)
-        if (typeof input === 'object') {
-          return input;
-        }
-        return defaultValue;
-      };
-
-      // Tarihi local timezone'a çevir
-      const formatDateForInput = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        // Local timezone'da tarihi al
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
-
+      }
+      console.log('Final formattedDate:', formattedDate);
+      
       setFormData({
         title: appointmentData.title || '',
-        date: formatDateForInput(appointmentData.date),
-        startTime: appointmentData.start_time ? appointmentData.start_time.substring(0, 5) : '',
-        endTime: appointmentData.end_time ? appointmentData.end_time.substring(0, 5) : '',
         description: appointmentData.description || '',
-        color: appointmentData.color || '#3C02AA',
+        date: formattedDate,
+        startTime: appointmentData.start_time || appointmentData.startTime || '',
+        endTime: appointmentData.end_time || appointmentData.endTime || '',
         location: appointmentData.location || '',
-        status: appointmentData.status || 'scheduled',
-        isAllDay: appointmentData.is_all_day || false,
-        repeat: appointmentData.repeat_type || 'TEKRARLANMAZ',
-        reminderBefore: appointmentData.reminder_enabled || false,
-        reminderDateTime: '',
-        notificationSMS: appointmentData.notification_sms || false,
-        notificationEmail: appointmentData.notification_email || false,
-        // DÜZELTME: doğru alan adı ve esnek parse
-        visibleToUsers: safeJsonParse(appointmentData.visible_to_users),
-        visibleToAll: appointmentData.visible_to_all || false
+        color: appointmentData.color || '#3B82F6',
+        isAllDay: appointmentData.isAllDay || false,
+        repeat: appointmentData.repeat_type || appointmentData.repeat || 'TEKRARLANMAZ',
+        assignedTo: appointmentData.assignedTo || 'YAKIP',
+        startOffice: appointmentData.startOffice || '',
+        notification: appointmentData.notification || false,
+        reminderBefore: appointmentData.reminderBefore || false,
+        reminderValue: appointmentData.reminder_value || appointmentData.reminderValue || appointmentData.reminderTime || 1,
+        reminderUnit: appointmentData.reminder_unit || appointmentData.reminderUnit || 'hours',
+        notificationSMS: appointmentData.notification_sms || appointmentData.smsNotification || false,
+        notificationEmail: appointmentData.notification_email || appointmentData.emailNotification || false,
+        visibleToUsers: appointmentData.visible_to_users || appointmentData.visibleToUsers || [],
+        visibleToAll: appointmentData.visible_to_all || appointmentData.visibleToAll || false,
+        isPrivate: appointmentData.isPrivate || false,
+        reminderEnabled: appointmentData.reminderEnabled || false,
+        reminderTime: appointmentData.reminderTime || 15,
+        reminderUnit: appointmentData.reminderUnit || 'minutes',
+        emailNotification: appointmentData.emailNotification || false,
+        smsNotification: appointmentData.smsNotification || false,
+        googleCalendarSync: appointmentData.googleCalendarSync || false,
+        status: appointmentData.status || 'SCHEDULED'
       });
 
-      // Davetlileri ve katılımcıları set et
-      const invitees = safeJsonParse(appointmentData.invitees);
-      const attendees = safeJsonParse(appointmentData.attendees);
-      const allInvited = [...invitees, ...attendees];
-      setSelectedContacts(allInvited);
-
-      setErrors({});
-      setConflicts([]);
+      // Orijinal değerleri sakla (tarih/saat değişikliği algılamak için)
+      setOriginalValues({
+        date: formattedDate,
+        startTime: appointmentData.start_time || appointmentData.startTime || '',
+        endTime: appointmentData.end_time || appointmentData.endTime || ''
+      });
+      
+      // Davetlileri yükle
+      if (appointmentData.invitees && Array.isArray(appointmentData.invitees)) {
+        setInvitees(appointmentData.invitees || []);
+        setSelectedContacts(appointmentData.invitees || []); // Davetlileri selectedContacts'a da yükle
+      }
+      
+      // Attendees'i yükle
+      if (appointmentData.attendees && Array.isArray(appointmentData.attendees)) {
+        setAttendees(appointmentData.attendees || []);
+      }
     }
-  }, [isOpen, appointmentData]);
+  }, [appointmentData, isOpen]);
 
-  // Kişileri yükle
+  // Kullanıcının varsayılan rengini yükle (Authentication sonrası)
   useEffect(() => {
+    const loadUserColor = async () => {
+      try {
+        if (!accessToken) {
+          console.warn('Access token bulunamadı, kullanıcı rengi yüklenemedi');
+          return;
+        }
+        const response = await getCurrentUser(accessToken);
+        if (response.success && response.data && response.data.color) {
+          setFormData(prev => ({ ...prev, color: response.data.color }));
+        }
+      } catch (error) {
+        console.error('Kullanıcı rengi yüklenirken hata:', error);
+      }
+    };
+
+    if (isOpen && accessToken) {
+      // Biraz bekleyerek auth'un hazır olmasını sağla
+      const timeoutId = setTimeout(loadUserColor, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen, accessToken]);
+
+  // Tarih/saat değişikliğini algıla ve otomatik olarak status'u RESCHEDULED yap
+  useEffect(() => {
+    if (originalValues.date && originalValues.startTime && originalValues.endTime) {
+      const dateChanged = formData.date !== originalValues.date;
+      const startTimeChanged = formData.startTime !== originalValues.startTime;
+      const endTimeChanged = formData.endTime !== originalValues.endTime;
+      
+      if ((dateChanged || startTimeChanged || endTimeChanged) && 
+          formData.status !== 'RESCHEDULED' && 
+          formData.status !== 'CANCELLED') {
+        console.log('Tarih/saat değişikliği algılandı, status RESCHEDULED olarak güncelleniyor');
+        setFormData(prev => ({ ...prev, status: 'RESCHEDULED' }));
+      }
+    }
+  }, [formData.date, formData.startTime, formData.endTime, originalValues]);
+
+  // Kullanıcıları yükle (Authentication sonrası)
+  React.useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        if (!accessToken) {
+          showError('Erişim token\'ı gerekli');
+          return;
+        }
+        setLoadingUsers(true);
+        const response = await getUsers(accessToken);
+        const usersData = response.data || [];
+        
+        // Mevcut kullanıcıyı filtrele (kendi listede görünmemeli)
+        const currentUserId = user?.id;
+        const filteredUsersData = usersData.filter(u => u.id !== currentUserId);
+        
+        setUsers(usersData); // Tüm kullanıcıları sakla (başka yerlerde kullanılabilir)
+        setFilteredUsers(filteredUsersData); // Filtrelenmiş listeyi göster
+        if (usersData.length > 0) {
+        } else {
+        }
+      } catch (error) {
+        console.error('Kullanıcıları yüklerken hata:', error);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    if (isOpen && accessToken) {
+      // Biraz bekleyerek auth'un hazır olmasını sağla
+      const timeoutId = setTimeout(loadUsers, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen, accessToken, showSuccess, showWarning, showError]);
+
+  // Contacts'ları yükle
+  React.useEffect(() => {
     const loadContacts = async () => {
       try {
+        // Tüm kişileri çekmek için yüksek limit kullan
         const response = await contactsService.getContacts({ limit: 1000 });
         
         if (response.success && response.data) {
+          // API'den gelen verileri uygun formata çevir
           const formattedContacts = response.data.map(contact => ({
             id: contact.id,
             name: `${contact.name || ''} ${contact.surname || ''}`.trim(),
             email: contact.email || '',
             phone1: contact.phone1 || '',
             phone2: contact.phone2 || '',
-            phone: contact.phone1 || contact.phone2 || 'Telefon yok'
+            phone: contact.phone1 || contact.phone2 || 'Telefon yok' // Arama için
           }));
           setContacts(formattedContacts);
           setFilteredContacts(formattedContacts);
@@ -168,9 +246,9 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
           setFilteredContacts([]);
         }
       } catch (error) {
+        // Hata durumunda boş array set et
         setContacts([]);
         setFilteredContacts([]);
-        console.error('Kişiler yüklenirken hata:', error);
       }
     };
 
@@ -179,89 +257,80 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
     }
   }, [isOpen]);
 
-  // Kullanıcıları yükle
+  // Dropdown dışına tıklandığında kapatma
   useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        if (!accessToken) {
-          console.warn('Access token bulunamadı, kullanıcılar yüklenemedi');
-          return;
-        }
-        setLoadingUsers(true);
-        const response = await getUsers(accessToken);
-        const usersData = response.data || [];
-        // Kullanıcıları alfabetik olarak sırala
-        const sortedUsers = usersData.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
-        setUsers(sortedUsers);
-        setFilteredUsers(sortedUsers);
-      } catch (error) {
-        console.error('Kullanıcıları yüklerken hata:', error);
-        setUsers([]);
-        setFilteredUsers([]);
-      } finally {
-        setLoadingUsers(false);
+    const handleClickOutside = (event) => {
+      // Eğer tıklanan element dropdown veya input değilse dropdown'u kapat
+      if (!event.target.closest('.visibility-search-container') && 
+          !event.target.closest('.user-dropdown')) {
+        setShowUserDropdown(false);
       }
     };
 
-    if (isOpen && accessToken) {
-      loadUsers();
+    if (showUserDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
     }
-  }, [isOpen, accessToken]);
+  }, [showUserDropdown]);
 
-  // Hatırlatma detaylarını yükle
-  useEffect(() => {
-    const loadAppointmentDetails = async () => {
-      if (isOpen && appointmentData?.id) {
-        try {
-          setLoadingDetails(true);
-          if (!accessToken) {
-            console.error('Access token bulunamadı');
-            return;
-          }
-          const response = await getAppointmentById(accessToken, appointmentData.id);
-          if (response.success) {
-            setAppointmentDetails(response.data);
-          }
-        } catch (error) {
-          console.error('Randevu detayları yüklenirken hata:', error);
-        } finally {
-          setLoadingDetails(false);
-        }
-      }
-    };
+  const [errors, setErrors] = useState({});
+  const [conflicts, setConflicts] = useState([]);
+  const [isCheckingConflict, setIsCheckingConflict] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [filteredContacts, setFilteredContacts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showContactDropdown, setShowContactDropdown] = useState(false);
+  const [selectedContacts, setSelectedContacts] = useState([]);
+  const [showAddContactModal, setShowAddContactModal] = useState(false);
+  const [activeToolbarButtons, setActiveToolbarButtons] = useState([]);
+  const [invitees, setInvitees] = useState([]);
+  const [attendees, setAttendees] = useState([]);
+  
+  // Önceki randevular için state'ler
+  const [previousAppointments, setPreviousAppointments] = useState([]);
+  const [showPreviousAppointments, setShowPreviousAppointments] = useState(false);
+  const [loadingPreviousAppointments, setLoadingPreviousAppointments] = useState(false);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [previousAppointmentsPagination, setPreviousAppointmentsPagination] = useState({
+    currentPage: 1,
+    limit: 5,
+    total: 0,
+    totalPages: 0
+  });
 
-    loadAppointmentDetails();
-  }, [isOpen, appointmentData?.id]);
+
 
   const colorOptions = [
     '#3C02AA', '#29CC39', '#FF6633', '#FFCB33', 
     '#33BFFF', '#FF8C33', '#E62E7B', '#2EE6CA'
   ];
 
-
-
   const statusOptions = [
-    { value: 'scheduled', label: 'Planlandı' },
-    { value: 'confirmed', label: 'Onaylandı' },
-    { value: 'completed', label: 'Tamamlandı' },
-    { value: 'cancelled', label: 'İptal Edildi' },
-    { value: 'postponed', label: 'Ertelendi' }
+    { value: 'SCHEDULED', label: 'Planlandı' },
+    { value: 'COMPLETED', label: 'Tamamlandı' },
+    { value: 'CANCELLED', label: 'İptal Edildi' },
+    { value: 'RESCHEDULED', label: 'Yeniden Planlandı' }
   ];
 
-  // Çakışma kontrolü
+  // Çakışma kontrolü yap
   const checkForConflicts = async (date, startTime, endTime) => {
-    if (!date || !startTime || !endTime) {
+    if (!date || !startTime || !endTime || formData.isAllDay) {
+      setConflicts([]);
+      return;
+    }
+
+    if (!accessToken) {
+      console.warn('Access token bulunamadı, çakışma kontrolü yapılamadı');
       setConflicts([]);
       return;
     }
 
     try {
       setIsCheckingConflict(true);
-      if (!accessToken) {
-        showError('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
-        return;
-      }
-      
+      console.log('Çakışma kontrolü parametreleri:', { date, startTime, endTime });
       const response = await checkAppointmentConflict(accessToken, {
         date,
         startTime,
@@ -279,30 +348,23 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
     } catch (error) {
       console.error('Çakışma kontrolü hatası:', error);
       setConflicts([]);
+      showError('Çakışma kontrolü yapılırken hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
     } finally {
       setIsCheckingConflict(false);
     }
   };
 
-  // Kişi arama ve seçim fonksiyonları
+  // Debounce için timeout
+  const [conflictTimeout, setConflictTimeout] = useState(null);
+
+  // Contact search fonksiyonları
   const handleContactSearch = (e) => {
     const term = e.target.value;
     setSearchTerm(term);
     
-    // Seçilmiş davetlilerin ID'lerini al
-    const selectedContactIds = selectedContacts.map(c => c.id);
-    
     if (term.trim() === '') {
-      // Seçilmiş davetlileri en üste koy, seçilmemişleri alt kısma
-      const selectedContactsFromAll = contacts.filter(contact => selectedContactIds.includes(contact.id));
-      const unselectedContacts = contacts.filter(contact => !selectedContactIds.includes(contact.id));
-      
-      // Her iki grubu da alfabetik sırala
-      const sortedSelected = selectedContactsFromAll.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
-      const sortedUnselected = unselectedContacts.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
-      
-      setFilteredContacts([...sortedSelected, ...sortedUnselected]);
-      setShowContactDropdown(true); // Boş durumda da dropdown'ı açık tut
+      setFilteredContacts(contacts);
+      setShowContactDropdown(false);
     } else {
       const filtered = contacts.filter(contact => {
         const name = contact.name || '';
@@ -313,15 +375,7 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
                email.toLowerCase().includes(term.toLowerCase()) ||
                phone.includes(term);
       });
-      
-      // Arama sonuçlarında da seçilmiş davetlileri üste koy
-      const selectedFiltered = filtered.filter(contact => selectedContactIds.includes(contact.id));
-      const unselectedFiltered = filtered.filter(contact => !selectedContactIds.includes(contact.id));
-      
-      const sortedSelectedFiltered = selectedFiltered.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
-      const sortedUnselectedFiltered = unselectedFiltered.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
-      
-      setFilteredContacts([...sortedSelectedFiltered, ...sortedUnselectedFiltered]);
+      setFilteredContacts(filtered);
       setShowContactDropdown(true);
     }
   };
@@ -345,77 +399,6 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
     }
   };
 
-  // Kullanıcı arama ve seçim fonksiyonları
-  const handleUserSearch = (e) => {
-    const searchTerm = e.target.value;
-    setUserSearchTerm(searchTerm);
-    
-    // Seçilmiş kullanıcıları al
-    const selectedUserIds = formData.visibleToUsers ? formData.visibleToUsers.map(u => u.id) : [];
-    
-    if (searchTerm.trim() === '') {
-      // Seçilmiş kullanıcıları en üste koy, seçilmemişleri alt kısma
-      const selectedUsers = users.filter(user => selectedUserIds.includes(user.id));
-      const unselectedUsers = users.filter(user => !selectedUserIds.includes(user.id));
-      
-      // Her iki grubu da alfabetik sırala
-      const sortedSelected = selectedUsers.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
-      const sortedUnselected = unselectedUsers.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
-      
-      setFilteredUsers([...sortedSelected, ...sortedUnselected]);
-      setShowUserDropdown(true); // Boş durumda da dropdown'ı açık tut
-    } else {
-      const filtered = users.filter(user => 
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      
-      // Arama sonuçlarında da seçilmiş kullanıcıları üste koy
-      const selectedFiltered = filtered.filter(user => selectedUserIds.includes(user.id));
-      const unselectedFiltered = filtered.filter(user => !selectedUserIds.includes(user.id));
-      
-      const sortedSelectedFiltered = selectedFiltered.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
-      const sortedUnselectedFiltered = unselectedFiltered.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
-      
-      setFilteredUsers([...sortedSelectedFiltered, ...sortedUnselectedFiltered]);
-      setShowUserDropdown(true);
-    }
-  };
-
-  const handleUserSelect = (user) => {
-    if (!formData.visibleToUsers || !formData.visibleToUsers.find(u => u.id === user.id)) {
-      // Kullanıcıyı sadece gerekli alanlarla ekle
-      const userToAdd = {
-        id: user.id,
-        name: user.name,
-        email: user.email
-      };
-      
-      setFormData(prev => ({
-        ...prev,
-        visibleToUsers: [...prev.visibleToUsers, userToAdd],
-        visibleToAll: false
-      }));
-      showSuccess(`${user.name} görünürlük listesine eklendi`);
-    } else {
-      showWarning(`${user.name} zaten görünürlük listesinde`);
-    }
-    setUserSearchTerm('');
-    setShowUserDropdown(false);
-  };
-
-  const handleUserRemove = (userId) => {
-    const removedUser = formData.visibleToUsers.find(u => u.id === userId);
-    setFormData(prev => ({
-      ...prev,
-      visibleToUsers: prev.visibleToUsers.filter(u => u.id !== userId)
-    }));
-    if (removedUser) {
-      showInfo(`${removedUser.name} görünürlük listesinden çıkarıldı`);
-    }
-  };
-
-  // Modal yönetimi
   const handleOpenAddContactModal = () => {
     setShowAddContactModal(true);
   };
@@ -425,6 +408,7 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
   };
 
   const handleContactAdded = (newContact) => {
+    // Yeni kişi eklendikten sonra contacts listesini güncelle
     const formattedContact = {
       id: newContact.id,
       name: `${newContact.name} ${newContact.surname}`,
@@ -439,401 +423,614 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
     showSuccess('Yeni kişi başarıyla eklendi!');
   };
 
-  // Debounce için timeout
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (formData.date && formData.startTime && formData.endTime) {
-        checkForConflicts(formData.date, formData.startTime, formData.endTime);
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [formData.date, formData.startTime, formData.endTime]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  // Kullanıcı arama handler'ı
+  const handleUserSearch = (e) => {
+    const searchTerm = e.target.value;
+    setUserSearchTerm(searchTerm);
     
-    // Geçmiş tarih/saat kontrolü (gerçek zamanlı)
-    if (['date', 'startTime'].includes(name)) {
-      const currentData = { ...formData, [name]: value };
+    // Seçilmiş kullanıcıları al
+    const selectedUserIds = formData.visibleToUsers ? formData.visibleToUsers.map(u => u.id) : [];
+    
+    // Mevcut kullanıcıyı filtrele (kendi listede görünmemeli)
+    const currentUserId = user?.id;
+    const availableUsers = users.filter(u => u.id !== currentUserId);
+    
+    if (searchTerm.trim() === '') {
+      // Seçilmiş kullanıcıları en üste koy, seçilmemişleri alt kısma
+      const selectedUsers = availableUsers.filter(user => selectedUserIds.includes(user.id));
+      const unselectedUsers = availableUsers.filter(user => !selectedUserIds.includes(user.id));
       
-      if (currentData.date && currentData.startTime) {
-        const now = new Date();
-        const appointmentDateTime = new Date(`${currentData.date}T${currentData.startTime}`);
-        
-        // Orijinal randevu tarih/saati
-        const originalDateTime = appointmentData.date && appointmentData.start_time ? 
-          new Date(`${appointmentData.date.split('T')[0]}T${appointmentData.start_time}`) : null;
-        
-                 // Eğer tarih/saat değiştiriliyorsa ve geçmişe alınıyorsa bilgilendir
-         if (appointmentDateTime < now && 
-             (!originalDateTime || appointmentDateTime.getTime() !== originalDateTime.getTime())) {
-           showInfo('ℹ️ Randevuyu geçmiş tarih ve saate taşıyorsunuz');
-         }
-      }
-    }
-    
-    // Hata mesajını temizle
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      // Her iki grubu da alfabetik sırala
+      const sortedSelected = selectedUsers.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
+      const sortedUnselected = unselectedUsers.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
+      
+      setFilteredUsers([...sortedSelected, ...sortedUnselected]);
+      // Arama terimi boş olduğunda da dropdown'u göster
+      setShowUserDropdown(availableUsers.length > 0);
+    } else {
+      const filtered = availableUsers.filter(user => 
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      // Arama sonuçlarında da seçilmiş kullanıcıları üste koy
+      const selectedFiltered = filtered.filter(user => selectedUserIds.includes(user.id));
+      const unselectedFiltered = filtered.filter(user => !selectedUserIds.includes(user.id));
+      
+      const sortedSelectedFiltered = selectedFiltered.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
+      const sortedUnselectedFiltered = unselectedFiltered.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
+      
+      setFilteredUsers([...sortedSelectedFiltered, ...sortedUnselectedFiltered]);
+      setShowUserDropdown(filtered.length > 0);
     }
   };
+
+  // Kullanıcı seçimi handler'ları
+  const handleUserSelect = (user) => {
+    const currentVisibleUsers = formData.visibleToUsers || [];
+    if (!currentVisibleUsers.find(u => u.id === user.id)) {
+      // Kullanıcıyı sadece gerekli alanlarla ekle
+      const userToAdd = {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        visibleToUsers: [...currentVisibleUsers, userToAdd],
+        visibleToAll: false // Bireysel seçim yapıldığında TÜMÜ'yü kapat
+      }));
+      showSuccess(`${user.name} görünürlük listesine eklendi`);
+    } else {
+      showWarning(`${user.name} zaten görünürlük listesinde`);
+    }
+    setUserSearchTerm('');
+    setShowUserDropdown(false);
+  };
+
+  const handleUserRemove = (userId) => {
+    const removedUser = formData.visibleToUsers?.find(u => u.id === userId);
+    setFormData(prev => ({
+      ...prev,
+      visibleToUsers: prev.visibleToUsers.filter(u => u.id !== userId)
+    }));
+    if (removedUser) {
+      showInfo(`${removedUser.name} görünürlük listesinden çıkarıldı`);
+    }
+  };
+
+  const handleSelectAllUsers = () => {
+    setFormData(prev => ({
+      ...prev,
+      visibleToAll: !prev.visibleToAll,
+      visibleToUsers: !prev.visibleToAll ? [] : prev.visibleToUsers // TÜMÜ seçiliyse bireysel seçimleri temizle
+    }));
+    
+    // Dropdown'u kapat
+    setShowUserDropdown(false);
+    
+    if (!formData.visibleToAll) {
+      showInfo('Randevu tüm kullanıcılara görünür olarak ayarlandı');
+    } else {
+      showInfo('Randevu görünürlüğü özelleştirildi');
+    }
+  };
+
+  const handleToolbarAction = (action, e) => {
+    e.preventDefault();
+    const textarea = document.querySelector('.editor-textarea');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = formData.description.substring(start, end);
+    let newText = formData.description;
+    let newCursorPos = start;
+
+    switch (action) {
+      case 'attach':
+        break;
+        
+      case 'bold':
+        if (selectedText) {
+          newText = formData.description.substring(0, start) + 
+                   `**${selectedText}**` + 
+                   formData.description.substring(end);
+          newCursorPos = end + 4; // ** ** eklendi
+        } else {
+          newText = formData.description.substring(0, start) + 
+                   `****` + 
+                   formData.description.substring(end);
+          newCursorPos = start + 2; // ** arasına cursor
+        }
+        break;
+        
+      case 'italic':
+        if (selectedText) {
+          newText = formData.description.substring(0, start) + 
+                   `*${selectedText}*` + 
+                   formData.description.substring(end);
+          newCursorPos = end + 2;
+        } else {
+          newText = formData.description.substring(0, start) + 
+                   `**` + 
+                   formData.description.substring(end);
+          newCursorPos = start + 1;
+        }
+        break;
+        
+      case 'underline':
+        if (selectedText) {
+          newText = formData.description.substring(0, start) + 
+                   `<u>${selectedText}</u>` + 
+                   formData.description.substring(end);
+          newCursorPos = end + 7;
+        } else {
+          newText = formData.description.substring(0, start) + 
+                   `<u></u>` + 
+                   formData.description.substring(end);
+          newCursorPos = start + 3;
+        }
+        break;
+        
+      case 'bullet':
+        const lines = formData.description.split('\n');
+        const lineStart = formData.description.lastIndexOf('\n', start - 1) + 1;
+        const currentLineIndex = formData.description.substring(0, start).split('\n').length - 1;
+        
+        if (lines[currentLineIndex].startsWith('• ')) {
+          // Zaten madde işareti varsa kaldır
+          lines[currentLineIndex] = lines[currentLineIndex].substring(2);
+          newCursorPos = start - 2;
+        } else {
+          // Madde işareti ekle
+          lines[currentLineIndex] = '• ' + lines[currentLineIndex];
+          newCursorPos = start + 2;
+        }
+        newText = lines.join('\n');
+        break;
+        
+      case 'number':
+        const numberedLines = formData.description.split('\n');
+        const currentNumberLineIndex = formData.description.substring(0, start).split('\n').length - 1;
+        
+        if (numberedLines[currentNumberLineIndex].match(/^\d+\. /)) {
+          // Zaten numaralı liste varsa kaldır
+          numberedLines[currentNumberLineIndex] = numberedLines[currentNumberLineIndex].replace(/^\d+\. /, '');
+          newCursorPos = start - 3;
+        } else {
+          // Numaralı liste ekle
+          numberedLines[currentNumberLineIndex] = '1. ' + numberedLines[currentNumberLineIndex];
+          newCursorPos = start + 3;
+        }
+        newText = numberedLines.join('\n');
+        break;
+        
+      case 'link':
+        if (selectedText) {
+          const url = prompt('Link URL\'sini girin:', 'https://');
+          if (url) {
+            newText = formData.description.substring(0, start) + 
+                     `[${selectedText}](${url})` + 
+                     formData.description.substring(end);
+            newCursorPos = end + url.length + 4;
+          }
+        } else {
+          const url = prompt('Link URL\'sini girin:', 'https://');
+          const linkText = prompt('Link metni girin:', 'Link');
+          if (url && linkText) {
+            newText = formData.description.substring(0, start) + 
+                     `[${linkText}](${url})` + 
+                     formData.description.substring(end);
+            newCursorPos = start + linkText.length + url.length + 4;
+          }
+        }
+        break;
+        
+      case 'clear':
+        if (window.confirm('Tüm metni silmek istediğinizden emin misiniz?')) {
+          newText = '';
+          newCursorPos = 0;
+          setActiveToolbarButtons([]);
+        }
+        break;
+        
+      default:
+        break;
+    }
+
+    if (newText !== formData.description) {
+      setFormData(prev => ({ ...prev, description: newText }));
+      
+      // Cursor pozisyonunu ayarla
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      }, 0);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+    
+    // Tüm gün seçeneği işaretlendiğinde başlangıç saatini 00:00, bitiş saatini 23:59 yap
+    if (name === 'isAllDay' && newValue === true) {
+      setFormData(prev => ({
+        ...prev,
+        [name]: newValue,
+        startTime: '00:00',
+        endTime: '23:59'
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: newValue
+      }));
+    }
+
+    // Geçmiş tarih/saat kontrolü ve çakışma kontrolü
+    if (['date', 'startTime', 'endTime'].includes(name)) {
+      const currentData = { ...formData, [name]: newValue };
+      
+             // Geçmiş tarih/saat bilgilendirmesi
+       if (currentData.date) {
+         const now = new Date();
+         
+         if (name === 'date' || (name === 'startTime' && currentData.startTime)) {
+           const appointmentDateTime = new Date(`${currentData.date}T${currentData.startTime || '00:00'}`);
+           
+           if (!currentData.isAllDay && currentData.startTime) {
+             if (appointmentDateTime < now) {
+               showInfo('ℹ️ Geçmiş tarih ve saatte randevu oluşturuyorsunuz');
+             }
+           } else if (currentData.isAllDay && name === 'date') {
+             const appointmentDate = new Date(currentData.date);
+             const today = new Date();
+             today.setHours(0, 0, 0, 0);
+             appointmentDate.setHours(0, 0, 0, 0);
+             
+             if (appointmentDate < today) {
+               showInfo('ℹ️ Geçmiş tarihte randevu oluşturuyorsunuz');
+             }
+           }
+         }
+       }
+      
+      // Çakışma kontrolü için debounce
+      if (conflictTimeout) {
+        clearTimeout(conflictTimeout);
+      }
+      
+      const newTimeout = setTimeout(() => {
+        if (currentData.date && currentData.startTime && currentData.endTime) {
+          checkForConflicts(currentData.date, currentData.startTime, currentData.endTime);
+        }
+      }, 300);
+      
+      setConflictTimeout(newTimeout);
+    }
+
+    // Hataları temizle
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+
+
+  // Önceki randevuları yükle
+  const loadPreviousAppointments = async (page = 1) => {
+    if (!accessToken) {
+      console.warn('Access token bulunamadı, önceki randevular yüklenemedi');
+      setPreviousAppointments([]);
+      setShowPreviousAppointments(false);
+      return;
+    }
+    
+    if (selectedContacts.length === 0) {
+      setPreviousAppointments([]);
+      setShowPreviousAppointments(false);
+      setPreviousAppointmentsPagination({
+        currentPage: 1,
+        totalPages: 0,
+        totalItems: 0,
+        itemsPerPage: 5,
+        hasNextPage: false,
+        hasPrevPage: false
+      });
+      return;
+    }
+
+    try {
+      setLoadingPreviousAppointments(true);
+      const inviteeEmails = selectedContacts.map(contact => contact.email).filter(email => email);
+      
+      if (inviteeEmails.length === 0) {
+        setPreviousAppointments([]);
+        setShowPreviousAppointments(false);
+        return;
+      }
+
+      console.log('Loading previous appointments for:', inviteeEmails);
+      
+      // Yerel tarih formatlaması için yardımcı fonksiyon
+      const getCurrentDateString = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const response = await getInviteePreviousAppointments(accessToken, {
+        inviteeEmails,
+        currentDate: formData.date || getCurrentDateString(),
+        currentTime: formData.startTime || new Date().toTimeString().split(' ')[0].substring(0, 5),
+        page,
+        limit: 5
+      });
+
+      console.log('Previous appointments response:', response);
+
+      if (response.appointments) {
+        // Randevuları frontend'de de sıralayalım (ekstra güvence için)
+        const sortedAppointments = response.appointments.sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          if (dateA.getTime() !== dateB.getTime()) {
+            return dateB.getTime() - dateA.getTime(); // En yeni en üstte
+          }
+          return b.start_time.localeCompare(a.start_time); // Aynı tarihte en geç saat en üstte
+        });
+        
+        setPreviousAppointments(sortedAppointments);
+        setPreviousAppointmentsPagination({
+          currentPage: response.pagination.currentPage || 1,
+          totalPages: response.pagination.totalPages || 0,
+          totalItems: response.pagination.totalItems || 0,
+          itemsPerPage: response.pagination.itemsPerPage || 10,
+          hasNextPage: response.pagination.hasNextPage || false,
+          hasPrevPage: response.pagination.hasPrevPage || false
+        });
+        setShowPreviousAppointments(sortedAppointments.length > 0);
+        
+        if (sortedAppointments.length > 0) {
+          showInfo(`${sortedAppointments.length} önceki randevu bulundu`);
+        } else {
+          showInfo('Seçilen kişiler için önceki randevu bulunamadı');
+        }
+      }
+    } catch (error) {
+      console.error('Önceki randevuları yükleme hatası:', error);
+      showError('Önceki randevular yüklenirken hata oluştu: ' + error.message);
+      setPreviousAppointments([]);
+      setShowPreviousAppointments(false);
+      setPreviousAppointmentsPagination({
+        currentPage: 1,
+        totalPages: 0,
+        totalItems: 0,
+        itemsPerPage: 5,
+        hasNextPage: false,
+        hasPrevPage: false
+      });
+    } finally {
+      setLoadingPreviousAppointments(false);
+    }
+  };
+
+  // Sayfa değiştirme fonksiyonu
+  const handlePreviousAppointmentsPageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= previousAppointmentsPagination.totalPages) {
+      loadPreviousAppointments(newPage);
+    }
+  };
+
+  // Yıl navigasyon fonksiyonları
+  const handlePrevYear = () => {
+    setCurrentYear(prev => prev - 1);
+  };
+
+  const handleNextYear = () => {
+    setCurrentYear(prev => prev + 1);
+  };
+
+  // Seçilen kişiler değiştiğinde önceki randevuları yükle
+  React.useEffect(() => {
+    if (selectedContacts.length > 0 && formData.date) {
+      loadPreviousAppointments(1);
+    } else {
+      setPreviousAppointments([]);
+      setShowPreviousAppointments(false);
+    }
+  }, [selectedContacts, formData.date]);
+
+  // Yıl değiştiğinde önceki randevuları yeniden yükle
+  React.useEffect(() => {
+    if (selectedContacts.length > 0 && formData.date) {
+      loadPreviousAppointments(1);
+    }
+  }, [currentYear]);
 
   const validateForm = () => {
     const newErrors = {};
-
+    
     if (!formData.title.trim()) {
-      newErrors.title = 'Başlık gereklidir';
+      newErrors.title = 'Randevu başlığı gereklidir';
     }
-
+    
     if (!formData.date) {
-      newErrors.date = 'Tarih gereklidir';
+      newErrors.date = 'Tarih seçimi gereklidir';
     }
+    
 
-
-
+    
+    if (!formData.isAllDay) {
     if (!formData.startTime) {
-      newErrors.startTime = 'Başlangıç saati gereklidir';
+        newErrors.startTime = 'Başlangıç saati gereklidir';
     }
-
+    
     if (!formData.endTime) {
-      newErrors.endTime = 'Bitiş saati gereklidir';
+        newErrors.endTime = 'Bitiş saati gereklidir';
     }
-
-    if (formData.startTime && formData.endTime) {
-      const start = new Date(`2000-01-01T${formData.startTime}`);
-      const end = new Date(`2000-01-01T${formData.endTime}`);
-      
-      if (end <= start) {
-        newErrors.endTime = 'Bitiş saati başlangıç saatinden sonra olmalıdır';
+    
+    if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
+      newErrors.endTime = 'Bitiş saati başlangıç saatinden sonra olmalıdır';
       }
     }
+    
 
+    
     setErrors(newErrors);
+    
+    // Hata varsa toast ile bildir
+    if (Object.keys(newErrors).length > 0) {
+      const firstError = Object.values(newErrors)[0];
+      showError(firstError);
+    }
+    
     return Object.keys(newErrors).length === 0;
-  };
-
-  // Detayları yeniden yükle
-  const reloadAppointmentDetails = async () => {
-    if (appointmentData?.id) {
-      try {
-        if (!accessToken) {
-          console.error('Access token bulunamadı');
-          return;
-        }
-        const response = await getAppointmentById(accessToken, appointmentData.id);
-        if (response.success) {
-          setAppointmentDetails(response.data);
-        }
-      } catch (error) {
-        console.error('Randevu detayları yeniden yüklenirken hata:', error);
-      }
-    }
-  };
-
-  // Hatırlatma yeniden gönder (hemen)
-  const handleResendReminder = async () => {
-    if (!accessToken) {
-      showError('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
-      return;
-    }
-    
-    try {
-      setResendingReminder(true);
-      const response = await resendReminder(accessToken, appointmentData.id);
-      if (response.success) {
-        showSuccess('Hatırlatma başarıyla yeniden gönderildi');
-        setShowReminderControls(false);
-        await reloadAppointmentDetails();
-      }
-    } catch (error) {
-      showError(error.message || 'Hatırlatma yeniden gönderilemedi');
-    } finally {
-      setResendingReminder(false);
-    }
-  };
-
-  // Hatırlatma manuel saat ile gönder
-  const handleManualReminder = async () => {
-    if (!manualReminderDateTime) {
-      showError('Lütfen hatırlatma zamanını seçin');
-      return;
-    }
-    
-    if (!accessToken) {
-      showError('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
-      return;
-    }
-
-    try {
-      setResendingReminder(true);
-      const response = await resendReminder(accessToken, appointmentData.id, manualReminderDateTime);
-      if (response.success) {
-        showSuccess('Hatırlatma başarıyla zamanlandı');
-        setShowReminderControls(false);
-        setShowManualTime(false);
-        setManualReminderDateTime('');
-        await reloadAppointmentDetails();
-      }
-    } catch (error) {
-      showError(error.message || 'Hatırlatma zamanlanamadı');
-    } finally {
-      setResendingReminder(false);
-    }
-  };
-
-  // Hatırlatma zamanını güncelle
-  const handleUpdateReminderTime = async () => {
-    if (!accessToken) {
-      showError('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
-      return;
-    }
-    
-    try {
-      setUpdatingReminder(true);
-      const response = await updateReminderTime(accessToken, appointmentData.id, parseInt(newReminderValue), newReminderUnit);
-      if (response.success) {
-        showSuccess('Hatırlatma zamanı başarıyla güncellendi');
-        setShowReminderEdit(false);
-        await reloadAppointmentDetails();
-      }
-    } catch (error) {
-      showError(error.message || 'Hatırlatma zamanı güncellenemedi');
-    } finally {
-      setUpdatingReminder(false);
-    }
-  };
-
-  // Hatırlatma düzenleme başlat
-  const startReminderEdit = () => {
-    setNewReminderValue(appointmentDetails?.reminder_value || appointmentData?.reminder_value || '15');
-    setNewReminderUnit(appointmentDetails?.reminder_unit || appointmentData?.reminder_unit || 'MINUTES');
-    setShowReminderEdit(true);
-  };
-
-  // Hatırlatma düzenleme iptal et
-  const cancelReminderEdit = () => {
-    setShowReminderEdit(false);
-    setNewReminderValue('');
-    setNewReminderUnit('MINUTES');
-  };
-
-  // Manuel zaman girişini iptal et
-  const cancelManualTime = () => {
-    setShowManualTime(false);
-    setManualReminderDateTime('');
-  };
-
-  // Değişiklikleri tespit et
-  const detectChanges = () => {
-    const changes = {};
-    
-    // Temel alanları kontrol et
-    if (formData.title.trim() !== (appointmentData.title || '')) {
-      changes.title = { old: appointmentData.title, new: formData.title.trim() };
-    }
-    
-    if (formData.date !== appointmentData.date?.split('T')[0]) {
-      changes.date = { old: appointmentData.date, new: formData.date };
-    }
-    
-    if (formData.startTime !== (appointmentData.start_time?.substring(0, 5) || '')) {
-      changes.startTime = { old: appointmentData.start_time, new: formData.startTime };
-    }
-    
-    if (formData.endTime !== (appointmentData.end_time?.substring(0, 5) || '')) {
-      changes.endTime = { old: appointmentData.end_time, new: formData.endTime };
-    }
-    
-    if (formData.description.trim() !== (appointmentData.description || '')) {
-      changes.description = { old: appointmentData.description, new: formData.description.trim() };
-    }
-    
-    if (formData.location.trim() !== (appointmentData.location || '')) {
-      changes.location = { old: appointmentData.location, new: formData.location.trim() };
-    }
-
-    // Davetlileri kontrol et
-    const currentInvitees = appointmentData.invitees || [];
-    const newInvitees = selectedContacts;
-    
-    const currentInviteeIds = currentInvitees.map(inv => inv.email || inv.name).sort();
-    const newInviteeIds = newInvitees.map(inv => inv.email || inv.name).sort();
-    
-    if (JSON.stringify(currentInviteeIds) !== JSON.stringify(newInviteeIds)) {
-      changes.invitees = { old: currentInvitees, new: newInvitees };
-    }
-
-    return changes;
-  };
-
-  // Bildirim gönder
-  const sendUpdateNotifications = async (changes) => {
-    try {
-      // Değişiklik mesajı oluştur
-      const changeMessages = [];
-      
-      if (changes.title) {
-        changeMessages.push(`Başlık: "${changes.title.old}" → "${changes.title.new}"`);
-      }
-      if (changes.date) {
-        changeMessages.push(`Tarih: ${changes.date.old} → ${changes.date.new}`);
-      }
-      if (changes.startTime || changes.endTime) {
-        const oldTime = `${changes.startTime?.old || appointmentData.start_time?.substring(0, 5)} - ${changes.endTime?.old || appointmentData.end_time?.substring(0, 5)}`;
-        const newTime = `${changes.startTime?.new || formData.startTime} - ${changes.endTime?.new || formData.endTime}`;
-        changeMessages.push(`Saat: ${oldTime} → ${newTime}`);
-      }
-      if (changes.description) {
-        changeMessages.push(`Açıklama güncellendi`);
-      }
-      if (changes.location) {
-        changeMessages.push(`Konum: "${changes.location.old}" → "${changes.location.new}"`);
-      }
-      if (changes.invitees) {
-        changeMessages.push(`Davetliler güncellendi`);
-      }
-
-      const changeText = changeMessages.join('\n');
-      
-      // E-posta bildirimi
-      if (formData.notificationEmail) {
-        try {
-          await sendNotificationCombo({
-            appointmentData: {
-              title: formData.title,
-              date: formData.date,
-              startTime: formData.startTime,
-              endTime: formData.endTime,
-              description: formData.description,
-              location: formData.location,
-              changes: changeText
-            },
-            recipients: selectedContacts.filter(contact => contact.email),
-            notificationType: 'updated'
-          });
-          
-          console.log('Güncelleme e-posta bildirimi gönderildi');
-        } catch (emailError) {
-          console.error('E-posta bildirimi gönderme hatası:', emailError);
-        }
-      }
-
-      // SMS bildirimi
-      if (formData.notificationSMS) {
-        try {
-          const smsMessage = `Randevu Güncellendi: ${formData.title}\nTarih: ${formData.date}\nSaat: ${formData.startTime} - ${formData.endTime}\n\nDeğişiklikler:\n${changeText}`;
-          
-          for (const contact of selectedContacts) {
-            if (contact.phone1 || contact.phone) {
-              try {
-                await sendSMS(contact.phone1 || contact.phone, smsMessage);
-                console.log(`SMS gönderildi: ${contact.phone1 || contact.phone}`);
-              } catch (smsError) {
-                console.error(`SMS gönderme hatası (${contact.phone1 || contact.phone}):`, smsError);
-              }
-            }
-          }
-        } catch (smsError) {
-          console.error('SMS bildirimi gönderme hatası:', smsError);
-        }
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Bildirim gönderme hatası:', error);
-      return false;
-    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      showError('Lütfen tüm gerekli alanları doldurun');
+    if (!validateForm() || conflicts.length > 0) {
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      setLoading(true);
-      
-      // Değişiklikleri tespit et
-      const changes = detectChanges();
-      const hasChanges = Object.keys(changes).length > 0;
-      
-      const appointmentUpdateData = {
-        title: formData.title.trim(),
-        date: formData.date,
-        start_time: formData.startTime,
-        end_time: formData.endTime,
-        description: formData.description.trim(),
-        color: formData.color,
-        location: formData.location.trim(),
-        google_event_id: appointmentData.google_event_id || appointmentData.googleEventId,
-        status: formData.status,
-        is_all_day: formData.isAllDay,
-        repeat_type: formData.repeat,
-        notification_email: formData.notificationEmail,
-        notification_sms: formData.notificationSMS,
-        reminder_enabled: formData.reminderBefore,
-        reminder_datetime: formData.reminderDateTime,
-        visible_to_all: formData.visibleToAll,
-        selectedContacts: selectedContacts,
-        visibleToUsers: formData.visibleToUsers
-      };
+      // Hatırlatma zamanını hesapla
+      let reminderDateTime = null;
+      if (formData.reminderBefore && formData.date && formData.startTime) {
+        // Türkiye saati için doğru timezone hesaplaması
+        const appointmentDateTime = new Date(`${formData.date}T${formData.startTime}:00+03:00`);
+        const reminderValue = parseInt(formData.reminderValue);
+        
+        if (formData.reminderUnit === 'minutes') {
+          reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 60 * 1000));
+        } else if (formData.reminderUnit === 'hours') {
+          reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 60 * 60 * 1000));
+        } else if (formData.reminderUnit === 'days') {
+          reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 24 * 60 * 60 * 1000));
+        }
+      }
 
-      if (!accessToken) {
-        showError('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
-        return;
-      }
+      // Randevu verilerini hazırla
+      const appointmentDataToSave = {
+        ...formData,
+        selectedContacts,
+        invitees: selectedContacts, // Davetliler
+        attendees: attendees, // Katılımcılar
+        visibleToUsers: formData.visibleToUsers,
+        visible_to_all: formData.visibleToAll, // Backend için snake_case
+        repeat_type: formData.repeat, // Backend için snake_case
+        notification_email: formData.notificationEmail, // Backend için snake_case
+        notification_sms: formData.notificationSMS, // Backend için snake_case
+        reminder_value: formData.reminderValue, // Backend için snake_case
+        reminder_unit: formData.reminderUnit, // Backend için snake_case
+        start_time: formData.startTime, // Backend için snake_case
+        end_time: formData.endTime, // Backend için snake_case
+        reminderDateTime: reminderDateTime ? reminderDateTime.toISOString() : null,
+        reminderEnabled: formData.reminderBefore
+      };
       
-      const response = await updateAppointment(accessToken, appointmentData.id, appointmentUpdateData);
+      console.log('=== FRONTEND RANDEVU VERİLERİ ===');
+      console.log('appointmentDataToSave:', JSON.stringify(appointmentDataToSave, null, 2));
+      console.log('formData.visibleToUsers:', formData.visibleToUsers);
+      console.log('formData.visibleToAll:', formData.visibleToAll);
+      console.log('appointmentData.id:', appointmentData?.id);
+      console.log('onSave fonksiyonu çağrılıyor...');
       
-      if (response.success) {
-        // Google Calendar'da da güncelle (eğer kullanıcı giriş yapmışsa)
-        try {
-          if (googleCalendarService.isSignedIn() && appointmentData.googleEventId) {
-            console.log('📅 Google Calendar: Randevu güncelleniyor...');
-            const googleEventData = {
-              title: formData.title,
-              description: formData.description || '',
-              date: formData.date,
-              startTime: formData.startTime,
-              endTime: formData.endTime,
-              location: formData.location || ''
-            };
-            
-            await googleCalendarService.updateEvent(appointmentData.googleEventId, googleEventData);
-            console.log('✅ Google Calendar: Randevu başarıyla güncellendi');
-          }
-        } catch (googleError) {
-          console.error('❌ Google Calendar: Randevu güncellenirken hata:', googleError);
+      // Google Calendar'a da ekle (eğer kullanıcı giriş yapmışsa)
+      let googleEventId = null;
+      try {
+        console.log('🚀 AddAppointmentModal: Google Calendar entegrasyonu başlatılıyor...');
+        
+        // Önce Google Calendar servisinin başlatılıp başlatılmadığını kontrol et
+        if (!googleCalendarService.isInitialized) {
+          console.log('🔄 Google Calendar: Servis başlatılıyor...');
+          const initResult = await googleCalendarService.init();
+          console.log('🔄 Google Calendar: Init sonucu:', initResult);
         }
         
-        // Toast bildirimi WeeklyCalendar'da gösterilecek
+        const isSignedIn = googleCalendarService.isSignedIn();
+        console.log('🔐 AddAppointmentModal: Google Calendar giriş durumu:', isSignedIn);
         
-        // Eğer değişiklik varsa ve bildirim seçenekleri açıksa bildirim gönder
-        if (hasChanges && (formData.notificationEmail || formData.notificationSMS)) {
-          console.log('Güncelleme bildirimleri gönderiliyor...');
-          console.log('Değişiklikler:', changes);
+        if (isSignedIn) {
+          console.log('📅 Google Calendar: Randevu ekleniyor...');
+          const googleEventData = {
+            title: formData.title,
+            description: formData.description || '',
+            date: formData.date,
+            startTime: formData.startTime,
+            endTime: formData.endTime,
+            location: formData.location || ''
+          };
           
-          const notificationSent = await sendUpdateNotifications(changes);
-          if (notificationSent) {
-            showInfo('Güncelleme bildirimleri gönderildi');
+          console.log('📋 AddAppointmentModal: Google Calendar event verisi:', googleEventData);
+          
+          const googleEvent = await googleCalendarService.createEvent(googleEventData);
+          
+          if (googleEvent && googleEvent.id) {
+            googleEventId = googleEvent.id;
+            console.log('✅ AddAppointmentModal: Google Calendar randevu başarıyla eklendi:', {
+              id: googleEvent.id,
+              summary: googleEvent.summary,
+              htmlLink: googleEvent.htmlLink
+            });
+          } else {
+            console.error('❌ AddAppointmentModal: Google Calendar yanıtında ID bulunamadı:', googleEvent);
           }
+        } else {
+          console.log('ℹ️ AddAppointmentModal: Google Calendar kullanıcı giriş yapmamış, randevu sadece yerel veritabanına kaydedilecek');
+        }
+      } catch (googleError) {
+        console.error('❌ AddAppointmentModal: Google Calendar randevu eklenirken HATA:', {
+          message: googleError.message,
+          status: googleError.status,
+          details: googleError.details,
+          stack: googleError.stack
+        });
+        
+        // Hata türüne göre kullanıcıya bilgi ver
+        if (googleError.status === 401) {
+          console.warn('⚠️ AddAppointmentModal: Google Calendar yetkilendirme hatası - Kullanıcının tekrar giriş yapması gerekebilir');
+        } else if (googleError.status === 403) {
+          console.warn('⚠️ AddAppointmentModal: Google Calendar erişim hatası - Calendar API izni eksik');
+        } else if (googleError.status === 400) {
+          console.warn('⚠️ AddAppointmentModal: Google Calendar veri hatası - Event verisi geçersiz');
         }
         
-        onSave && onSave();
-        onClose();
-      } else {
-        showError(response.message || 'Randevu güncellenirken hata oluştu');
+        // Google Calendar hatası randevu oluşturmayı engellemez
+        console.log('ℹ️ AddAppointmentModal: Google Calendar hatası olmasına rağmen randevu yerel veritabanına kaydedilecek');
       }
+      
+      // Google Event ID'yi appointment data'ya ekle
+      if (googleEventId) {
+        appointmentDataToSave.google_event_id = googleEventId;
+      }
+      
+      // Randevuyu kaydet (bildirimler backend'de gönderilecek)
+      const response = await onSave(appointmentDataToSave);
+      console.log('✅ EditAppointmentModal: onSave response:', response);
+      
+      // Toast bildirimi WeeklyCalendar'da gösterilecek, burada göstermeye gerek yok
+      
+      handleClose();
     } catch (error) {
-      console.error('Randevu güncelleme hatası:', error);
-      showError('Randevu güncellenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
+      if (error.response && error.response.status === 409) {
+        showWarning('Bu saatte başka bir randevunuz bulunmaktadır!');
+      } else {
+        showError('Randevu kaydedilirken bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
+      }
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -845,13 +1042,10 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
       endTime: '',
       description: '',
       color: '#3C02AA',
-      location: '',
-      type: 'meeting',
-      priority: 'medium',
-      status: 'scheduled',
       isAllDay: false,
       repeat: 'TEKRARLANMAZ',
       assignedTo: 'YAKIP',
+      location: '',
       startOffice: '',
       notification: false,
       reminderBefore: false,
@@ -867,39 +1061,38 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
     setSelectedContacts([]);
     setSearchTerm('');
     setUserSearchTerm('');
-    setShowContactDropdown(false);
-    setShowUserDropdown(false);
+    setIsSubmitting(false);
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="edit-appointment-modal" onClick={(e) => e.stopPropagation()}>
+    <>
+    <div className="modal-overlay">
+      <div className="add-appointment-modal">
         <div className="modal-header">
-          <h2>Randevu Düzenle</h2>
+          <h2>RANDEVU DÜZENLE</h2>
           <button className="close-btn" onClick={handleClose}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M18 6L6 18M6 6L18 18" stroke="#666" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="modal-form">
-          {/* Başlık */}
-          <div className="form-group">
-            <label htmlFor="title">Başlık *</label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              className={errors.title ? 'error' : ''}
-              placeholder="Randevu başlığını girin"
-            />
-            {errors.title && <span className="error-message">{errors.title}</span>}
+          {/* Randevu Başlığı */}
+            <div className="form-group full-width">
+            <label>RANDEVU BAŞLIĞI</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="Randevu başlığını girin"
+                className={errors.title ? 'error' : ''}
+              />
+              {errors.title && <span className="error-message">{errors.title}</span>}
           </div>
 
           {/* Tarih ve Saat */}
@@ -916,7 +1109,6 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
               />
               {errors.date && <span className="error-message">{errors.date}</span>}
             </div>
-
             <div className="form-group">
               <label htmlFor="startTime">Başlangıç Saati *</label>
               <input
@@ -926,10 +1118,10 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
                 value={formData.startTime}
                 onChange={handleInputChange}
                 className={errors.startTime ? 'error' : ''}
+                disabled={formData.isAllDay}
               />
               {errors.startTime && <span className="error-message">{errors.startTime}</span>}
             </div>
-
             <div className="form-group">
               <label htmlFor="endTime">Bitiş Saati *</label>
               <input
@@ -939,531 +1131,735 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
                 value={formData.endTime}
                 onChange={handleInputChange}
                 className={errors.endTime ? 'error' : ''}
+                disabled={formData.isAllDay}
               />
               {errors.endTime && <span className="error-message">{errors.endTime}</span>}
             </div>
           </div>
 
-          {/* Açıklama */}
-          <div className="form-group full-width">
-            <label htmlFor="description">Açıklama</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows="3"
-              placeholder="Randevu açıklamasını girin"
-            />
-          </div>
+      
 
-          {/* Konum */}
-          <div className="form-group full-width">
-            <label htmlFor="location">Konum</label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              placeholder="Randevu konumunu girin"
-            />
-          </div>
-
-          {/* Durum */}
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="status">Durum</label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-              >
-                {statusOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+          {/* Tekrarlanmaz ve Davetli Ekle yan yana */}
+          <div className="repeat-invite-row">
+            
+            
+            <div className="invite-section">
+              <div className="invite-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="8.5" cy="7" r="4" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M20 8v6M23 11h-6" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>DAVETLİ EKLE</span>
+              </div>
+              
+              <div className="contact-search-container">
+                <div className="contact-search-input-wrapper">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleContactSearch}
+                    placeholder="Kişi ara..."
+                    className="contact-search-input-new"
+                  />
+                  <button 
+                    type="button"
+                    className="add-contact-button-new"
+                    onClick={handleOpenAddContactModal}
+                    title="Yeni kişi ekle"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  </button>
+                </div>
+                
+                {/* Kişi Arama Dropdown */}
+                {showContactDropdown && filteredContacts.length > 0 && (
+                  <div className="contact-dropdown-new">
+                    {filteredContacts.map(contact => (
+                      <div
+                        key={contact.id}
+                        className="contact-option-new"
+                        onClick={() => handleContactSelect(contact)}
+                      >
+                        <div className="contact-option-avatar">
+                          <div className="contact-avatar-circle-tiny">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="white" strokeWidth="2"/>
+                              <circle cx="12" cy="7" r="4" stroke="white" strokeWidth="2"/>
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="contact-option-info">
+                          <div className="contact-option-name">{contact.name}</div>
+                          <div className="contact-option-details">{contact.email} • {contact.phone}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-
-
-          {/* Tüm Gün Etkinliği */}
-          <div className="form-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="isAllDay"
-                checked={formData.isAllDay}
-                onChange={(e) => setFormData(prev => ({ ...prev, isAllDay: e.target.checked }))}
-              />
-              Tüm gün etkinliği
-            </label>
-          </div>
-
-          {/* Davetli Seçimi */}
-          <div className="form-group full-width">
-            <label>Davetliler</label>
-            <div className="contact-search-container">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={handleContactSearch}
-                placeholder="Davetli aramak için isim yazın..."
-                className="contact-search-input"
-                onFocus={() => setShowContactDropdown(true)}
-              />
-              <button
-                type="button"
-                className="add-contact-btn"
-                onClick={handleOpenAddContactModal}
-                title="Yeni kişi ekle"
-              >
+          {/* Seçilen Kişiler */}
+          {selectedContacts.length > 0 && (
+            <div className="selected-contacts-section">
+              <div className="selected-contacts-header-new">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#FF6B35" strokeWidth="2"/>
+                  <circle cx="9" cy="7" r="4" stroke="#FF6B35" strokeWidth="2"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="#FF6B35" strokeWidth="2"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#FF6B35" strokeWidth="2"/>
                 </svg>
-              </button>
-              
-              {showContactDropdown && filteredContacts.length > 0 && (
-                <div className="contact-dropdown">
-                  {filteredContacts.slice(0, 10).map(contact => {
-                    const isSelected = selectedContacts.find(c => c.id === contact.id);
-                    return (
-                    <div
-                      key={contact.id}
-                      className={`contact-option ${isSelected ? 'selected' : ''}`}
-                      onClick={() => handleContactSelect(contact)}
-                    >
-                      <div className="contact-option-avatar">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
-                          <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                <span>SEÇİLEN KİŞİLER ({selectedContacts.length})</span>
+              </div>
+              <div className="selected-contacts-list-new">
+                {selectedContacts.map((contact, index) => (
+                  <div key={contact.email || contact.id || index} className="selected-contact-item-new">
+                    <div className="selected-contact-avatar">
+                      <div className="contact-avatar-circle-selected">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="white" strokeWidth="2"/>
+                          <circle cx="12" cy="7" r="4" stroke="white" strokeWidth="2"/>
                         </svg>
                       </div>
-                      <div className="contact-info">
-                        <span className="contact-name">{contact.name}</span>
-                        <span className="contact-details">{contact.phone} - {contact.email}</span>
+                    </div>
+                    <div className="selected-contact-info">
+                      <span className="selected-contact-name">{contact.name}</span>
+                      <div className="selected-contact-details">
+                        {contact.phone1 && <span className="contact-phone-tag">{contact.phone1}</span>}
+                        {contact.phone2 && <span className="contact-phone-tag">{contact.phone2}</span>}
                       </div>
                     </div>
-                    );
-                  })}
-                </div>
-              )}
+                    <button
+                      type="button"
+                      className="remove-contact-btn-new"
+                      onClick={() => handleContactRemove(contact.id)}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
+          )}
 
-            {/* Seçilen Davetliler */}
-            {selectedContacts.length > 0 && (
-              <div className="selected-contacts">
-                <label>Seçilen Davetliler:</label>
-                <div className="contact-tags">
-                  {selectedContacts.map(contact => (
-                    <div key={contact.id} className="contact-tag">
-                      <span>{contact.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleContactRemove(contact.id)}
-                        className="remove-tag-btn"
-                        title="Kaldır"
-                      >
-                        ×
-                      </button>
+          {/* Önceki Randevular - Resim Tasarımı */}
+          {selectedContacts.length > 0 && showPreviousAppointments && (
+            <div className="previous-appointments-image-style">
+              <div className="appointments-top-bar">
+                <div className="year-navigation">
+                  <button type="button" className="nav-arrow prev-year" onClick={handlePrevYear}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <polyline points="15,18 9,12 15,6" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  </button>
+                  <span className="current-year">{currentYear}</span>
+                  <button type="button" className="nav-arrow next-year" onClick={handleNextYear}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <polyline points="9,18 15,12 9,6" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  </button>
+                </div>
+                <div className="total-appointments">
+                  <span className="total-text">TOPLAM {previousAppointments.length} RANDEVU BULUNMUŞTUR.</span>
+                </div>
+              </div>
+              
+              {previousAppointments.length > 0 ? (
+                <div className="appointments-list-image">
+                  {previousAppointments.map((appointment, index) => (
+                    <div key={`${appointment.id}-${index}`} className="appointment-row">
+                      <div className="appointment-dot" style={{backgroundColor: appointment.color || '#ff6b35'}}></div>
+                      <div className="appointment-info">
+                        <div className="appointment-datetime-inline">
+                          <span className="appointment-date-text">
+                            {new Date(appointment.date).toLocaleDateString('tr-TR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })}
+                          </span>
+                          <span className="appointment-time-text">
+                            {appointment.start_time?.substring(0, 5)} - {appointment.end_time?.substring(0, 5)}
+                          </span>
+                        </div>
+                        <div className="appointment-title-text">{appointment.title}</div>
+                      </div>
+                      <div className="appointment-status-right">
+                        <span className="status-label" style={{color: appointment.color || '#ff6b35'}}>
+                          {appointment.status === 'COMPLETED' ? 'GÖRÜŞME YAPILDI' : 
+                           appointment.status === 'CONFIRMED' ? 'ONAYLANMIŞ' :
+                           appointment.status === 'RESCHEDULED' ? 'RANDEVU TEKRARI' : 
+                           appointment.status === 'CANCELLED' ? 'İPTAL EDİLDİ' : 
+                           'ZAMANLANMIŞ'}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Bildirim Ayarları */}
-          <div className="form-group full-width">
-            <label>Bildirim Ayarları</label>
-            <div className="notification-info">
-              <p style={{ fontSize: '13px', color: '#666', margin: '0 0 15px 0' }}>
-                ℹ️ Bu seçenekler açıksa, randevu güncellendiğinde değişiklikler davetlilere bildirilir
-              </p>
-            </div>
-            <div className="checkbox-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="notificationEmail"
-                  checked={formData.notificationEmail}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notificationEmail: e.target.checked }))}
-                />
-                E-posta Bildirimi (Güncellemeler davetlilere e-posta ile gönderilir)
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  name="notificationSMS"
-                  checked={formData.notificationSMS}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notificationSMS: e.target.checked }))}
-                />
-                SMS Bildirimi (Güncellemeler davetlilere SMS ile gönderilir)
-              </label>
-            </div>
-          </div>
-
-          {/* Hatırlatma Ayarları */}
-          <div className="form-group full-width">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="reminderBefore"
-                checked={formData.reminderBefore}
-                onChange={(e) => setFormData(prev => ({ ...prev, reminderBefore: e.target.checked }))}
-              />
-              Hatırlatma Gönder
-            </label>
-            
-            {formData.reminderBefore && (
-              <div className="reminder-settings">
-                <div className="reminder-datetime-group">
-                  <label>Hatırlatma Tarihi ve Saati:</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.reminderDateTime}
-                    onChange={(e) => setFormData(prev => ({ ...prev, reminderDateTime: e.target.value }))}
-                    className="reminder-datetime-input"
-                    min={new Date().toISOString().slice(0, 16)}
-                  />
-                  <small className="reminder-help-text">
-                    Hatırlatma mesajının gönderileceği tarih ve saati seçin
-                  </small>
+              ) : (
+                <div className="no-appointments-image">
+                  <p>Seçilen kişiler için önceki randevu bulunamadı</p>
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Görünürlük Ayarları */}
-          <div className="form-group full-width">
-            <label>Görünürlük Ayarları</label>
-            <div className="visibility-section">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={formData.visibleToAll}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
-                    visibleToAll: e.target.checked,
-                    visibleToUsers: e.target.checked ? [] : prev.visibleToUsers
-                  }))}
-                />
-                Tüm kullanıcılara görünür
-              </label>
-
-              {!formData.visibleToAll && (
-                <div className="user-visibility-section">
-                  <input
-                    type="text"
-                    value={userSearchTerm}
-                    onChange={handleUserSearch}
-                    placeholder="Kullanıcı aramak için isim yazın..."
-                    className="user-search-input"
-                    onFocus={() => {
-                      setShowUserDropdown(true);
-                      // Input'a focus olduğunda tüm kullanıcıları göster
-                      if (userSearchTerm.trim() === '') {
-                        setFilteredUsers(users);
-                      }
-                    }}
-                    onBlur={() => {
-                      // Dropdown'daki seçim işlemini tamamlamak için kısa bir gecikme
-                      setTimeout(() => setShowUserDropdown(false), 200);
-                    }}
-                  />
-                  
-                  {showUserDropdown && filteredUsers.length > 0 && (
-                    <div className="user-dropdown">
-                      {filteredUsers.slice(0, 10).map(user => {
-                        const isSelected = formData.visibleToUsers && formData.visibleToUsers.find(u => u.id === user.id);
+              )}
+              
+              {/* Pagination */}
+              {previousAppointmentsPagination.totalPages > 1 && (
+                <div className="pagination-container">
+                  <div className="pagination-info">
+                    Sayfa {previousAppointmentsPagination.currentPage} / {previousAppointmentsPagination.totalPages} 
+                    (Toplam {previousAppointmentsPagination.totalItems} randevu)
+                  </div>
+                  <div className="pagination-controls">
+                    <button 
+                      type="button"
+                      className="pagination-btn prev"
+                      onClick={() => handlePreviousAppointmentsPageChange(previousAppointmentsPagination.currentPage - 1)}
+                      disabled={!previousAppointmentsPagination.hasPrevPage || loadingPreviousAppointments}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <polyline points="15,18 9,12 15,6" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                      Önceki
+                    </button>
+                    
+                    <div className="pagination-pages">
+                      {Array.from({ length: Math.min(5, previousAppointmentsPagination.totalPages) }, (_, i) => {
+                        const totalPages = previousAppointmentsPagination.totalPages;
+                        const currentPage = previousAppointmentsPagination.currentPage;
+                        let pageNumber;
+                        
+                        if (totalPages <= 5) {
+                          pageNumber = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNumber = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNumber = totalPages - 4 + i;
+                        } else {
+                          pageNumber = currentPage - 2 + i;
+                        }
+                        
                         return (
-                        <div
-                          key={user.id}
-                          className={`user-option ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handleUserSelect(user)}
-                        >
-                          <div className="user-option-avatar">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
-                              <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-                            </svg>
-                          </div>
-                          <div className="user-info">
-                            <span className="user-name">{user.name}</span>
-                            <span className="user-email">{user.email}</span>
-                          </div>
-                        </div>
+                          <button
+                            key={pageNumber}
+                            type="button"
+                            className={`pagination-page ${pageNumber === currentPage ? 'active' : ''}`}
+                            onClick={() => handlePreviousAppointmentsPageChange(pageNumber)}
+                            disabled={loadingPreviousAppointments}
+                          >
+                            {pageNumber}
+                          </button>
                         );
                       })}
                     </div>
-                  )}
-
-                  {/* Seçilen Kullanıcılar */}
-                  {formData.visibleToUsers && formData.visibleToUsers.length > 0 && (
-                    <div className="selected-users">
-                      <label>Görünür Kullanıcılar:</label>
-                      <div className="user-tags">
-                        {formData.visibleToUsers.map(user => (
-                          <div key={user.id} className="user-tag">
-                            <span>{user.name}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleUserRemove(user.id)}
-                              className="remove-tag-btn"
-                              title="Kaldır"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    
+                    <button 
+                      type="button"
+                      className="pagination-btn next"
+                      onClick={() => handlePreviousAppointmentsPageChange(previousAppointmentsPagination.currentPage + 1)}
+                      disabled={!previousAppointmentsPagination.hasNextPage || loadingPreviousAppointments}
+                    >
+                      Sonraki
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <polyline points="9,18 15,12 9,6" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
+          )}
+
+       
+
+          {/* Randevu Öncesi Bildirim Saat Ayarı */}
+          {formData.reminderBefore && (
+            <div className="reminder-time-section">
+              <div className="reminder-time-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="#666" strokeWidth="2"/>
+                  <polyline points="12,6 12,12 16,14" stroke="#666" strokeWidth="2"/>
+                </svg>
+                <span>BİLDİRİM ZAMANI</span>
+              </div>
+              <div className="reminder-time-options">
+                <input
+                  type="number"
+                  name="reminderValue"
+                  value={formData.reminderValue}
+                  onChange={handleInputChange}
+                  className="reminder-value-input"
+                  min="1"
+                  max="999"
+                  placeholder="Sayı"
+                />
+                <select
+                  name="reminderUnit"
+                  value={formData.reminderUnit}
+                  onChange={handleInputChange}
+                  className="reminder-unit-select"
+                >
+                  <option value="minutes">Dakika</option>
+                  <option value="hours">Saat</option>
+                  <option value="days">Gün</option>
+                  <option value="weeks">Hafta</option>
+                </select>
+                <span className="reminder-text">öncesinden bildirim gönder</span>
+              </div>
+            </div>
+          )}
+
+
+
+          {/* Konum */}
+          <div className="form-group location-input">
+            <div className="input-with-icon">
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                placeholder="KONUM"
+              />
+            </div>
           </div>
 
-          {/* Çakışma Uyarısı */}
+          {/* Durum */}
+          <div className="form-group">
+            <label htmlFor="status">Randevu Durumu</label>
+            <select
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleInputChange}
+              className="status-select"
+            >
+              {statusOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+        
+
+
+
+          {/* Açıklama - Editör Tarzı */}
+          <div className="form-group full-width">
+            <div className="description-editor">
+              <div className="editor-header">
+                <div className="editor-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#FF6B35" strokeWidth="2"/>
+                    <polyline points="14,2 14,8 20,8" stroke="#FF6B35" strokeWidth="2"/>
+                    <line x1="16" y1="13" x2="8" y2="13" stroke="#FF6B35" strokeWidth="2"/>
+                    <line x1="16" y1="17" x2="8" y2="17" stroke="#FF6B35" strokeWidth="2"/>
+                  </svg>
+                  <span>AÇIKLAMA</span>
+                </div>
+              </div>
+              
+              <div className="editor-toolbar">
+                <button 
+                  type="button" 
+                  className="toolbar-btn" 
+                  title="Dosya Ekle"
+                  onClick={(e) => handleToolbarAction('attach', e)}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2"/>
+                    <polyline points="14,2 14,8 20,8" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </button>
+                
+                <button 
+                  type="button" 
+                  className={`toolbar-btn ${activeToolbarButtons.includes('bold') ? 'active' : ''}`}
+                  title="Kalın (**metin**)"
+                  onClick={(e) => handleToolbarAction('bold', e)}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </button>
+                
+                <button 
+                  type="button" 
+                  className={`toolbar-btn ${activeToolbarButtons.includes('italic') ? 'active' : ''}`}
+                  title="İtalik (*metin*)"
+                  onClick={(e) => handleToolbarAction('italic', e)}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <line x1="19" y1="4" x2="10" y2="4" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="14" y1="20" x2="5" y2="20" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="15" y1="4" x2="9" y2="20" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </button>
+                
+                <button 
+                  type="button" 
+                  className={`toolbar-btn ${activeToolbarButtons.includes('underline') ? 'active' : ''}`}
+                  title="Altı Çizili (<u>metin</u>)"
+                  onClick={(e) => handleToolbarAction('underline', e)}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 4v6a6 6 0 0 0 12 0V4" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="4" y1="20" x2="20" y2="20" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </button>
+                
+                <button 
+                  type="button" 
+                  className="toolbar-btn" 
+                  title="Madde İşareti (• metin)"
+                  onClick={(e) => handleToolbarAction('bullet', e)}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="3" y1="6" x2="3.01" y2="6" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="3" y1="12" x2="3.01" y2="12" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="3" y1="18" x2="3.01" y2="18" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </button>
+                
+                <button 
+                  type="button" 
+                  className="toolbar-btn" 
+                  title="Numaralı Liste (1. metin)"
+                  onClick={(e) => handleToolbarAction('number', e)}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <line x1="10" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="10" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="10" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M4 6h1v4" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M4 10h2" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </button>
+                
+                <button 
+                  type="button" 
+                  className="toolbar-btn" 
+                  title="Link Ekle ([metin](url))"
+                  onClick={(e) => handleToolbarAction('link', e)}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </button>
+                
+                <button 
+                  type="button" 
+                  className="toolbar-btn" 
+                  title="Tümünü Temizle"
+                  onClick={(e) => handleToolbarAction('clear', e)}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="editor-content">
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => {
+                    // Ctrl/Cmd + B = Bold
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                      e.preventDefault();
+                      handleToolbarAction('bold', e);
+                    }
+                    // Ctrl/Cmd + I = Italic
+                    else if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                      e.preventDefault();
+                      handleToolbarAction('italic', e);
+                    }
+                    // Ctrl/Cmd + U = Underline
+                    else if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                      e.preventDefault();
+                      handleToolbarAction('underline', e);
+                    }
+                    // Ctrl/Cmd + K = Link
+                    else if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                      e.preventDefault();
+                      handleToolbarAction('link', e);
+                    }
+                    // Tab = Indent (bullet point)
+                    else if (e.key === 'Tab' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleToolbarAction('bullet', e);
+                    }
+                  }}
+                  
+                  rows="6"
+                  className="editor-textarea"
+                />
+              </div>
+            </div>
+          </div>
+
+
+
+                      {/* Bildirim ve Görünürlük Bölümü */}
+          <div className="notification-visibility-section">
+            {/* Üst Başlıklar */}
+            <div className="section-headers">
+              <div className="notification-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="#FF6B35" strokeWidth="2"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="#FF6B35" strokeWidth="2"/>
+                </svg>
+                <span>BİLDİRİM</span>
+              </div>
+              <div className="visibility-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#FF6B35" strokeWidth="2"/>
+                  <circle cx="12" cy="12" r="3" stroke="#FF6B35" strokeWidth="2"/>
+                </svg>
+                <span>GÖRÜNÜRLÜK</span>
+              </div>
+            </div>
+            
+                        {/* Bildirim ve Görünürlük Seçenekleri */}
+            <div className="notification-visibility-options">
+              <div className="notification-controls">
+                <div className="notification-checkboxes">
+                  <label className="notification-checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="notificationEmail"
+                      checked={formData.notificationEmail}
+                      onChange={handleInputChange}
+                      className="notification-checkbox"
+                    />
+                    <span className="checkbox-custom"></span>
+                    <span className="checkbox-text">EPOSTA</span>
+                  </label>
+                  <label className="notification-checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="notificationSMS"
+                      checked={formData.notificationSMS}
+                      onChange={handleInputChange}
+                      className="notification-checkbox"
+                    />
+                    <span className="checkbox-custom"></span>
+                    <span className="checkbox-text">SMS</span>
+                  </label>
+                </div>
+                
+          
+              </div>
+              <div className="visibility-controls">
+                <div className="visibility-search-container">
+                  <input
+                    type="text"
+                    placeholder="Kullanıcı ara..."
+                    value={userSearchTerm}
+                    onChange={handleUserSearch}
+                    onClick={() => {
+                      if (users.length > 0) {
+                        setShowUserDropdown(true);
+                        // Eğer filteredUsers boşsa, tüm kullanıcıları göster
+                        if (filteredUsers.length === 0) {
+                          const selectedUserIds = formData.visibleToUsers ? formData.visibleToUsers.map(u => u.id) : [];
+                          const selectedUsers = users.filter(user => selectedUserIds.includes(user.id));
+                          const unselectedUsers = users.filter(user => !selectedUserIds.includes(user.id));
+                          const sortedSelected = selectedUsers.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
+                          const sortedUnselected = unselectedUsers.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
+                          setFilteredUsers([...sortedSelected, ...sortedUnselected]);
+                        }
+                      }
+                    }}
+                    className="visibility-search-input"
+                  />
+
+                </div>
+                
+                {/* Kullanıcı Arama Dropdown */}
+                {showUserDropdown && (
+                  <div className="user-dropdown">
+                    {/* Tümü Seçeneği */}
+                    <div 
+                      className={`user-option all-users-option ${formData.visibleToAll ? 'selected' : ''}`}
+                      onClick={handleSelectAllUsers}
+                    >
+                      <div className="user-option-avatar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
+                          <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                      </div>
+                      <div className="user-option-info">
+                        <div className="user-option-name">TÜMÜ</div>
+                        <div className="user-option-email">Tüm kullanıcılara görünür</div>
+                      </div>
+                    </div>
+                    
+                    {/* Kullanıcı Listesi */}
+                     {filteredUsers.map(user => {
+                      const isSelected = formData.visibleToUsers && formData.visibleToUsers.find(u => u.id === user.id);
+                      return (
+                      <div 
+                        key={user.id} 
+                        className={`user-option ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleUserSelect(user)}
+                      >
+                        <div className="user-option-avatar">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
+                            <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                          </svg>
+                        </div>
+                        <div className="user-option-info">
+                          <div className="user-option-name">{user.name}</div>
+                          <div className="user-option-email">{user.email}</div>
+                        </div>
+                      </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Seçilen Kullanıcılar */}
+            {((formData.visibleToUsers && formData.visibleToUsers.length > 0) || formData.visibleToAll) && (
+              <div className="selected-users-section">
+                <div className="selected-users-header">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#FF6B35" strokeWidth="2"/>
+                    <circle cx="9" cy="7" r="4" stroke="#FF6B35" strokeWidth="2"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="#FF6B35" strokeWidth="2"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#FF6B35" strokeWidth="2"/>
+                  </svg>
+                  <span>
+                    {formData.visibleToAll 
+                      ? 'TÜM KULLANICILARA GÖRÜNÜR' 
+                      : `SEÇİLEN KULLANICILAR (${formData.visibleToUsers ? formData.visibleToUsers.length : 0})`
+                    }
+                  </span>
+                </div>
+                
+                {/* TÜMÜ seçiliyse bilgi mesajı göster */}
+                {formData.visibleToAll ? (
+                  <div className="all-users-info">
+                    <div className="all-users-message">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#10B981"/>
+                        <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span>Bu randevu sistemdeki tüm kullanıcıların takviminde görünecektir.</span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Bireysel seçilen kullanıcıları göster */
+                  <div className="selected-users-list">
+                    {formData.visibleToUsers && formData.visibleToUsers.map(user => (
+                      <div key={user.id} className="selected-user-item">
+                        <div className="selected-user-avatar">
+                          <div className="avatar-circle-selected">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="white" strokeWidth="2"/>
+                              <circle cx="12" cy="7" r="4" stroke="white" strokeWidth="2"/>
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="selected-user-info">
+                          <span className="selected-user-name">{user.name}</span>
+                          <span className="selected-user-email">{user.email}</span>
+                        </div>
+                        <button 
+                          type="button"
+                          className="remove-user-btn"
+                          onClick={() => handleUserRemove(user.id)}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Çakışma uyarısı */}
           {isCheckingConflict && (
             <div className="conflict-checking">
-              <div className="spinner-small"></div>
               <span>Çakışma kontrolü yapılıyor...</span>
             </div>
           )}
 
           {conflicts.length > 0 && (
-            <div className="conflicts-warning">
-              <div className="warning-header">
+            <div className="conflict-warning">
+              <div className="conflict-header">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 9v4M12 17h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#ff4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span>Çakışan Randevular ({conflicts.length})</span>
+                <span>Randevu Çakışması!</span>
               </div>
-              <div className="conflicts-list">
+              <p>Bu saatte aşağıdaki randevularınız bulunmaktadır:</p>
+              <ul>
                 {conflicts.map((conflict, index) => (
-                  <div key={index} className="conflict-item">
-                    <strong>{conflict.title}</strong>
-                    <span>{conflict.start_time} - {conflict.end_time}</span>
-                    <span>{conflict.creator_name}</span>
-                  </div>
+                  <li key={index}>
+                    <strong>{conflict.title}</strong> - {conflict.startTime} / {conflict.endTime}
+                  </li>
                 ))}
-              </div>
+              </ul>
+              <p>Lütfen farklı bir saat seçiniz.</p>
             </div>
           )}
 
-          {/* Hatırlatma Kontrolleri */}
-          {appointmentDetails?.reminder_info && (
-            <div className="reminder-management-section">
-              <h3>Hatırlatma Yönetimi</h3>
-              
-              <div className="reminder-status-info">
-                <div className="status-item">
-                  <label>Durum:</label>
-                  <span className={`reminder-status-badge status-${appointmentDetails.reminder_info.status}`}>
-                    {appointmentDetails.reminder_info.status === 'scheduled' && 'Zamanlandı'}
-                    {appointmentDetails.reminder_info.status === 'sending' && 'Gönderiliyor'}
-                    {appointmentDetails.reminder_info.status === 'sent' && 'Gönderildi'}
-                    {appointmentDetails.reminder_info.status === 'failed' && 'Başarısız'}
-                    {appointmentDetails.reminder_info.status === 'cancelled' && 'İptal'}
-                  </span>
-                </div>
-                {appointmentDetails.reminder_info.reminder_time && (
-                  <div className="status-item">
-                    <label>Hatırlatma Zamanı:</label>
-                    <span>{new Date(appointmentDetails.reminder_info.reminder_time).toLocaleString('tr-TR')}</span>
-                  </div>
-                )}
-                {appointmentDetails.reminder_info.sent_at && (
-                  <div className="status-item">
-                    <label>Gönderilme Zamanı:</label>
-                    <span>{new Date(appointmentDetails.reminder_info.sent_at).toLocaleString('tr-TR')}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="reminder-controls">
-                {/* Eğer hatırlatma gönderildiyse tekrar gönder butonu göster */}
-                {(appointmentDetails.reminder_info.status === 'sent' || appointmentDetails.reminder_info.status === 'failed') && (
-                  <div className="reminder-resend-section">
-                    {!showReminderControls ? (
-                      <button 
-                        type="button"
-                        className="btn btn-primary" 
-                        onClick={() => setShowReminderControls(true)}
-                        disabled={resendingReminder}
-                      >
-                        Tekrar Gönder
-                      </button>
-                    ) : (
-                      <div className="resend-options">
-                        <h4>Hatırlatma Tekrar Gönder</h4>
-                        <div className="resend-choice">
-                          <button 
-                            type="button"
-                            className="btn btn-secondary" 
-                            onClick={handleResendReminder}
-                            disabled={resendingReminder}
-                          >
-                            {resendingReminder ? 'Gönderiliyor...' : 'Hemen Gönder'}
-                          </button>
-                          <button 
-                            type="button"
-                            className="btn btn-primary" 
-                            onClick={() => setShowManualTime(true)}
-                            disabled={resendingReminder}
-                          >
-                            Tarih/Saat Belirle
-                          </button>
-                        </div>
-                        
-                        {showManualTime && (
-                          <div className="manual-time-form">
-                            <div className="form-group">
-                              <label>Hatırlatma Zamanı:</label>
-                              <input
-                                type="datetime-local"
-                                value={manualReminderDateTime}
-                                onChange={(e) => setManualReminderDateTime(e.target.value)}
-                                min={new Date().toISOString().slice(0, 16)}
-                              />
-                            </div>
-                            <div className="form-actions">
-                              <button 
-                                type="button"
-                                className="btn btn-primary" 
-                                onClick={handleManualReminder}
-                                disabled={resendingReminder || !manualReminderDateTime}
-                              >
-                                {resendingReminder ? 'Zamanlanıyor...' : 'Zamanla'}
-                              </button>
-                              <button 
-                                type="button"
-                                className="btn btn-secondary" 
-                                onClick={() => {
-                                  setShowManualTime(false);
-                                  setManualReminderDateTime('');
-                                }}
-                                disabled={resendingReminder}
-                              >
-                                İptal
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div className="resend-actions">
-                          <button 
-                            type="button"
-                            className="btn btn-outline" 
-                            onClick={() => {
-                              setShowReminderControls(false);
-                              setShowManualTime(false);
-                              setManualReminderDateTime('');
-                            }}
-                            disabled={resendingReminder}
-                          >
-                            İptal
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Eğer hatırlatma henüz gönderilmediyse zaman değiştirme imkanı ver */}
-                {appointmentDetails.reminder_info.status === 'scheduled' && (
-                  <div className="reminder-edit-section">
-                    {!showReminderEdit ? (
-                      <button 
-                        type="button"
-                        className="btn btn-primary" 
-                        onClick={startReminderEdit}
-                      >
-                        Hatırlatma Zamanını Değiştir
-                      </button>
-                    ) : (
-                      <div className="reminder-edit-form">
-                        <div className="form-row">
-                          <div className="form-group">
-                            <input
-                              type="number"
-                              min="1"
-                              value={newReminderValue}
-                              onChange={(e) => setNewReminderValue(e.target.value)}
-                              placeholder="Değer"
-                            />
-                          </div>
-                          <div className="form-group">
-                            <select
-                              value={newReminderUnit}
-                              onChange={(e) => setNewReminderUnit(e.target.value)}
-                            >
-                              <option value="MINUTES">Dakika</option>
-                              <option value="HOURS">Saat</option>
-                              <option value="DAYS">Gün</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div className="form-actions">
-                          <button 
-                            type="button"
-                            className="btn btn-primary" 
-                            onClick={handleUpdateReminderTime}
-                            disabled={updatingReminder || !newReminderValue}
-                          >
-                            {updatingReminder ? 'Güncelleniyor...' : 'Güncelle'}
-                          </button>
-                          <button 
-                            type="button"
-                            className="btn btn-secondary" 
-                            onClick={cancelReminderEdit}
-                            disabled={updatingReminder}
-                          >
-                            İptal
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={handleClose}>
-              İptal
+          {/* Modal Actions */}
+          <div className="modal-actions">
+            <button type="button" className="cancel-btn" onClick={handleClose}>
+              İPTAL ET
             </button>
             <button 
               type="submit" 
-              className="btn btn-primary"
-              disabled={loading || isCheckingConflict}
+              className="save-btn"
+              disabled={conflicts.length > 0 || isCheckingConflict || isSubmitting}
             >
-              {loading ? (
+              {isSubmitting ? (
                 <>
-                  <div className="spinner-small"></div>
-                  Güncelleniyor...
+                  <div className="loading-spinner"></div>
+                  KAYDEDILIYOR...
                 </>
               ) : (
-                'Güncelle'
+                'GÜNCELLE'
               )}
             </button>
           </div>
         </form>
-
-        {/* AddContactModal */}
-        <AddContactModal
-          isOpen={showAddContactModal}
-          onClose={handleCloseAddContactModal}
-          onSave={handleContactAdded}
-        />
       </div>
     </div>
+
+    {/* Add Contact Modal */}
+    <AddContactModal
+      show={showAddContactModal}
+      onHide={handleCloseAddContactModal}
+      onContactAdded={handleContactAdded}
+    />
+  </>
   );
 };
 
