@@ -14,6 +14,7 @@
     "gapi-script": "^1.2.0",
     "quill": "^2.0.3",
     "react": "^19.1.0",
+    "react-big-calendar": "^1.19.4",
     "react-bootstrap": "^2.10.10",
     "react-datepicker": "^8.4.0",
     "react-dom": "^19.1.0",

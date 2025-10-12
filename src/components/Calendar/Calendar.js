@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { getAppointments } from '../../services/appointmentsService';
+import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
+import { getAppointments, getAppointmentsByDateRange } from '../../services/appointmentsService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSocket } from '../../contexts/SocketContext';
 import './Calendar.css';
 
-const Calendar = ({ 
+const Calendar = memo(({ 
   selectedDate: externalSelectedDate, 
   currentMonth: externalCurrentMonth, 
   currentYear: externalCurrentYear,
   onDateChange 
 }) => {
   const { accessToken } = useAuth();
-  const today = new Date();
+  const { socket } = useSocket();
+  const today = useMemo(() => new Date(), []);
   const [currentDate, setCurrentDate] = useState(today);
   const [selectedDate, setSelectedDate] = useState(externalSelectedDate || today.getDate());
   const [currentMonth, setCurrentMonth] = useState(externalCurrentMonth !== undefined ? externalCurrentMonth : today.getMonth());
@@ -27,7 +29,7 @@ const Calendar = ({
       // Eğer external prop yoksa bugünü seç
       setSelectedDate(today.getDate());
     }
-  }, [externalSelectedDate]);
+  }, [externalSelectedDate, today]);
 
   useEffect(() => {
     if (externalCurrentMonth !== undefined) {
@@ -36,7 +38,7 @@ const Calendar = ({
       // Eğer external prop yoksa bugünkü ayı seç
       setCurrentMonth(today.getMonth());
     }
-  }, [externalCurrentMonth]);
+  }, [externalCurrentMonth, today]);
 
   useEffect(() => {
     if (externalCurrentYear !== undefined) {
@@ -45,31 +47,98 @@ const Calendar = ({
       // Eğer external prop yoksa bugünkü yılı seç
       setCurrentYear(today.getFullYear());
     }
-  }, [externalCurrentYear]);
+  }, [externalCurrentYear, today]);
 
-  // Randevuları yükle
-  useEffect(() => {
-    loadAppointments();
-  }, [accessToken]);
-
-  const loadAppointments = async () => {
+  // Randevuları yükle - tarih aralığı ile optimize edildi
+  const loadAppointments = useCallback(async () => {
     if (!accessToken) return;
     
     try {
       setLoading(true);
-      const response = await getAppointments(accessToken);
+      
+      // Görünen ayın başlangıç ve bitiş tarihlerini hesapla
+      const startOfMonth = new Date(currentYear, currentMonth, 1);
+      const endOfMonth = new Date(currentYear, currentMonth + 1, 0);
+      
+      // Takvim grid'inde görünen önceki ve sonraki ayın günlerini de dahil et (Pazartesi başlangıçlı)
+      const firstDayOfWeek = (startOfMonth.getDay() + 6) % 7; // Pazartesi=0, Salı=1, ..., Pazar=6
+      const startDate = new Date(startOfMonth);
+      startDate.setDate(startDate.getDate() - firstDayOfWeek);
+      
+      const lastDayOfWeek = (endOfMonth.getDay() + 6) % 7; // Pazartesi=0, Salı=1, ..., Pazar=6
+      const endDate = new Date(endOfMonth);
+      endDate.setDate(endDate.getDate() + (6 - lastDayOfWeek));
+      
+      // Tarih formatını YYYY-MM-DD olarak hazırla
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+      
+      // Tarih aralığına göre randevuları getir
+      const response = await getAppointmentsByDateRange(accessToken, startDateStr, endDateStr);
       if (response.success) {
         setAppointments(response.data);
       }
     } catch (error) {
       console.error('Randevular yüklenirken hata:', error);
+      // Hata durumunda tüm randevuları yükle (fallback)
+      try {
+        const response = await getAppointments(accessToken);
+        if (response.success) {
+          setAppointments(response.data);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback randevu yükleme hatası:', fallbackError);
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [accessToken, currentYear, currentMonth]);
 
-  // Seçili günün randevularını getir
-  const getSelectedDayAppointments = () => {
+  // Randevuları yükle
+  useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
+
+  // Socket.IO real-time güncellemeler
+  useEffect(() => {
+    if (!socket) return;
+
+    console.log('🔌 Calendar: Socket event listenerlari ekleniyor...');
+
+    // Randevu ekleme event'i
+    const handleAppointmentCreated = (data) => {
+      console.log('📅 Calendar: Yeni randevu eklendi:', data);
+      loadAppointments(); // Randevuları yeniden yükle
+    };
+
+    // Randevu güncelleme event'i
+    const handleAppointmentUpdated = (data) => {
+      console.log('📅 Calendar: Randevu güncellendi:', data);
+      loadAppointments(); // Randevuları yeniden yükle
+    };
+
+    // Randevu silme event'i
+    const handleAppointmentDeleted = (data) => {
+      console.log('📅 Calendar: Randevu silindi:', data);
+      loadAppointments(); // Randevuları yeniden yükle
+    };
+
+    // Event listener'ları ekle
+    socket.on('appointment-created', handleAppointmentCreated);
+    socket.on('appointment-updated', handleAppointmentUpdated);
+    socket.on('appointment-deleted', handleAppointmentDeleted);
+
+    // Cleanup function
+    return () => {
+      console.log('🔌 Calendar: Socket event listenerlari kaldiriliyor...');
+      socket.off('appointment-created', handleAppointmentCreated);
+      socket.off('appointment-updated', handleAppointmentUpdated);
+      socket.off('appointment-deleted', handleAppointmentDeleted);
+    };
+  }, [socket, loadAppointments]);
+
+  // Seçili günün randevularını getir - useMemo ile optimize edildi
+  const getSelectedDayAppointments = useMemo(() => {
     const selectedDateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`;
     
     const filtered = appointments.filter(appointment => {
@@ -88,15 +157,15 @@ const Calendar = ({
     });
     
     return filtered;
-  };
+  }, [appointments, currentYear, currentMonth, selectedDate]);
 
-  // Saat formatla
-  const formatTime = (timeString) => {
+  // Saat formatla - useCallback ile optimize edildi
+  const formatTime = useCallback((timeString) => {
     return timeString.substring(0, 5);
-  };
+  }, []);
 
-  // Seçili günün tarih formatı
-  const getSelectedDateFormatted = () => {
+  // Seçili günün tarih formatı - useMemo ile optimize edildi
+  const selectedDateFormatted = useMemo(() => {
     const date = new Date(currentYear, currentMonth, selectedDate);
     return date.toLocaleDateString('tr-TR', {
       day: 'numeric',
@@ -104,52 +173,53 @@ const Calendar = ({
       year: 'numeric',
       weekday: 'long'
     });
-  };
+  }, [currentYear, currentMonth, selectedDate]);
 
-  // Türkçe ay isimleri
-  const monthNames = [
+  // Türkçe ay isimleri - useMemo ile optimize edildi
+  const monthNames = useMemo(() => [
     'OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN',
     'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK'
-  ];
+  ], []);
 
-  // Türkçe gün isimleri - Figma tasarımına göre
-  const dayHeaders = ['PAZ', 'PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMTS'];
+  // Türkçe gün isimleri - useMemo ile optimize edildi (Pazartesi başlangıçlı)
+  const dayHeaders = useMemo(() => ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMTS', 'PAZ'], []);
   const [scrollContainer, setScrollContainer] = useState(null); // Scroll container referansı
 
-  // Aylık randevu verileri için event oluştur
-  const createEventData = () => {
+  // Aylık randevu verileri için event oluştur - useMemo ile optimize edildi
+  const eventData = useMemo(() => {
     const eventData = {};
     
     appointments.forEach(appointment => {
-      // Backend'den gelen tarihi normalize et (sadece tarih kısmını al)
-      let appointmentDate = appointment.date;
+      // Backend'den gelen tarihi local timezone'a çevir (getSelectedDayAppointments ile aynı mantık)
+      if (!appointment.date) return;
       
-      // Eğer ISO string formatında ise sadece tarih kısmını al
-      if (appointmentDate.includes('T')) {
-        appointmentDate = appointmentDate.split('T')[0];
-      }
+      const appointmentDate = new Date(appointment.date);
+      const year = appointmentDate.getFullYear();
+      const month = String(appointmentDate.getMonth() + 1).padStart(2, '0');
+      const day = String(appointmentDate.getDate()).padStart(2, '0');
+      const localDateString = `${year}-${month}-${day}`;
       
-      if (!eventData[appointmentDate]) {
-        eventData[appointmentDate] = [];
+      if (!eventData[localDateString]) {
+        eventData[localDateString] = [];
       }
-      eventData[appointmentDate].push({
+      eventData[localDateString].push({
         color: appointment.color || '#3B82F6'
       });
     });
     
     return eventData;
-  };
+  }, [appointments]);
 
-  const eventData = createEventData();
-  const selectedDayAppointments = getSelectedDayAppointments();
-
+  const selectedDayAppointments = getSelectedDayAppointments;
 
 
-  // Takvim günlerini oluştur
-  const generateCalendarDays = () => {
+
+  // Takvim günlerini oluştur - useCallback ile optimize edildi
+  const generateCalendarDays = useCallback(() => {
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-    const firstDayOfWeek = firstDayOfMonth.getDay();
+    // Pazartesi başlangıçlı hafta için: Pazar=6, Pazartesi=0, Salı=1, ...
+    const firstDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
     const daysInMonth = lastDayOfMonth.getDate();
     
     const days = [];
@@ -197,9 +267,10 @@ const Calendar = ({
     }
     
     return days;
-  };
+  }, [currentMonth, currentYear, eventData]);
 
-  const calendarDays = generateCalendarDays();
+  // Virtualization için optimize edilmiş takvim günleri - useMemo ile cache'lendi
+  const calendarDays = useMemo(() => generateCalendarDays(), [currentMonth, currentYear, eventData]);
 
   const handleDateClick = (day, month) => {
     if (month === 'current') {
@@ -420,35 +491,44 @@ const Calendar = ({
           ))}
         </div>
 
-        {/* Calendar Days */}
+        {/* Calendar Days - Virtualized for performance */}
         <div className="calendar-days">
-          {calendarDays.map((dateObj, index) => (
-            <div
-              key={index}
-              className={`calendar-day ${dateObj.month} ${
-                dateObj.day === selectedDate && dateObj.month === 'current' ? 'selected' : ''
-              } ${isToday(dateObj.day, dateObj.month) ? 'today' : ''}`}
-              onClick={() => handleDateClick(dateObj.day, dateObj.month)}
-            >
-              <span className="day-number">{dateObj.day}</span>
-              {dateObj.events.length > 0 && (
-                <div className="event-dots">
-                  {dateObj.events.slice(0, 3).map((event, eventIndex) => (
-                    <div
-                      key={eventIndex}
-                      className="event-dot"
-                      style={{ backgroundColor: event.color }}
-                    />
-                  ))}
-                  {dateObj.events.length > 3 && (
-                    <div className="event-dot more-events" title={`+${dateObj.events.length - 3} daha fazla randevu`}>
-                      +
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+          {calendarDays.map((dateObj, index) => {
+            // Virtualization: Sadece gerekli hesaplamaları yap
+            const isSelected = dateObj.day === selectedDate && dateObj.month === 'current';
+            const isTodayDate = isToday(dateObj.day, dateObj.month);
+            const hasEvents = dateObj.events.length > 0;
+            const visibleEvents = hasEvents ? dateObj.events.slice(0, 3) : [];
+            const extraEventsCount = dateObj.events.length > 3 ? dateObj.events.length - 3 : 0;
+            
+            return (
+              <div
+                key={`${dateObj.dateKey}-${index}`}
+                className={`calendar-day ${dateObj.month} ${
+                  isSelected ? 'selected' : ''
+                } ${isTodayDate ? 'today' : ''}`}
+                onClick={() => handleDateClick(dateObj.day, dateObj.month)}
+              >
+                <span className="day-number">{dateObj.day}</span>
+                {hasEvents && (
+                  <div className="event-dots">
+                    {visibleEvents.map((event, eventIndex) => (
+                      <div
+                        key={`${event.id || eventIndex}-${dateObj.dateKey}`}
+                        className="event-dot"
+                        style={{ backgroundColor: event.color }}
+                      />
+                    ))}
+                    {extraEventsCount > 0 && (
+                      <div className="event-dot more-events" title={`+${extraEventsCount} daha fazla randevu`}>
+                        +
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -456,7 +536,7 @@ const Calendar = ({
       <div className="today-section">
         <div className="today-header">
           <span>SEÇİLİ GÜN</span>
-          <span>{getSelectedDateFormatted()}</span>
+          <span>{selectedDateFormatted}</span>
         </div>
         <div className="today-events">
           <div 
@@ -466,30 +546,155 @@ const Calendar = ({
             {loading ? (
               <div className="loading-message">Randevular yükleniyor...</div>
             ) : selectedDayAppointments.length > 0 ? (
-              selectedDayAppointments.map((appointment) => (
-                <div key={appointment.id} className="today-event">
-                <div className="event-meta">
-                  <div 
-                    className="event-indicator" 
-                      style={{ backgroundColor: appointment.color || '#3B82F6' }}
-                  />
-                  <div className="event-time">
-                      {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
+              selectedDayAppointments.map((appointment) => {
+                // JSON verilerini parse et
+                let invitees = [];
+                let attendees = [];
+                let visibleToUsers = [];
+                
+                try {
+                  if (appointment.invitees && typeof appointment.invitees === 'string') {
+                    invitees = JSON.parse(appointment.invitees);
+                  } else if (Array.isArray(appointment.invitees)) {
+                    invitees = appointment.invitees;
+                  }
+                } catch (e) {
+                  console.warn('Invitees parse hatası:', e);
+                }
+                
+                try {
+                  if (appointment.attendees && typeof appointment.attendees === 'string') {
+                    attendees = JSON.parse(appointment.attendees);
+                  } else if (Array.isArray(appointment.attendees)) {
+                    attendees = appointment.attendees;
+                  }
+                } catch (e) {
+                  console.warn('Attendees parse hatası:', e);
+                }
+                
+                try {
+                  if (appointment.visible_to_users && typeof appointment.visible_to_users === 'string') {
+                    visibleToUsers = JSON.parse(appointment.visible_to_users);
+                  } else if (Array.isArray(appointment.visible_to_users)) {
+                    visibleToUsers = appointment.visible_to_users;
+                  }
+                } catch (e) {
+                  console.warn('Visible to users parse hatası:', e);
+                }
+
+                // Status çevirisi
+                const getStatusText = (status) => {
+                  switch (status) {
+                    case 'SCHEDULED': return 'Planlandı';
+                    case 'COMPLETED': return 'Tamamlandı';
+                    case 'CANCELLED': return 'İptal Edildi';
+                    case 'PENDING': return 'Beklemede';
+                    default: return status;
+                  }
+                };
+
+                const getStatusColor = (status) => {
+                  switch (status) {
+                    case 'SCHEDULED': return '#3B82F6';
+                    case 'COMPLETED': return '#10B981';
+                    case 'CANCELLED': return '#EF4444';
+                    case 'PENDING': return '#F59E0B';
+                    default: return '#6B7280';
+                  }
+                };
+
+                return (
+                  <div key={appointment.id} className="today-event">
+                    <div className="event-meta">
+                      <div 
+                        className="event-indicator" 
+                        style={{ backgroundColor: appointment.color || '#3B82F6' }}
+                      />
+                      <div className="event-time">
+                        {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
+                      </div>
+                      <div className="event-status" style={{ color: getStatusColor(appointment.status) }}>
+                        {getStatusText(appointment.status)}
+                      </div>
+                    </div>
+                    <div className="event-details">
+                      <div className="event-title">{appointment.title}</div>
+                      {appointment.description && (
+                        <div className="event-subtitle">{appointment.description}</div>
+                      )}
+                      {appointment.location && (
+                        <div className="event-location">
+                          <span>📍 Konum: </span>{appointment.location}
+                        </div>
+                      )}
+                      {appointment.created_by_name && (
+                        <div className="event-creator">
+                          <span>👤 Oluşturan: </span>{appointment.created_by_name}
+                          {appointment.created_by_email && (
+                            <span> ({appointment.created_by_email})</span>
+                          )}
+                        </div>
+                      )}
+                      {appointment.attendee_name && (
+                        <div className="event-attendee">
+                          <span>🎯 Katılımcı: </span>{appointment.attendee_name}
+                          {appointment.attendee_email && (
+                            <span> ({appointment.attendee_email})</span>
+                          )}
+                          {appointment.attendee_phone && (
+                            <span> - {appointment.attendee_phone}</span>
+                          )}
+                        </div>
+                      )}
+                      {invitees.length > 0 && (
+                        <div className="event-invitees">
+                          <span>📧 Davetliler: </span>
+                          {invitees.map((invitee, index) => (
+                            <span key={index}>
+                              {invitee.name} ({invitee.email})
+                              {index < invitees.length - 1 ? ', ' : ''}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {attendees.length > 0 && (
+                        <div className="event-attendees">
+                          <span>👥 Katılanlar: </span>
+                          {attendees.map((attendee, index) => (
+                            <span key={index}>
+                              {attendee.name || attendee.email}
+                              {index < attendees.length - 1 ? ', ' : ''}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {appointment.repeat_type && appointment.repeat_type !== 'TEKRARLANMAZ' && (
+                        <div className="event-repeat">
+                          <span>🔄 Tekrar: </span>{appointment.repeat_type}
+                        </div>
+                      )}
+                      {appointment.source && (
+                        <div className="event-source">
+                          <span>📱 Kaynak: </span>{appointment.source}
+                        </div>
+                      )}
+                      {(appointment.notification_email || appointment.notification_sms) && (
+                        <div className="event-notifications">
+                          <span>🔔 Bildirimler: </span>
+                          {appointment.notification_email && <span>Email </span>}
+                          {appointment.notification_sms && <span>SMS</span>}
+                        </div>
+                      )}
+                      {appointment.reminder_value && appointment.reminder_unit && (
+                        <div className="event-reminder">
+                          <span>⏰ Hatırlatma: </span>
+                          {appointment.reminder_value} {appointment.reminder_unit} önce
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="event-details">
-                    <div className="event-title">{appointment.title}</div>
-                    {appointment.description && (
-                      <div className="event-subtitle">{appointment.description}</div>
-                    )}
-                    {appointment.attendee_name && (
-                      <div className="event-attendee">
-                        <span>Katılımcı: </span>{appointment.attendee_name}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="no-events">
                 <p>Bu günde randevu bulunmuyor.</p>
@@ -520,6 +725,6 @@ const Calendar = ({
       </div>
     </div>
   );
-};
+});
 
 export default Calendar;

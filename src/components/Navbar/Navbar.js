@@ -238,7 +238,30 @@ const Navbar = ({ user, onLogout }) => {
     const required = menuPermissionMap[item.id];
     if (!required) return true;
     if (user?.role === 'admin' || user?.role === 'başkan' || user?.department === 'BAŞKAN') return true;
-    return Boolean(user?.permissions && user.permissions[required]);
+    
+    // Permissions array formatında geldiği için includes kullanıyoruz
+    if (user?.permissions) {
+      if (Array.isArray(user.permissions)) {
+        return user.permissions.includes(required);
+      } else if (typeof user.permissions === 'object') {
+        // Object formatında ise (eski format için uyumluluk)
+        return Boolean(user.permissions[required]);
+      } else if (typeof user.permissions === 'string') {
+        // String formatında ise JSON parse et
+        try {
+          const parsedPermissions = JSON.parse(user.permissions);
+          if (Array.isArray(parsedPermissions)) {
+            return parsedPermissions.includes(required);
+          } else if (typeof parsedPermissions === 'object') {
+            return Boolean(parsedPermissions[required]);
+          }
+        } catch (e) {
+          console.warn('Navbar: permissions parse edilemedi:', user.permissions);
+          return false;
+        }
+      }
+    }
+    return false;
   });
 
   const handleMenuClick = (menuId, path) => {

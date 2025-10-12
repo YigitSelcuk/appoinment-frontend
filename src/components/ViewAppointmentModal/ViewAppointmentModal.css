@@ -306,11 +306,21 @@
 
 .view-appointment-modal .modal-footer {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
   padding: 20px 28px;
   border-top: 1px solid #eef2f7;
   background: #f8fafc;
+}
+
+.view-appointment-modal .footer-left {
+  display: flex;
+  gap: 10px;
+}
+
+.view-appointment-modal .footer-right {
+  display: flex;
+  gap: 10px;
 }
 
 .view-appointment-modal .btn {
@@ -342,6 +352,18 @@
   background: #3C02AA;
   color: white;
   box-shadow: 0 6px 16px rgba(60, 2, 170, 0.28);
+}
+
+.view-appointment-modal .btn-danger {
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.28);
+}
+
+.view-appointment-modal .btn-danger:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.35);
 }
 
 .view-appointment-modal .btn-primary:hover {

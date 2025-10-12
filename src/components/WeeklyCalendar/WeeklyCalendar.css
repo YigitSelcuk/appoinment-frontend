@@ -492,8 +492,9 @@
 
 /* Google Calendar etkinlikleri için aylık görünüm stilleri */
 .month-appointment.google-event {
-  background: linear-gradient(135deg, rgba(var(--appointment-color-rgb, 66, 133, 244), 0.1) 0%, rgba(var(--appointment-color-rgb, 66, 133, 244), 0.05) 100%);
-  border: 1px solid var(--appointment-color, #2196F3);
+  background: rgba(66, 133, 244, 0.15);
+  backdrop-filter: blur(8px);
+  border: 2px solid var(--appointment-color, #2196F3);
   color: #1F2937;
 }
 
@@ -510,8 +511,9 @@
 
 /* Sistem randevuları için aylık görünüm stilleri */
 .month-appointment:not(.google-event) {
-  background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
-  border: 1px solid #9C27B0;
+  background: rgba(156, 39, 176, 0.15);
+  backdrop-filter: blur(8px);
+  border: 2px solid #9C27B0;
   color: #6A1B9A;
 }
 
@@ -1041,8 +1043,9 @@
 
 /* Google etkinlikleri için özel stil */
 .appointment-block.google-event {
-  border-left: 4px solid var(--appointment-color, #4285F4);
-  background: linear-gradient(135deg, rgba(var(--appointment-color-rgb, 66, 133, 244), 0.1) 0%, rgba(var(--appointment-color-rgb, 66, 133, 244), 0.05) 100%);
+  border: 2px solid var(--appointment-color, #4285F4);
+  background: rgba(66, 133, 244, 0.15);
+  backdrop-filter: blur(12px);
   position: relative;
 }
 
@@ -1067,8 +1070,9 @@
 
 /* Kendi sistemimizden gelen randevular için özel stil */
 .appointment-block:not(.google-event) {
-  border-left: 4px solid var(--appointment-color, #3C02AA);
-  background: linear-gradient(135deg, rgba(60, 2, 170, 0.1) 0%, rgba(60, 2, 170, 0.05) 100%);
+  border: 2px solid var(--appointment-color, #3C02AA);
+  background: rgba(60, 2, 170, 0.15);
+  backdrop-filter: blur(12px);
   position: relative;
 }
 
@@ -1099,4 +1103,83 @@
 
 .text-muted {
   color: #6B7280 !important;
+}
+
+/* React Big Calendar saat kutularının yüksekliğini ayarla */
+.rbc-time-slot {
+  min-height: 50px !important;
+  height: 50px !important;
+}
+
+.rbc-timeslot-group {
+  min-height: 50px !important;
+}
+
+.rbc-time-gutter .rbc-timeslot-group {
+  min-height: 50px !important;
+}
+
+.rbc-day-slot .rbc-time-slot {
+  height: 50px !important;
+  min-height: 50px !important;
+}
+
+/* Mobil cihazlarda daha küçük yükseklik */
+@media (max-width: 768px) {
+  .rbc-time-slot {
+    min-height: 40px !important;
+    height: 40px !important;
+  }
+  
+  .rbc-timeslot-group {
+    min-height: 40px !important;
+  }
+  
+  .rbc-time-gutter .rbc-timeslot-group {
+    min-height: 40px !important;
+  }
+  
+  .rbc-day-slot .rbc-time-slot {
+    height: 40px !important;
+    min-height: 40px !important;
+  }
+}
+
+/* React Big Calendar Event Kartları - Blur ve Border Efektleri */
+.rbc-event {
+  backdrop-filter: blur(10px) !important; /* Blur efekti */
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.2s ease !important;
+  border-width: 2px !important;
+  border-style: solid !important;
+}
+
+.rbc-event:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  opacity: 0.9 !important;
+}
+
+.rbc-event-content {
+  color: #1F2937 !important; /* Koyu metin rengi */
+  font-weight: 500 !important;
+  text-shadow: none !important;
+}
+
+.rbc-selected {
+  opacity: 0.8 !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Aylık görünümde event kartları */
+.rbc-month-view .rbc-event {
+  backdrop-filter: blur(8px) !important;
+  border-radius: 6px !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+.rbc-month-view .rbc-event:hover {
+  opacity: 0.9 !important;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Spinner } from 'react-bootstrap';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSimpleToast } from '../../contexts/SimpleToastContext';
@@ -9,16 +9,24 @@ const DeleteAppointmentModal = ({ isOpen, onClose, onConfirm, appointmentData })
   const { showError } = useSimpleToast();
   const [loading, setLoading] = useState(false);
   
+  // Modal kapatıldığında loading state'ini sıfırla
+  useEffect(() => {
+    if (!isOpen) {
+      setLoading(false);
+    }
+  }, [isOpen]);
+  
   if (!isOpen) return null;
 
   const handleConfirm = async () => {
     setLoading(true);
     try {
       await onConfirm(appointmentData?.id);
+      // Başarılı silme işleminden sonra modal otomatik kapanacak
+      // Loading state'i parent component tarafından reset edilecek
     } catch (error) {
       console.error('Error deleting appointment:', error);
-    } finally {
-      setLoading(false);
+      setLoading(false); // Sadece hata durumunda loading'i sıfırla
     }
   };
 

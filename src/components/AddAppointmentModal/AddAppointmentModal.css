@@ -1,3 +1,5 @@
+
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -14,8 +16,8 @@
 .add-appointment-modal {
   background: white;
   border-radius: 12px;
-  width: 95%;
-  max-width: 650px;
+  width: 100%;
+  max-width: 700px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -38,7 +40,7 @@
   justify-content: flex-start;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #e0e0e0;
+  border: none;
   background: #3C02AA;
   position: relative;
   border-top-left-radius: 12px;
@@ -78,27 +80,41 @@
 }
 
 .modal-form {
-  padding: 32px;
+  padding: 4px 32px 32px 32px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr !important;
   gap: 0px;
   align-items: end;
+}
+
+/* Tarih ve saat form satırı için özel kural */
+.add-appointment-modal .form-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap: 8px !important;
+  align-items: end !important;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .form-group.full-width {
   grid-column: 1 / -1;
+  margin-bottom: -10px;
+}
+
+/* Konum input'u için özel spacing */
+.form-group.location-input {
+  margin-bottom: -10px;
 }
 
 .form-group label {
@@ -106,7 +122,7 @@
   font-size: 12px;
   font-weight: 600;
   color: #666;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   text-transform: uppercase;
 }
 
@@ -165,8 +181,7 @@
   align-items: center;
   justify-content: flex-start;
   padding: 16px 0;
-  border-top: 1px solid #f0f0f0;
-  border-bottom: 1px solid #f0f0f0;
+  border: none;
 }
 
 .notification-toggles-row .toggle-group {
@@ -274,7 +289,7 @@
 .repeat-invite-row {
   display: flex;
   align-items: flex-start;
-  gap: 24px;
+  gap: 16px;
   padding: 16px 0;
   border-top: 1px solid #f0f0f0;
   border-bottom: 1px solid #f0f0f0;
@@ -283,7 +298,7 @@
 .repeat-invite-row .form-group {
   flex: 1;
   margin-bottom: 0;
-  max-width: 45%;
+  width: 50%;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -299,7 +314,7 @@
   flex-direction: column;
   flex: 1;
   gap: 12px;
-  max-width: 50%;
+  width: 50%;
 }
 
 .invite-header {
@@ -340,7 +355,6 @@
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  border-left: 1px solid #e0e0e0;
   width: 32px;
   height: 32px;
   display: flex;
@@ -362,7 +376,7 @@
   left: 0;
   right: 0;
   background: white;
-  border: 1px solid #e0e0e0;
+  border: none;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   max-height: 200px;
@@ -375,11 +389,11 @@
   padding: 12px 16px;
   cursor: pointer;
   transition: background-color 0.2s;
-  border-bottom: 1px solid #f0f0f0;
+  border: none;
 }
 
 .contact-option:last-child {
-  border-bottom: none;
+  border: none;
 }
 
 .contact-option:hover {
@@ -1001,28 +1015,29 @@
 
 .input-with-icon svg {
   position: absolute;
-  left: 12px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 1;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .input-with-icon input,
 .input-with-icon textarea {
-  padding-left: 44px;
+  padding-left: 48px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* New Contact Search Styles */
 .contact-search-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   position: relative;
+  width: 100%;
 }
 
 .contact-search-input-new {
-  flex: 1;
-  padding: 12px 16px;
+  width: 100%;
+  padding: 12px 50px 12px 16px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   font-size: 14px;
@@ -1038,6 +1053,10 @@
 }
 
 .add-contact-button-new {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   padding: 8px;
   background: #FF6B35;
   color: white;
@@ -1134,16 +1153,17 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 20px 0;
-  border-top: 1px solid #f0f0f0;
+  padding: 4px 0;
+  border: none;
 }
 
 /* Section Headers */
 .section-headers {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+  gap: 240px;
 }
 
 .notification-header,
@@ -1155,6 +1175,7 @@
   font-weight: 600;
   color: #FF6B35;
   text-transform: uppercase;
+  border: none;
 }
 
 /* Notification and Visibility Options */
@@ -1193,11 +1214,15 @@
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   color: #666;
   text-transform: uppercase;
   transition: color 0.2s;
+  height: 48px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
 }
 
 .notification-checkbox-label:hover {
@@ -1209,10 +1234,10 @@
 }
 
 .checkbox-custom {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border: 2px solid #e0e0e0;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1227,10 +1252,10 @@
 
 .notification-checkbox:checked + .checkbox-custom::after {
   content: '';
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708.708z'/%3e%3c/svg%3e");
-  background-size: 14px 14px;
+  background-size: 18px 18px;
   background-repeat: no-repeat;
   background-position: center;
 }
@@ -1331,7 +1356,7 @@
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: #666;
   text-transform: uppercase;
@@ -1343,10 +1368,10 @@
 }
 
 .visibility-checkbox-custom {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border: 2px solid #e0e0e0;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1361,10 +1386,10 @@
 
 .visibility-checkbox:checked + .visibility-checkbox-custom::after {
   content: '';
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708.708z'/%3e%3c/svg%3e");
-  background-size: 14px 14px;
+  background-size: 20px 20px;
   background-repeat: no-repeat;
   background-position: center;
 }
@@ -1930,8 +1955,15 @@
   }
   
   .form-row {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  
+  .add-appointment-modal .form-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 8px !important;
+    align-items: end !important;
   }
   
   .modal-header {
@@ -2245,6 +2277,7 @@
 .description-editor {
   background: white;
   overflow: hidden;
+  border: none !important;
 }
 
 .description-editor:focus-within {
@@ -2256,7 +2289,7 @@
   align-items: center;
   padding: 8px 12px;
   background: transparent;
-  border-bottom: none;
+  border: none !important;
 }
 
 .editor-title {
@@ -2304,7 +2337,7 @@
   gap: 2px;
   padding: 6px 12px;
   background: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: none;
 }
 
 .toolbar-btn {
@@ -2341,6 +2374,7 @@
 
 .editor-content {
   padding: 0;
+  border: none !important;
 }
 
 .editor-textarea {
@@ -2371,7 +2405,7 @@
 /* Live Preview Styles */
 .editor-preview {
   padding: 12px;
-  border-top: 1px solid #e0e0e0;
+  border-top: none;
   background: #f9f9f9;
   font-size: 13px;
   line-height: 1.4;

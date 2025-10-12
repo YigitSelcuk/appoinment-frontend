@@ -55,7 +55,32 @@ const ProtectedRoute = ({ children, requiredPermission, requireAdmin = false }) 
 
   // Sayfa-bazlı izin kontrolü (admin, başkan rolü ve BAŞKAN department her zaman geçer)
   if (requiredPermission && user?.role !== 'admin' && user?.role !== 'başkan' && user?.department !== 'BAŞKAN') {
-    const hasPermission = Boolean(user?.permissions && user.permissions[requiredPermission]);
+    // Permissions array formatında geldiği için includes kullanıyoruz
+    let hasPermission = false;
+    
+    if (user?.permissions) {
+      if (Array.isArray(user.permissions)) {
+        // Array formatında ise
+        hasPermission = user.permissions.includes(requiredPermission);
+      } else if (typeof user.permissions === 'object') {
+        // Object formatında ise (eski format için uyumluluk)
+        hasPermission = Boolean(user.permissions[requiredPermission]);
+      } else if (typeof user.permissions === 'string') {
+        // String formatında ise JSON parse et
+        try {
+          const parsedPermissions = JSON.parse(user.permissions);
+          if (Array.isArray(parsedPermissions)) {
+            hasPermission = parsedPermissions.includes(requiredPermission);
+          } else if (typeof parsedPermissions === 'object') {
+            hasPermission = Boolean(parsedPermissions[requiredPermission]);
+          }
+        } catch (e) {
+          console.warn('ProtectedRoute: permissions parse edilemedi:', user.permissions);
+          hasPermission = false;
+        }
+      }
+    }
+    
     if (!hasPermission) {
       return <Navigate to="/dashboard" replace />;
     }

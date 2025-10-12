@@ -95,13 +95,10 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
         setUsers(usersData);
         setFilteredUsers(usersData);
         if (usersData.length > 0) {
-          showSuccess('Kullanıcılar başarıyla yüklendi');
         } else {
-          showWarning('Kullanıcı listesi boş');
         }
       } catch (error) {
         console.error('Kullanıcıları yüklerken hata:', error);
-        showError('Kullanıcılar yüklenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
       } finally {
         setLoadingUsers(false);
       }
@@ -133,17 +130,14 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
           }));
           setContacts(formattedContacts);
           setFilteredContacts(formattedContacts);
-          showSuccess('Kişiler başarıyla yüklendi');
         } else {
           setContacts([]);
           setFilteredContacts([]);
-          showWarning('Kişi listesi boş');
         }
       } catch (error) {
         // Hata durumunda boş array set et
         setContacts([]);
         setFilteredContacts([]);
-        showError('Kişiler yüklenirken hata oluştu: ' + error.message);
       }
     };
 
@@ -285,12 +279,10 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
 
   const handleOpenAddContactModal = () => {
     setShowAddContactModal(true);
-    showInfo('Yeni kişi ekleme formu açılıyor...');
   };
 
   const handleCloseAddContactModal = () => {
     setShowAddContactModal(false);
-    showInfo('Kişi ekleme formu kapatıldı');
   };
 
   const handleContactAdded = (newContact) => {
@@ -534,10 +526,19 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: newValue
-    }));
+    // Tüm gün seçeneği işaretlendiğinde bitiş saatini 23:59 yap
+    if (name === 'isAllDay' && newValue === true) {
+      setFormData(prev => ({
+        ...prev,
+        [name]: newValue,
+        endTime: '23:59'
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: newValue
+      }));
+    }
 
     // Geçmiş tarih/saat kontrolü ve çakışma kontrolü
     if (['date', 'startTime', 'endTime'].includes(name)) {
@@ -630,6 +631,7 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
       const response = await getInviteePreviousAppointments(accessToken, {
         inviteeEmails,
         currentDate: formData.date || new Date().toISOString().split('T')[0],
+        currentTime: formData.startTime || new Date().toTimeString().split(' ')[0].substring(0, 5),
         page,
         limit: 5
       });
@@ -778,13 +780,19 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
       // Google Calendar'a da ekle (eğer kullanıcı giriş yapmışsa)
       let googleEventId = null;
       try {
+        console.log('🚀 AddAppointmentModal: Google Calendar entegrasyonu başlatılıyor...');
+        
         // Önce Google Calendar servisinin başlatılıp başlatılmadığını kontrol et
         if (!googleCalendarService.isInitialized) {
           console.log('🔄 Google Calendar: Servis başlatılıyor...');
-          await googleCalendarService.init();
+          const initResult = await googleCalendarService.init();
+          console.log('🔄 Google Calendar: Init sonucu:', initResult);
         }
         
-        if (googleCalendarService.isSignedIn()) {
+        const isSignedIn = googleCalendarService.isSignedIn();
+        console.log('🔐 AddAppointmentModal: Google Calendar giriş durumu:', isSignedIn);
+        
+        if (isSignedIn) {
           console.log('📅 Google Calendar: Randevu ekleniyor...');
           const googleEventData = {
             title: formData.title,
@@ -795,15 +803,42 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
             location: formData.location || ''
           };
           
+          console.log('📋 AddAppointmentModal: Google Calendar event verisi:', googleEventData);
+          
           const googleEvent = await googleCalendarService.createEvent(googleEventData);
-          googleEventId = googleEvent.id;
-          console.log('✅ Google Calendar: Randevu başarıyla eklendi:', googleEvent);
+          
+          if (googleEvent && googleEvent.id) {
+            googleEventId = googleEvent.id;
+            console.log('✅ AddAppointmentModal: Google Calendar randevu başarıyla eklendi:', {
+              id: googleEvent.id,
+              summary: googleEvent.summary,
+              htmlLink: googleEvent.htmlLink
+            });
+          } else {
+            console.error('❌ AddAppointmentModal: Google Calendar yanıtında ID bulunamadı:', googleEvent);
+          }
         } else {
-          console.log('ℹ️ Google Calendar: Kullanıcı giriş yapmamış, randevu sadece yerel veritabanına kaydedilecek');
+          console.log('ℹ️ AddAppointmentModal: Google Calendar kullanıcı giriş yapmamış, randevu sadece yerel veritabanına kaydedilecek');
         }
       } catch (googleError) {
-        console.error('❌ Google Calendar: Randevu eklenirken hata:', googleError);
+        console.error('❌ AddAppointmentModal: Google Calendar randevu eklenirken HATA:', {
+          message: googleError.message,
+          status: googleError.status,
+          details: googleError.details,
+          stack: googleError.stack
+        });
+        
+        // Hata türüne göre kullanıcıya bilgi ver
+        if (googleError.status === 401) {
+          console.warn('⚠️ AddAppointmentModal: Google Calendar yetkilendirme hatası - Kullanıcının tekrar giriş yapması gerekebilir');
+        } else if (googleError.status === 403) {
+          console.warn('⚠️ AddAppointmentModal: Google Calendar erişim hatası - Calendar API izni eksik');
+        } else if (googleError.status === 400) {
+          console.warn('⚠️ AddAppointmentModal: Google Calendar veri hatası - Event verisi geçersiz');
+        }
+        
         // Google Calendar hatası randevu oluşturmayı engellemez
+        console.log('ℹ️ AddAppointmentModal: Google Calendar hatası olmasına rağmen randevu yerel veritabanına kaydedilecek');
       }
       
       // Google Event ID'yi appointment data'ya ekle
@@ -853,7 +888,6 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
     setSelectedContacts([]);
     setSearchTerm('');
     setUserSearchTerm('');
-    showInfo('Randevu formu temizlendi');
     onClose();
   };
 
@@ -890,8 +924,10 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
           {/* Tarih ve Saat */}
           <div className="form-row">
             <div className="form-group">
+              <label htmlFor="date">Tarih *</label>
               <input
                 type="date"
+                id="date"
                 name="date"
                 value={formData.date}
                 onChange={handleInputChange}
@@ -900,8 +936,10 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
               {errors.date && <span className="error-message">{errors.date}</span>}
             </div>
             <div className="form-group">
+              <label htmlFor="startTime">Başlangıç Saati *</label>
               <input
                 type="time"
+                id="startTime"
                 name="startTime"
                 value={formData.startTime}
                 onChange={handleInputChange}
@@ -911,17 +949,10 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
               {errors.startTime && <span className="error-message">{errors.startTime}</span>}
             </div>
             <div className="form-group">
-              <input
-                type="date"
-                name="endDate"
-                value={formData.date}
-                onChange={handleInputChange}
-                className={errors.date ? 'error' : ''}
-              />
-            </div>
-            <div className="form-group">
+              <label htmlFor="endTime">Bitiş Saati *</label>
               <input
                 type="time"
+                id="endTime"
                 name="endTime"
                 value={formData.endTime}
                 onChange={handleInputChange}
@@ -962,7 +993,6 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
                 onChange={handleInputChange}
               >
                 <option value="TEKRARLANMAZ">TEKRARLANMAZ</option>
-                <option value="GÜNLÜK">GÜNLÜK</option>
                 <option value="HAFTALIK">HAFTALIK</option>
                 <option value="AYLIK">AYLIK</option>
               </select>
@@ -1265,12 +1295,8 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
 
 
           {/* Konum */}
-          <div className="form-group">
+          <div className="form-group location-input">
             <div className="input-with-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke="#666" strokeWidth="2"/>
-                <circle cx="12" cy="10" r="3" stroke="#666" strokeWidth="2"/>
-              </svg>
               <input
                 type="text"
                 name="location"

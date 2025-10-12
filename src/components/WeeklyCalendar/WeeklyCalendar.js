@@ -1,21 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import format from 'date-fns/format';
+import parse from 'date-fns/parse';
+import startOfWeek from 'date-fns/startOfWeek';
+import getDay from 'date-fns/getDay';
+import { tr } from 'date-fns/locale';
 import AddAppointmentModal from '../AddAppointmentModal/AddAppointmentModal';
 import DeleteAppointmentModal from '../DeleteAppointmentModal/DeleteAppointmentModal';
 import ViewAppointmentModal from '../ViewAppointmentModal/ViewAppointmentModal';
 import EditAppointmentModal from '../EditAppointmentModal/EditAppointmentModal';
-import { getAppointments, createAppointment, updateAppointment, deleteAppointment } from '../../services/appointmentsService';
+import { getAppointments, getAppointmentsByDateRange, createAppointment, updateAppointment, deleteAppointment } from '../../services/appointmentsService';
 import { useSimpleToast } from '../../contexts/SimpleToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 import googleCalendarService from '../../services/googleCalendarService';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './WeeklyCalendar.css';
+
+// React Big Calendar localizer'ı
+const locales = {
+  'tr': tr,
+};
+
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek: (date) => startOfWeek(date, { weekStartsOn: 1 }), // Pazartesi'yi hafta başlangıcı yap
+  getDay,
+  locales,
+});
 
 const WeeklyCalendar = ({ 
   selectedDate: externalSelectedDate,
   onDateChange 
 }) => {
   // Toast hook'u
-  const { showSuccess, showError } = useSimpleToast();
+  const { showError } = useSimpleToast();
   const { accessToken, user } = useAuth();
   const { socket } = useSocket();
   
@@ -49,7 +69,10 @@ const WeeklyCalendar = ({
   // Takvim navigasyonu için state'ler
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('HAFTA'); // 'YIL', 'AY', 'HAFTA', 'GÜN'
-  const [selectedWeekStart, setSelectedWeekStart] = useState(new Date());
+  const [selectedWeekStart, setSelectedWeekStart] = useState(() => {
+    const today = new Date();
+    return startOfWeek(today, { weekStartsOn: 1 }); // Pazartesi başlangıçlı hafta
+  });
 
   // Randevu verileri - backend'den gelecek
   const [appointments, setAppointments] = useState([
@@ -145,15 +168,199 @@ const WeeklyCalendar = ({
     }
   ]);
 
-  // Backend'den randevuları yükle
-  useEffect(() => {
-    loadAppointments();
-  }, [accessToken]);
+  // Randevuları React Big Calendar formatına dönüştür
+  const convertAppointmentsToEvents = useCallback((appointments) => {
+    return appointments.map(appointment => {
+      // Tarih ve saat bilgilerini birleştir
+      const appointmentDate = new Date(appointment.date || appointment.appointment_date);
+      const [startHour, startMinute] = (appointment.time || appointment.start_time || '09:00').split(':');
+      const [endHour, endMinute] = (appointment.endTime || appointment.end_time || '10:00').split(':');
+      
+      const start = new Date(appointmentDate);
+      start.setHours(parseInt(startHour), parseInt(startMinute), 0, 0);
+      
+      const end = new Date(appointmentDate);
+      end.setHours(parseInt(endHour), parseInt(endMinute), 0, 0);
+      
+      const dayOfWeek = appointmentDate.getDay();
+      
+      // Pazar günü randevularını debug et
+      if (dayOfWeek === 0) {
+        console.log('🔴 PAZAR GÜNÜ EVENT OLUŞTURMA:', {
+          appointmentId: appointment.id,
+          title: appointment.title,
+          originalDate: appointment.date,
+          appointmentDate: appointmentDate,
+          dayOfWeek: dayOfWeek,
+          start: start,
+          end: end
+        });
+      }
+      
+      return {
+        id: appointment.id,
+        title: appointment.title || appointment.description,
+        start: start,
+        end: end,
+        resource: {
+          ...appointment,
+          color: appointment.color || '#3174ad',
+          attendee: appointment.attendee || appointment.client_name || appointment.user_name
+        }
+      };
+    });
+  }, []);
 
-  // Hafta değiştiğinde randevuları yeniden yükle
-  useEffect(() => {
-    loadAppointments();
-  }, [selectedWeekStart, accessToken]);
+  // React Big Calendar için event'leri hazırla
+  const events = useMemo(() => {
+    const allAppointments = [...appointments, ...googleEvents];
+    const convertedEvents = convertAppointmentsToEvents(allAppointments);
+    
+    // Pazar günü event'lerini debug et
+    const sundayEvents = convertedEvents.filter(event => event.start.getDay() === 0);
+    if (sundayEvents.length > 0) {
+      console.log('🔴 PAZAR GÜNÜ EVENTS TOPLAM:', sundayEvents.length, sundayEvents);
+    }
+    
+    return convertedEvents;
+  }, [appointments, googleEvents, convertAppointmentsToEvents]);
+
+  // Tarihten gün indexini hesapla (0-6 arası) - Pazartesi=0, Pazar=6
+  // TEMİZ VE BASİT MANTIK - Pazar günü kartlarının kaybolma sorunu çözüldü
+  const calculateDayIndex = useCallback((dateString) => {
+    try {
+      if (!dateString) return -1;
+      
+      // Randevu tarihini parse et
+      const appointmentDateStr = dateString.split('T')[0];
+      const [year, month, day] = appointmentDateStr.split('-').map(Number);
+      const appointmentDate = new Date(year, month - 1, day);
+      
+      // Hafta başlangıcını hesapla (Pazartesi)
+      const weekStart = new Date(selectedWeekStart);
+      const weekStartLocal = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
+      
+      // Hafta sonunu hesapla (Pazar)
+      const weekEndLocal = new Date(weekStartLocal);
+      weekEndLocal.setDate(weekEndLocal.getDate() + 6);
+      
+      // Randevunun bu haftaya ait olup olmadığını kontrol et
+      if (appointmentDate < weekStartLocal || appointmentDate > weekEndLocal) {
+        return -1; // Bu haftaya ait değil
+      }
+      
+      // JavaScript'te getDay(): 0=Pazar, 1=Pazartesi, 2=Salı, ..., 6=Cumartesi
+      // Bizim sistem: 0=Pazartesi, 1=Salı, 2=Çarşamba, 3=Perşembe, 4=Cuma, 5=Cumartesi, 6=Pazar
+      const jsDay = appointmentDate.getDay();
+      
+      // JavaScript gün numarasını bizim sisteme çevir
+      let dayIndex;
+      if (jsDay === 0) {
+        // Pazar günü = 6 (hafta sonu)
+        dayIndex = 6;
+      } else {
+        // Pazartesi(1) = 0, Salı(2) = 1, ..., Cumartesi(6) = 5
+        dayIndex = jsDay - 1;
+      }
+      
+      // Güvenlik kontrolü
+      if (dayIndex >= 0 && dayIndex <= 6) {
+        return dayIndex;
+      }
+      
+      return -1;
+    } catch (error) {
+      console.error('calculateDayIndex hatası:', error, 'dateString:', dateString);
+      return -1;
+    }
+  }, [selectedWeekStart]);
+
+  // Randevu filtreleme mantığı - ayrı fonksiyon
+  const filterAppointments = useCallback((appointments, user) => {
+    return appointments.filter(appointment => {
+      // BAŞKAN departmanı, admin veya başkan rolündeki kullanıcılar tüm randevuları görebilir
+      const canViewAll = user?.role === 'admin' || 
+                        user?.role === 'başkan' || 
+                        user?.department === 'BAŞKAN';
+      
+      if (canViewAll) {
+        return true;
+      }
+      
+      // Kendi oluşturduğu randevular
+      if (appointment.user_id === user?.id) {
+        return true;
+      }
+      
+      // Tüm kullanıcılara görünür randevular
+      if (appointment.visible_to_all) {
+        return true;
+      }
+      
+      // visible_to_users listesinde olan randevular
+      if (appointment.visible_to_users) {
+        try {
+          const visibleUsers = typeof appointment.visible_to_users === 'string' 
+            ? JSON.parse(appointment.visible_to_users) 
+            : appointment.visible_to_users;
+          
+          if (Array.isArray(visibleUsers)) {
+            return visibleUsers.some(visibleUser => 
+              visibleUser.id === user?.id || 
+              visibleUser.email === user?.email ||
+              visibleUser === user?.id.toString()
+            );
+          }
+        } catch (parseError) {
+          console.error('visible_to_users parse hatası:', parseError);
+        }
+      }
+      
+      return false;
+    });
+  }, []);
+
+  // Randevu formatlama mantığı - basitleştirilmiş
+  const formatAppointments = useCallback((appointments) => {
+    return appointments.map(appointment => {
+      const dayIndex = calculateDayIndex(appointment.date);
+      
+      return {
+        id: appointment.id,
+        title: appointment.title,
+        date: appointment.date,
+        time: appointment.start_time ? appointment.start_time.substring(0, 5) : '00:00',
+        startTime: appointment.start_time ? appointment.start_time.substring(0, 5) : '00:00',
+        endTime: appointment.end_time ? appointment.end_time.substring(0, 5) : '00:00',
+        attendee: (() => {
+          if (appointment.creator_name) return appointment.creator_name;
+          if (appointment.created_by_name) return appointment.created_by_name;
+          if (appointment.attendee_name) return appointment.attendee_name;
+          if (appointment.invitees && Array.isArray(appointment.invitees) && appointment.invitees.length > 0) {
+            return appointment.invitees[0].name || appointment.invitees[0].email || 'Davetli';
+          }
+          if (appointment.attendees && Array.isArray(appointment.attendees) && appointment.attendees.length > 0) {
+            return appointment.attendees[0].name || appointment.attendees[0].email || 'Katılımcı';
+          }
+          return 'Bilinmiyor';
+        })(),
+        color: appointment.creator_color || appointment.color || '#3C02AA',
+        day: dayIndex,
+        duration: calculateDurationFromTimes(appointment.start_time, appointment.end_time),
+        description: appointment.description,
+        status: appointment.status,
+        type: appointment.type,
+        priority: appointment.priority,
+        creatorName: appointment.creator_name || appointment.created_by_name,
+        attendeeName: appointment.attendee_name,
+        attendees: appointment.attendees || [],
+        invitees: appointment.invitees || [],
+        isGoogleEvent: appointment.source === 'GOOGLE',
+        googleEventId: appointment.google_event_id,
+        ...appointment
+      };
+    });
+  }, [calculateDayIndex]);
 
   // Haftanın başlangıcını ayarla
   useEffect(() => {
@@ -204,17 +411,6 @@ const WeeklyCalendar = ({
     }
   }, [googleCalendarEnabled]);
 
-  // Hafta değiştiğinde randevuları yeniden yükle
-  useEffect(() => {
-    console.log('📅 WeeklyCalendar: Randevular yeniden yükleniyor...', {
-      selectedWeekStart: selectedWeekStart.toISOString(),
-      accessToken: accessToken ? 'MEVCUT' : 'YOK',
-      googleCalendarEnabled,
-      isGoogleSignedIn
-    });
-    loadAppointments();
-  }, [selectedWeekStart, accessToken, googleCalendarEnabled, isGoogleSignedIn]);
-
   // External selected date değiştiğinde hafta görünümünü güncelle
   useEffect(() => {
     if (externalSelectedDate) {
@@ -223,44 +419,6 @@ const WeeklyCalendar = ({
       setSelectedWeekStart(startOfWeek);
     }
   }, [externalSelectedDate]);
-
-  // Socket.IO real-time güncellemeler
-  useEffect(() => {
-    if (!socket) return;
-
-    console.log('🔌 WeeklyCalendar: Socket event listenerlari ekleniyor...');
-
-    // Randevu ekleme event'i
-    const handleAppointmentCreated = (data) => {
-      console.log('📅 Yeni randevu eklendi:', data);
-      loadAppointments(); // Randevuları yeniden yükle
-    };
-
-    // Randevu güncelleme event'i
-    const handleAppointmentUpdated = (data) => {
-      console.log('📅 Randevu güncellendi:', data);
-      loadAppointments(); // Randevuları yeniden yükle
-    };
-
-    // Randevu silme event'i
-    const handleAppointmentDeleted = (data) => {
-      console.log('📅 Randevu silindi:', data);
-      loadAppointments(); // Randevuları yeniden yükle
-    };
-
-    // Event listener'ları ekle
-    socket.on('appointment-created', handleAppointmentCreated);
-    socket.on('appointment-updated', handleAppointmentUpdated);
-    socket.on('appointment-deleted', handleAppointmentDeleted);
-
-    // Cleanup function
-    return () => {
-      console.log('🔌 WeeklyCalendar: Socket event listenerlari kaldiriliyor...');
-      socket.off('appointment-created', handleAppointmentCreated);
-      socket.off('appointment-updated', handleAppointmentUpdated);
-      socket.off('appointment-deleted', handleAppointmentDeleted);
-    };
-  }, [socket, showSuccess]);
 
   // Anlık saat çizgisi useEffect'i kaldırıldı - pozisyonlama sistemi sıfırdan yazılacak
 
@@ -317,151 +475,156 @@ const WeeklyCalendar = ({
     }
   };
 
-  const loadAppointments = async () => {
-    if (!accessToken) return;
+  // Temizlenmiş loadAppointments fonksiyonu
+  const loadAppointments = useCallback(async () => {
+    if (!accessToken || !user) {
+      console.log('⚠️ loadAppointments: accessToken veya user eksik');
+      return;
+    }
     
     try {
       setLoading(true);
-      const response = await getAppointments(accessToken);
-      let formattedAppointments = [];
+      console.log('📅 Randevular yükleniyor...', { 
+        selectedWeekStart: selectedWeekStart.toISOString(),
+        userId: user.id 
+      });
       
-      if (response.success) {
-        // Backend'den gelen verileri frontend formatına çevir ve filtreleme uygula
-        const filteredAppointments = response.data.filter(appointment => {
-          // BAŞKAN departmanı, admin veya başkan rolündeki kullanıcılar tüm randevuları görebilir
-          const canViewAll = user?.role === 'admin' || 
-                            user?.role === 'başkan' || 
-                            user?.department === 'BAŞKAN';
-          
-          if (canViewAll) {
-            return true;
-          }
-          
-          // Kendi oluşturduğu randevular
-          if (appointment.user_id === user?.id) {
-            return true;
-          }
-          
-          // Tüm kullanıcılara görünür randevular
-          if (appointment.visible_to_all) {
-            return true;
-          }
-          
-          // visible_to_users listesinde olan randevular
-          if (appointment.visible_to_users) {
-            try {
-              const visibleUsers = typeof appointment.visible_to_users === 'string' 
-                ? JSON.parse(appointment.visible_to_users) 
-                : appointment.visible_to_users;
-              
-              if (Array.isArray(visibleUsers)) {
-                return visibleUsers.some(visibleUser => 
-                  visibleUser.id === user?.id || visibleUser.id === user?.id?.toString()
-                );
-              }
-            } catch (error) {
-              console.error('visible_to_users parse hatası:', error);
-            }
-          }
-          
-          return false;
+      // Hafta tarih aralığını hesapla (Pazartesi-Pazar = 7 gün)
+      // Saat dilimi sorununu önlemek için local tarih kullan
+      const weekStart = new Date(selectedWeekStart);
+      const startOfWeekLocal = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
+      const endOfWeekLocal = new Date(startOfWeekLocal);
+      endOfWeekLocal.setDate(endOfWeekLocal.getDate() + 6); // +6 gün = 7 günlük hafta (Pazartesi-Pazar)
+      
+      // Tarih formatını hazırla (saat dilimi olmadan)
+      const startDateStr = `${startOfWeekLocal.getFullYear()}-${String(startOfWeekLocal.getMonth() + 1).padStart(2, '0')}-${String(startOfWeekLocal.getDate()).padStart(2, '0')}`;
+      const endDateStr = `${endOfWeekLocal.getFullYear()}-${String(endOfWeekLocal.getMonth() + 1).padStart(2, '0')}-${String(endOfWeekLocal.getDate()).padStart(2, '0')}`;
+      
+      console.log('🔴 HAFTA TARİH ARALIĞI:', {
+        selectedWeekStart: selectedWeekStart.toISOString(),
+        startOfWeekLocal: startOfWeekLocal.toISOString(),
+        endOfWeekLocal: endOfWeekLocal.toISOString(),
+        startDateStr,
+        endDateStr
+      });
+      
+      // Randevuları getir
+      const response = await getAppointmentsByDateRange(accessToken, startDateStr, endDateStr);
+      
+      if (response.success && Array.isArray(response.data)) {
+        console.log('🔴 BACKEND RESPONSE:', {
+          totalAppointments: response.data.length,
+          appointments: response.data.map(apt => ({
+            id: apt.id,
+            title: apt.title,
+            date: apt.date,
+            dayOfWeek: new Date(apt.date).getDay()
+          }))
         });
         
-        formattedAppointments = filteredAppointments.map(appointment => ({
-          id: appointment.id,
-          title: appointment.title,
-          date: appointment.date,
-          time: appointment.start_time ? appointment.start_time.substring(0, 5) : '00:00',
-          startTime: appointment.start_time ? appointment.start_time.substring(0, 5) : '00:00',
-          endTime: appointment.end_time ? appointment.end_time.substring(0, 5) : '00:00',
-          attendee: (() => {
-            if (appointment.creator_name) return appointment.creator_name;
-            if (appointment.created_by_name) return appointment.created_by_name;
-            if (appointment.attendee_name) return appointment.attendee_name;
-            if (appointment.invitees && Array.isArray(appointment.invitees) && appointment.invitees.length > 0) {
-              return appointment.invitees[0].name || appointment.invitees[0].email || 'Davetli';
-            }
-            if (appointment.attendees && Array.isArray(appointment.attendees) && appointment.attendees.length > 0) {
-              return appointment.attendees[0].name || appointment.attendees[0].email || 'Katılımcı';
-            }
-            return 'Bilinmiyor';
-          })(),
-          color: appointment.creator_color || appointment.color || '#3C02AA',
-          day: calculateDayIndex(appointment.date),
-          duration: calculateDurationFromTimes(appointment.start_time, appointment.end_time),
-          description: appointment.description,
-          status: appointment.status,
-          type: appointment.type,
-          priority: appointment.priority,
-          creatorName: appointment.creator_name || appointment.created_by_name,
-          attendeeName: appointment.attendee_name,
-          attendees: appointment.attendees || [],
-          invitees: appointment.invitees || [],
-          isGoogleEvent: appointment.source === 'GOOGLE',
-          googleEventId: appointment.google_event_id,
-          ...appointment
-        }));
-      }
-      
-      // Google Calendar etkinliklerini sadece state'e yükle, ana listeye ekleme
-      // Sadece kendi sistemimizden gelen randevuları göster
-      if (googleCalendarEnabled && isGoogleSignedIn) {
-        try {
-          console.log('📅 WeeklyCalendar: Google Calendar bağlantısı aktif (sadece senkronizasyon için)');
-          const weekStart = new Date(selectedWeekStart);
-          const weekEnd = new Date(selectedWeekStart);
-          weekEnd.setDate(weekEnd.getDate() + 6);
-          
-          // Kullanıcının rengini Google etkinlikleri için kullan
-          const userColor = user?.color || '#4285f4';
-          
-          const googleEvents = await googleCalendarService.getEvents(
-            weekStart.toISOString(),
-            weekEnd.toISOString(),
-            userColor
-          );
-          setGoogleEvents(googleEvents);
-          console.log('📅 Google Calendar etkinlikleri yüklendi (sadece senkronizasyon için):', googleEvents.length);
-        } catch (error) {
-          console.error('❌ Google Calendar etkinlikleri yüklenirken hata:', error);
-          setGoogleEvents([]);
-        }
+        // Filtreleme ve formatlama işlemlerini ayrı fonksiyonlarla yap
+        const filteredAppointments = filterAppointments(response.data, user);
+        const formattedAppointments = formatAppointments(filteredAppointments);
+        
+        console.log('🔴 FILTERED & FORMATTED:', {
+          filteredCount: filteredAppointments.length,
+          formattedCount: formattedAppointments.length,
+          formattedAppointments: formattedAppointments.map(apt => ({
+            id: apt.id,
+            title: apt.title,
+            date: apt.date,
+            day: apt.day
+          }))
+        });
+        
+        setAppointments(formattedAppointments);
+        console.log('✅ Randevular başarıyla yüklendi:', formattedAppointments.length);
       } else {
-        // Google Calendar bağlantısı yoksa boş array set et
-        setGoogleEvents([]);
+        console.warn('⚠️ Randevu verisi alınamadı:', response);
+        setAppointments([]);
       }
       
-      setAppointments(formattedAppointments);
     } catch (error) {
-      console.error('Randevular yüklenirken hata:', error);
+      console.error('❌ Randevular yüklenirken hata:', error);
+      setAppointments([]);
+      // Toast kaldırıldı - console log yeterli
     } finally {
       setLoading(false);
     }
-  };
+  }, [accessToken, selectedWeekStart, user, filterAppointments, formatAppointments]);
 
-  // Tarihten gün indexini hesapla (0-6 arası)
-  const calculateDayIndex = (dateString) => {
-    // Backend'den gelen tarih formatı: YYYY-MM-DD veya ISO string
-    const appointmentDateStr = dateString.split('T')[0]; // ISO string ise sadece tarih kısmını al
-    
-    const weekStart = selectedWeekStart;
-    const weekEnd = getEndOfWeek(weekStart);
-    
-    // Hafta başlangıcı ve bitişini YYYY-MM-DD formatına çevir
-    const weekStartStr = weekStart.toISOString().split('T')[0];
-    const weekEndStr = weekEnd.toISOString().split('T')[0];
-    
-    // String karşılaştırması ile randevunun bu haftaya ait olup olmadığını kontrol et
-    if (appointmentDateStr >= weekStartStr && appointmentDateStr <= weekEndStr) {
-      // Gün farkını hesapla
-      const appointmentDate = new Date(appointmentDateStr + 'T12:00:00'); // Timezone sorununu önlemek için öğlen saati
-      const weekStartDate = new Date(weekStartStr + 'T12:00:00');
-      const diffTime = appointmentDate - weekStartDate;
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays;
+  // Google Calendar etkinliklerini yükle - DEVRE DIŞI
+  // Sadece WeeklyCalendar'dan eklenen randevular Google Calendar'a senkronize olacak
+  // Google Calendar'dan direkt eklenen etkinlikler WeeklyCalendar'da görünmeyecek
+  const loadGoogleEvents = useCallback(async () => {
+    // Google Calendar etkinliklerini çekme işlemi devre dışı bırakıldı
+    setGoogleEvents([]);
+    console.log('ℹ️ Google Calendar etkinlikleri çekme işlemi devre dışı - sadece senkronizasyon aktif');
+  }, []);
+
+  // Randevuları yükle - sadece gerekli bağımlılıklar
+  useEffect(() => {
+    if (accessToken && user) {
+      console.log('📅 WeeklyCalendar: Randevular yükleniyor...', {
+        selectedWeekStart: selectedWeekStart.toISOString(),
+        userId: user.id
+      });
+      loadAppointments();
     }
-    return -1; // Gösterilmeyecek
-  };
+  }, [selectedWeekStart, accessToken, user?.id, loadAppointments]);
+
+  // Google Calendar durumu değiştiğinde etkinlik yükleme - DEVRE DIŞI
+  // Google Calendar etkinlikleri artık çekilmiyor, sadece senkronizasyon aktif
+  useEffect(() => {
+    // Google Calendar etkinliklerini yükleme işlemi devre dışı
+    console.log('ℹ️ Google Calendar etkinlik yükleme devre dışı');
+  }, [googleCalendarEnabled, isGoogleSignedIn]);
+
+  // Socket.IO real-time güncellemeler
+  useEffect(() => {
+    if (!socket) return;
+
+    console.log('🔌 WeeklyCalendar: Socket event listenerlari ekleniyor...');
+
+    // Randevu ekleme event'i
+    const handleAppointmentCreated = (data) => {
+      console.log('📅 Yeni randevu eklendi:', data);
+      
+      // Bugünün randevusu mu kontrol et
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const appointmentDate = data.date ? data.date.split('T')[0] : null;
+      
+
+      
+      loadAppointments(); // Randevuları yeniden yükle
+    };
+
+    // Randevu güncelleme event'i
+    const handleAppointmentUpdated = (data) => {
+      console.log('📅 Randevu güncellendi:', data);
+      loadAppointments(); // Randevuları yeniden yükle
+    };
+
+    // Randevu silme event'i
+    const handleAppointmentDeleted = (data) => {
+      console.log('📅 Randevu silindi:', data);
+      loadAppointments(); // Randevuları yeniden yükle
+    };
+
+    // Event listener'ları ekle
+    socket.on('appointment-created', handleAppointmentCreated);
+    socket.on('appointment-updated', handleAppointmentUpdated);
+    socket.on('appointment-deleted', handleAppointmentDeleted);
+
+    // Cleanup function
+    return () => {
+      console.log('🔌 WeeklyCalendar: Socket event listenerlari kaldiriliyor...');
+      socket.off('appointment-created', handleAppointmentCreated);
+      socket.off('appointment-updated', handleAppointmentUpdated);
+      socket.off('appointment-deleted', handleAppointmentDeleted);
+    };
+  }, [socket, loadAppointments]);
 
   // İki saat arasındaki süreyi hesapla
   const calculateDurationFromTimes = (startTime, endTime) => {
@@ -484,22 +647,24 @@ const WeeklyCalendar = ({
     timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
   }
 
-  // Haftalık görünüm için günleri hesapla
-  const getWeekDays = () => {
+  // Haftalık görünüm için günleri hesapla - Timezone sorunları düzeltildi ve optimize edildi
+  const weekDays = useMemo(() => {
     const days = [];
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    // Hafta başlangıcını local timezone'da hesapla
+    const weekStart = new Date(selectedWeekStart);
+    const weekStartLocal = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
     
     for (let i = 0; i < 7; i++) {
-      // Timezone sorununu önlemek için string bazlı hesaplama
-      const weekStartStr = selectedWeekStart.toISOString().split('T')[0];
-      const date = new Date(weekStartStr + 'T12:00:00'); // Öğlen saati ile timezone sorununu önle
+      // Local timezone'da tarih hesapla
+      const date = new Date(weekStartLocal);
       date.setDate(date.getDate() + i);
       
-      const dateStr = date.toISOString().split('T')[0];
-      
       let dayName;
-      if (dateStr === todayStr) {
+      // Bugün kontrolü local tarihler ile
+      if (date.getTime() === todayLocal.getTime()) {
         dayName = 'BUGÜN';
       } else {
         dayName = date.toLocaleDateString('tr-TR', { weekday: 'short' }).toUpperCase();
@@ -513,9 +678,7 @@ const WeeklyCalendar = ({
     }
     
     return days;
-  };
-
-  const weekDays = getWeekDays();
+  }, [selectedWeekStart]);
 
   // Gün başlığına tıklama
   const handleDayHeaderClick = (selectedDate) => {
@@ -567,7 +730,7 @@ const WeeklyCalendar = ({
     const endHour = parseTime(endTime);
     
     // Her saat slotu 60px yüksekliğinde
-    const hourHeight = 60;
+    const hourHeight = 50;
     
     // Pozisyon hesaplama
     const topPosition = startHour * hourHeight;
@@ -620,20 +783,26 @@ const WeeklyCalendar = ({
   // Yeni randevu kaydet
   const handleSaveAppointment = async (appointmentData) => {
     if (!accessToken) {
-      showError('Erişim token\'ı bulunamadı!');
+      console.error('Erişim token\'ı bulunamadı!');
       return;
     }
     
     try {
       const response = await createAppointment(accessToken, appointmentData);
       if (response.success) {
-        // Başarılı kayıt sonrası randevuları yeniden yükle
+        // Başarılı kayıt sonrası randevuları hemen yeniden yükle
         await loadAppointments();
-        showSuccess('Randevu başarıyla oluşturuldu!');
+        
+        // Modal'ı kapat
+        setIsModalOpen(false);
+        setSelectedDate('');
+        setSelectedTime('');
+        setSelectedDay(null);
+        
+        console.log('✅ Randevu başarıyla kaydedildi ve takvim güncellendi');
       }
     } catch (error) {
       console.error('Randevu kaydetme hatası:', error);
-      showError('Randevu kaydedilirken hata oluştu!');
     }
   };
 
@@ -663,12 +832,12 @@ const WeeklyCalendar = ({
     await loadAppointments();
     setIsEditModalOpen(false);
     setSelectedAppointment(null);
-    showSuccess('Randevu başarıyla güncellendi!');
+    // Toast kaldırıldı - gereksiz bildirim
   };
 
   const handleDeleteAppointment = async (appointmentId) => {
     if (!accessToken) {
-      showError('Erişim token\'ı bulunamadı!');
+      console.error('Erişim token\'ı bulunamadı!');
       return;
     }
     
@@ -696,11 +865,7 @@ const WeeklyCalendar = ({
       setIsDeleteModalOpen(false);
       setSelectedAppointment(null);
       
-      if (googleCalendarService.isSignedIn() && selectedAppointment?.googleEventId) {
-        showSuccess('Randevu başarıyla silindi ve Google Calendar\'dan kaldırıldı!');
-      } else {
-        showSuccess('Randevu başarıyla silindi!');
-      }
+      // Toast kaldırıldı - gereksiz bildirim
     } catch (error) {
       console.error('Randevu silme hatası:', error);
       showError('Randevu silinirken bir hata oluştu: ' + error.message);
@@ -742,14 +907,14 @@ const WeeklyCalendar = ({
       } catch (_) {}
       
       if (isSignedIn) {
-        showSuccess('Google Calendar\'a başarıyla giriş yapıldı!');
+        // Toast kaldırıldı - gereksiz bildirim
         await loadAppointments(); // Etkinlikleri yükle
       } else {
-        showError('Google Calendar girişi tamamlanamadı!');
+        console.error('Google Calendar girişi tamamlanamadı!');
       }
     } catch (error) {
       console.error('❌ WeeklyCalendar: Google Calendar giriş hatası:', error);
-      showError('Google Calendar giriş hatası: ' + error.message);
+      // Toast kaldırıldı - console log yeterli
       setIsGoogleSignedIn(false);
       try { localStorage.setItem('googleSignedIn', 'false'); } catch (_) {}
     } finally {
@@ -776,11 +941,11 @@ const WeeklyCalendar = ({
         console.log('💾 WeeklyCalendar: localStorage temizlendi:', localStorage.getItem('googleSignedIn'));
       } catch (_) {}
       
-      showSuccess('Google Calendar\'dan çıkış yapıldı!');
+      // Toast kaldırıldı - gereksiz bildirim
       await loadAppointments(); // Sadece yerel randevuları göster
     } catch (error) {
       console.error('❌ WeeklyCalendar: Google Calendar çıkış hatası:', error);
-      showError('Google Calendar çıkış hatası: ' + error.message);
+      // Toast kaldırıldı - console log yeterli
     } finally {
       setGoogleLoading(false);
     }
@@ -793,6 +958,31 @@ const WeeklyCalendar = ({
     setIsDeleteModalOpen(true);
   };
 
+  // Custom Event Component - Sağ tık ile düzenleme
+  const CustomEvent = ({ event }) => {
+    const handleContextMenu = (e) => {
+      e.preventDefault(); // Varsayılan sağ tık menüsünü engelle
+      handleEditAppointment(event.resource);
+    };
+
+    return (
+      <div 
+        onContextMenu={handleContextMenu}
+        style={{ 
+          height: '100%', 
+          width: '100%',
+          cursor: 'pointer',
+          padding: '2px 4px',
+          fontSize: '12px',
+          overflow: 'hidden'
+        }}
+        title={`Sol tık: Görüntüle | Sağ tık: Düzenle\n${event.title}`}
+      >
+        {event.title}
+      </div>
+    );
+  };
+
   // Navigasyon fonksiyonları
   const goToPreviousWeek = () => {
     if (viewMode === 'AY') {
@@ -801,6 +991,13 @@ const WeeklyCalendar = ({
       setCurrentDate(prevMonth);
       if (onDateChange) {
         onDateChange(prevMonth);
+      }
+    } else if (viewMode === 'GÜN') {
+      const prevDay = new Date(currentDate);
+      prevDay.setDate(currentDate.getDate() - 1);
+      setCurrentDate(prevDay);
+      if (onDateChange) {
+        onDateChange(prevDay);
       }
     } else {
       const prevWeek = new Date(selectedWeekStart);
@@ -821,6 +1018,13 @@ const WeeklyCalendar = ({
       if (onDateChange) {
         onDateChange(nextMonth);
       }
+    } else if (viewMode === 'GÜN') {
+      const nextDay = new Date(currentDate);
+      nextDay.setDate(currentDate.getDate() + 1);
+      setCurrentDate(nextDay);
+      if (onDateChange) {
+        onDateChange(nextDay);
+      }
     } else {
       const nextWeek = new Date(selectedWeekStart);
       nextWeek.setDate(selectedWeekStart.getDate() + 7);
@@ -834,8 +1038,13 @@ const WeeklyCalendar = ({
 
   const goToToday = () => {
     const today = new Date();
-    const startOfWeek = getStartOfWeek(today);
-    setSelectedWeekStart(startOfWeek);
+    
+    if (viewMode === 'HAFTA') {
+      const startOfWeek = getStartOfWeek(today);
+      setSelectedWeekStart(startOfWeek);
+    } else {
+      setCurrentDate(today);
+    }
     
     if (onDateChange) {
       onDateChange(today);
@@ -875,136 +1084,176 @@ const WeeklyCalendar = ({
 
   // Haftalık görünüm
   const renderWeekView = () => {
-    // currentTimePosition kaldırıldı - pozisyonlama sistemi sıfırdan yazılacak
-    
     return (
-    <div className="weekly-grid">
-      {/* Saat Sütunu */}
-      <div className="time-column">
-        <div className="time-header"></div>
-        {timeSlots.map((time, index) => (
-          <div key={index} className="time-slot">
-            {time}
-          </div>
-        ))}
-      </div>
-
-      {/* Gün Sütunları */}
-      {weekDays.map((day, dayIndex) => (
-        <div key={dayIndex} className="day-column">
-          <div 
-            className="day-header"
-            onClick={() => handleDayHeaderClick(day.fullDate)}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className="day-name">{day.name}</div>
-            <div className="day-date">{day.date}</div>
-          </div>
-          
-          <div className="day-slots">
-            {/* Saat çizgileri (arka plan) */}
-            {timeSlots.map((time, timeIndex) => (
-              <div 
-                key={timeIndex} 
-                className="time-cell"
-                onClick={() => handleTimeSlotClick(dayIndex, timeIndex)}
-              ></div>
-            ))}
-            
-            {/* Anlık saat çizgisi - SİLİNDİ (Kullanıcı tarafından sıfırdan yazılacak) */}
-            
-            {/* Bu güne ait randevular (sürekli bloklar) */}
-            {appointments
-              .filter(appointment => {
-                // Backend'den gelen randevuları tarihe göre filtrele
-                if (appointment.date) {
-                  const appointmentDate = new Date(appointment.date);
-                  const currentDayDate = new Date(selectedWeekStart);
-                  currentDayDate.setDate(currentDayDate.getDate() + dayIndex);
-                  
-                  return appointmentDate.toDateString() === currentDayDate.toDateString();
-                }
-                // Eski test verileri için day alanını kullan
-                return appointment.day === dayIndex && appointment.day !== -1;
-              })
-              .map(appointment => (
-                <div
-                  key={appointment.id}
-                  className={`appointment-block ${appointment.isGoogleEvent ? 'google-event' : ''}`}
-                  style={getAppointmentStyle(appointment)}
-                  onClick={() => handleAppointmentClick(appointment)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    if (!appointment.isGoogleEvent) {
-                      handleOpenDeleteModal(appointment);
-                    }
-                  }}
-                  title={appointment.isGoogleEvent ? 'Google Calendar Etkinliği (Dış Kaynak)' : 'Sistem Randevusu - Sol tık: Görüntüle, Sağ tık: Sil'}
-                >
-                  {/* Tamamlanmış randevular için yeşil tik */}
-                  {appointment.status === 'COMPLETED' && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '4px',
-                      right: '4px',
-                      width: '16px',
-                      height: '16px',
-                      backgroundColor: '#10B981',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      zIndex: 10
-                    }}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                        <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  )}
-                  <div style={{ 
-                    fontSize: '10px', 
-                    marginBottom: '3px',
-                    color: appointment.color,
-                    fontWeight: '700'
-                  }}>
-                    {formatTime(appointment.startTime || appointment.time)} - {formatTime(appointment.endTime)}
-                  </div>
-                  <div style={{ 
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    marginBottom: '2px'
-                  }}>
-                    {appointment.title}
-                  </div>
-                  <div style={{ 
-                    fontSize: '10px',
-                    color: '#6B7280',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {appointment.attendee}
-                  </div>
-                </div>
-              ))
+      <div style={{ height: '725px' }}>
+        <Calendar
+          localizer={localizer}
+          events={events}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: '100%' }}
+          view="week"
+          views={['week']}
+          culture="tr"
+          date={selectedWeekStart}
+          onNavigate={(date) => {
+            setSelectedWeekStart(date);
+            setCurrentDate(date);
+            if (onDateChange) {
+              onDateChange(date);
             }
-          </div>
-        </div>
-      ))}
-    </div>
+          }}
+          toolbar={false}
+          onSelectEvent={(event) => {
+            setSelectedAppointment(event.resource);
+            setIsViewModalOpen(true);
+          }}
+          onSelectSlot={(slotInfo) => {
+            const selectedDate = format(slotInfo.start, 'yyyy-MM-dd');
+            const selectedTime = format(slotInfo.start, 'HH:mm');
+            setSelectedDate(selectedDate);
+            setSelectedTime(selectedTime);
+            setIsModalOpen(true);
+          }}
+          selectable
+          popup
+          components={{
+            event: CustomEvent
+          }}
+          eventPropGetter={(event) => {
+            const color = event.resource.color || '#3174ad';
+            const hexToRgb = (hex) => {
+              const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+              return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+              } : null;
+            };
+            const rgb = hexToRgb(color);
+            const rgbString = rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '49, 116, 173';
+            
+            return {
+              style: {
+                backgroundColor: `rgba(${rgbString}, 0.15)`,
+                borderColor: color,
+                color: '#1F2937'
+              }
+            };
+          }}
+          messages={{
+            week: 'Hafta',
+            today: 'Bugün',
+            previous: 'Önceki',
+            next: 'Sonraki',
+            showMore: (total) => `+${total} daha`,
+            time: 'Saat',
+            event: 'Etkinlik',
+            allDay: 'Tüm Gün',
+            date: 'Tarih',
+            noEventsInRange: 'Bu tarih aralığında etkinlik yok'
+          }}
+          formats={{
+            dayHeaderFormat: (date, culture, localizer) =>
+              localizer.format(date, 'dddd, dd MMMM', culture),
+            timeGutterFormat: (date, culture, localizer) =>
+              localizer.format(date, 'HH:mm', culture),
+            eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
+              `${localizer.format(start, 'HH:mm', culture)} - ${localizer.format(end, 'HH:mm', culture)}`,
+            selectRangeFormat: ({ start, end }, culture, localizer) =>
+              `${localizer.format(start, 'HH:mm', culture)} - ${localizer.format(end, 'HH:mm', culture)}`
+          }}
+          min={new Date(2024, 0, 1, 0, 0)} // 00:00
+          max={new Date(2024, 0, 1, 23, 59)} // 23:59
+          step={30}
+          timeslots={2}
+        />
+      </div>
     );
   };
 
   // Günlük görünüm
   const renderDayView = () => (
-    <div className="day-view">
-      <div className="day-view-content">
-        <h3>Günlük Görünüm - {formatDate(currentDate)}</h3>
-        <p>Günlük görünüm yakında eklenecek...</p>
-      </div>
+    <div style={{ height: '750px' }}>
+      <Calendar
+        localizer={localizer}
+        events={events}
+        startAccessor="start"
+        endAccessor="end"
+        style={{ height: '100%' }}
+        view="day"
+        views={['day']}
+        culture="tr"
+        date={currentDate}
+        onNavigate={(date) => {
+          setCurrentDate(date);
+          if (onDateChange) {
+            onDateChange(date);
+          }
+        }}
+        toolbar={false}
+        onSelectEvent={(event) => {
+          setSelectedAppointment(event.resource);
+          setIsViewModalOpen(true);
+        }}
+        onSelectSlot={(slotInfo) => {
+          const selectedDate = format(slotInfo.start, 'yyyy-MM-dd');
+          const selectedTime = format(slotInfo.start, 'HH:mm');
+          setSelectedDate(selectedDate);
+          setSelectedTime(selectedTime);
+          setIsModalOpen(true);
+        }}
+        selectable
+        components={{
+          event: CustomEvent
+        }}
+        eventPropGetter={(event) => {
+          const color = event.resource.color || '#3174ad';
+          const hexToRgb = (hex) => {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+              r: parseInt(result[1], 16),
+              g: parseInt(result[2], 16),
+              b: parseInt(result[3], 16)
+            } : null;
+          };
+          const rgb = hexToRgb(color);
+          const rgbString = rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '49, 116, 173';
+          
+          return {
+            style: {
+              backgroundColor: `rgba(${rgbString}, 0.15)`,
+              borderColor: color,
+              color: '#1F2937'
+            }
+          };
+        }}
+        messages={{
+          day: 'Gün',
+          today: 'Bugün',
+          previous: 'Önceki',
+          next: 'Sonraki',
+          allDay: 'Tüm Gün',
+          time: 'Saat',
+          event: 'Etkinlik',
+          date: 'Tarih',
+          noEventsInRange: 'Bu tarihte etkinlik yok'
+        }}
+        formats={{
+          dayHeaderFormat: (date, culture, localizer) =>
+            localizer.format(date, 'dd MMMM yyyy, dddd', culture),
+          timeGutterFormat: (date, culture, localizer) =>
+            localizer.format(date, 'HH:mm', culture),
+          eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
+            `${localizer.format(start, 'HH:mm', culture)} - ${localizer.format(end, 'HH:mm', culture)}`,
+          selectRangeFormat: ({ start, end }, culture, localizer) =>
+            `${localizer.format(start, 'HH:mm', culture)} - ${localizer.format(end, 'HH:mm', culture)}`
+        }}
+        min={new Date(2024, 0, 1, 0, 0)} // 00:00
+        max={new Date(2024, 0, 1, 23, 59)} // 23:59
+        step={30}
+        timeslots={2}
+      />
     </div>
   );
 
@@ -1076,115 +1325,178 @@ const WeeklyCalendar = ({
 
   // Aylık görünüm
   const renderMonthView = () => {
-    const monthDays = getMonthDays();
-    const dayNames = ['PAZARTESİ', 'SALI', 'ÇARŞAMBA', 'PERŞEMBE', 'CUMA', 'CUMARTESİ', 'PAZAR'];
-    
     return (
-      <div className="month-view">
-        <div className="month-grid">
-          {/* Gün başlıkları */}
-          <div className="month-header">
-            {dayNames.map(dayName => (
-              <div key={dayName} className="month-day-header">
-                {dayName}
-              </div>
-            ))}
-          </div>
-          
-          {/* Günler */}
-          <div className="month-days">
-            {monthDays.map((dayInfo, index) => {
-              const dayAppointments = getAppointmentsForDate(dayInfo.date);
-              return (
-                <div 
-                  key={index} 
-                  className={`month-day ${
-                    dayInfo.isCurrentMonth ? 'current-month' : 'other-month'
-                  } ${
-                    isToday(dayInfo.date) ? 'today' : ''
-                  }`}
-                  onClick={() => {
-                    if (dayInfo.isCurrentMonth && dayInfo.date && !isNaN(dayInfo.date.getTime())) {
-                      handleDayHeaderClick(dayInfo.date);
-                    }
-                  }}
-                >
-                  <div className="month-day-number">
-                    {dayInfo.day}
-                  </div>
-                  
-                  {/* Randevular */}
-                  <div className="month-day-appointments">
-                    {dayAppointments.slice(0, 2).map((appointment, idx) => (
-                      <div 
-                        key={appointment.id}
-                        className={`month-appointment ${appointment.isGoogleEvent ? 'google-event' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAppointmentClick(appointment);
-                        }}
-                        title={appointment.isGoogleEvent 
-                          ? `Google Calendar Etkinliği (Dış Kaynak) - ${formatTime(appointment.startTime)} - ${appointment.title}`
-                          : `Sistem Randevusu - ${formatTime(appointment.startTime)} - ${appointment.title}`
-                        }
-                        style={{ position: 'relative' }}
-                      >
-                        <div 
-                          className="month-appointment-dot"
-                          style={{
-                            backgroundColor: getAppointmentColor(appointment)
-                          }}
-                        ></div>
-                        <span className="month-appointment-time">{formatTime(appointment.startTime)}</span>
-                        <span className="month-appointment-title">{appointment.title}</span>
-                        {/* Tamamlanmış randevular için yeşil tik */}
-                        {appointment.status === 'COMPLETED' && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '2px',
-                            right: '2px',
-                            width: '12px',
-                            height: '12px',
-                            backgroundColor: '#10B981',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 10
-                          }}>
-                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none">
-                              <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {dayAppointments.length > 2 && (
-                      <div className="month-appointment-more">
-                        +{dayAppointments.length - 2} daha
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          
-
-        </div>
+      <div style={{ height: '800px' }}>
+        <Calendar
+          localizer={localizer}
+          events={events}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: '100%' }}
+          view="month"
+          views={['month']}
+          culture="tr"
+          date={currentDate}
+          onNavigate={(date) => {
+            setCurrentDate(date);
+            if (onDateChange) {
+              onDateChange(date);
+            }
+          }}
+          toolbar={false}
+          onSelectEvent={(event) => {
+            setSelectedAppointment(event.resource);
+            setIsViewModalOpen(true);
+          }}
+          onSelectSlot={(slotInfo) => {
+            const selectedDate = format(slotInfo.start, 'yyyy-MM-dd');
+            setSelectedDate(selectedDate);
+            setSelectedTime('09:00');
+            setIsModalOpen(true);
+          }}
+          selectable
+          popup
+          components={{
+            event: CustomEvent
+          }}
+          eventPropGetter={(event) => {
+            const color = event.resource.color || '#3174ad';
+            const hexToRgb = (hex) => {
+              const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+              return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+              } : null;
+            };
+            const rgb = hexToRgb(color);
+            const rgbString = rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '49, 116, 173';
+            
+            return {
+              style: {
+                backgroundColor: `rgba(${rgbString}, 0.15)`,
+                borderColor: color,
+                color: '#1F2937'
+              }
+            };
+          }}
+          messages={{
+            month: 'Ay',
+            today: 'Bugün',
+            previous: 'Önceki',
+            next: 'Sonraki',
+            showMore: (total) => `+${total} daha`,
+            time: 'Saat',
+            event: 'Etkinlik',
+            allDay: 'Tüm Gün',
+            date: 'Tarih',
+            noEventsInRange: 'Bu ayda etkinlik yok'
+          }}
+          formats={{
+            monthHeaderFormat: (date, culture, localizer) =>
+              localizer.format(date, 'MMMM yyyy', culture),
+            dayHeaderFormat: (date, culture, localizer) =>
+              localizer.format(date, 'dddd', culture),
+            eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
+              `${localizer.format(start, 'HH:mm', culture)} - ${localizer.format(end, 'HH:mm', culture)}`,
+            dayRangeHeaderFormat: ({ start, end }, culture, localizer) =>
+              `${localizer.format(start, 'dd MMMM', culture)} - ${localizer.format(end, 'dd MMMM yyyy', culture)}`
+          }}
+        />
       </div>
     );
   };
 
   // Yıllık görünüm
-  const renderYearView = () => (
-    <div className="year-view">
-      <div className="year-view-content">
-        <h3>Yıllık Görünüm - {currentDate.getFullYear()}</h3>
-        <p>Yıllık görünüm yakında eklenecek...</p>
+  const renderYearView = () => {
+    const year = currentDate.getFullYear();
+    const months = [];
+    
+    for (let month = 0; month < 12; month++) {
+      const monthDate = new Date(year, month, 1);
+      months.push(monthDate);
+    }
+    
+    return (
+      <div className="year-view">
+        <div className="year-header">
+          <h3>Yıllık Görünüm - {year}</h3>
+        </div>
+        <div className="year-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '20px',
+          padding: '20px'
+        }}>
+          {months.map((monthDate, index) => (
+            <div key={index} style={{
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              padding: '10px',
+              backgroundColor: 'white',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              setCurrentDate(monthDate);
+              setViewMode('AY');
+            }}>
+              <div style={{ height: '200px' }}>
+                <Calendar
+                  localizer={localizer}
+                  events={events.filter(event => {
+                    const eventDate = new Date(event.start);
+                    return eventDate.getFullYear() === year && 
+                           eventDate.getMonth() === monthDate.getMonth();
+                  })}
+                  startAccessor="start"
+                  endAccessor="end"
+                  style={{ height: '100%' }}
+                  view="month"
+                  views={['month']}
+                  date={monthDate}
+                  toolbar={false}
+                  eventPropGetter={(event) => {
+                    const color = event.resource.color || '#3174ad';
+                    const hexToRgb = (hex) => {
+                      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                      return result ? {
+                        r: parseInt(result[1], 16),
+                        g: parseInt(result[2], 16),
+                        b: parseInt(result[3], 16)
+                      } : null;
+                    };
+                    const rgb = hexToRgb(color);
+                    const rgbString = rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '49, 116, 173';
+                    
+                    return {
+                      style: {
+                        backgroundColor: `rgba(${rgbString}, 0.15)`,
+                        borderColor: color,
+                        color: '#1F2937',
+                        fontSize: '10px'
+                      }
+                    };
+                  }}
+                  formats={{
+                    dayHeaderFormat: (date, culture, localizer) =>
+                      localizer.format(date, 'dd', culture)
+                  }}
+                />
+              </div>
+              <div style={{
+                textAlign: 'center',
+                marginTop: '10px',
+                fontWeight: 'bold',
+                color: '#333'
+              }}>
+                {format(monthDate, 'MMMM', { locale: tr })}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Tarih seçici
   const handleDateSelect = (selectedDate) => {
@@ -1327,6 +1639,7 @@ const WeeklyCalendar = ({
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
         onEdit={handleEditAppointment}
+        onDelete={handleOpenDeleteModal}
         appointmentData={selectedAppointment}
       />
 
