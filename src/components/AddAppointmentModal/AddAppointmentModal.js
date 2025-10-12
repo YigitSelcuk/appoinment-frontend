@@ -167,6 +167,7 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
   const [errors, setErrors] = useState({});
   const [conflicts, setConflicts] = useState([]);
   const [isCheckingConflict, setIsCheckingConflict] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -764,12 +765,31 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
       return;
     }
 
+    setIsSubmitting(true);
     try {
+      // Hatırlatma zamanını hesapla
+      let reminderDateTime = null;
+      if (formData.reminderBefore && formData.date && formData.startTime) {
+        // Türkiye saati için doğru timezone hesaplaması
+        const appointmentDateTime = new Date(`${formData.date}T${formData.startTime}:00+03:00`);
+        const reminderValue = parseInt(formData.reminderValue);
+        
+        if (formData.reminderUnit === 'minutes') {
+          reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 60 * 1000));
+        } else if (formData.reminderUnit === 'hours') {
+          reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 60 * 60 * 1000));
+        } else if (formData.reminderUnit === 'days') {
+          reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 24 * 60 * 60 * 1000));
+        }
+      }
+
       // Randevu verilerini hazırla
       const appointmentDataToSave = {
         ...formData,
         selectedContacts,
-        visibleToUsers: formData.visibleToUsers
+        visibleToUsers: formData.visibleToUsers,
+        reminderDateTime: reminderDateTime ? reminderDateTime.toISOString() : null,
+        reminderEnabled: formData.reminderBefore
       };
       
       console.log('=== FRONTEND RANDEVU VERİLERİ ===');
@@ -858,6 +878,8 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
       } else {
         showError('Randevu kaydedilirken bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -888,6 +910,7 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
     setSelectedContacts([]);
     setSearchTerm('');
     setUserSearchTerm('');
+    setIsSubmitting(false);
     onClose();
   };
 
@@ -1686,9 +1709,16 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
             <button 
               type="submit" 
               className="save-btn"
-              disabled={conflicts.length > 0 || isCheckingConflict}
+              disabled={conflicts.length > 0 || isCheckingConflict || isSubmitting}
             >
-              KAYDET
+              {isSubmitting ? (
+                <>
+                  <div className="loading-spinner"></div>
+                  KAYDEDILIYOR...
+                </>
+              ) : (
+                'KAYDET'
+              )}
             </button>
           </div>
         </form>
