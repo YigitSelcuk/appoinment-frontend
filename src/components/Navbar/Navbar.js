@@ -177,7 +177,7 @@ const Navbar = ({ user, onLogout }) => {
       ),
       color: "#3C02AA",
     },
-    {
+   /*  {
       id: "reports",
       name: "RAPOR",
       path: "#",
@@ -198,7 +198,7 @@ const Navbar = ({ user, onLogout }) => {
         </svg>
       ),
       color: "#4E0DCC",
-    },
+    }, */
 
     {
       id: "management",

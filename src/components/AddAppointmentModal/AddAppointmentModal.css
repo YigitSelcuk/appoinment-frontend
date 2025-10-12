@@ -695,6 +695,7 @@
 
 .appointment-info {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
   flex: 1;
 }
@@ -730,6 +731,8 @@
   color: #2c3e50;
   font-weight: 500;
   line-height: 1.3;
+  display: block;
+  margin-top: 4px;
 }
 
 .appointment-title-row {
@@ -1715,6 +1718,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Tümü Seçeneği Özel Stili */
+.all-users-option {
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.1), rgba(255, 107, 53, 0.1));
+  border-bottom: 2px solid rgba(233, 30, 99, 0.2) !important;
+  font-weight: 600;
+}
+
+.all-users-option:hover {
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.15), rgba(255, 107, 53, 0.15)) !important;
+}
+
+.all-users-option.selected {
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.2), rgba(255, 107, 53, 0.2)) !important;
+  border-left: 4px solid #E91E63;
+}
+
+.all-users-option .user-option-name {
+  color: #E91E63;
+  font-weight: 700;
+}
+
+.all-users-option .user-option-email {
+  color: #FF6B35;
+  font-weight: 500;
 }
 
 /* Selected Users Section */

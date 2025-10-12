@@ -104,8 +104,10 @@
 
 .appointment-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
+  width: 100%;
+  min-height: 44px;
 }
 
 .appointment-color-indicator {
@@ -119,6 +121,13 @@
   font-size: 20px !important;
   font-weight: 700;
   color: #111827;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
 }
 
 .detail-row {

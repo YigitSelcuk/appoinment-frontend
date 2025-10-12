@@ -99,28 +99,124 @@ const Calendar = memo(({
     loadAppointments();
   }, [loadAppointments]);
 
-  // Socket.IO real-time güncellemeler
+  // Socket.IO real-time güncellemeler - Optimize edilmiş
   useEffect(() => {
     if (!socket) return;
 
     console.log('🔌 Calendar: Socket event listenerlari ekleniyor...');
 
-    // Randevu ekleme event'i
+    // Randevu ekleme event'i - Chat mantığı gibi spesifik ekleme
     const handleAppointmentCreated = (data) => {
-      console.log('📅 Calendar: Yeni randevu eklendi:', data);
-      loadAppointments(); // Randevuları yeniden yükle
+      console.log('📅 Calendar: Socket appointment-created event alındı:', data);
+      
+      if (data && data.appointment) {
+        // Backend'den gelen randevu verisini formatla
+        const backendAppointment = data.appointment;
+        const newAppointment = {
+          id: backendAppointment.id,
+          title: backendAppointment.title || backendAppointment.subject,
+          date: backendAppointment.date,
+          start_time: backendAppointment.start_time,
+          end_time: backendAppointment.end_time,
+          color: backendAppointment.color || '#29CC39',
+          description: backendAppointment.description,
+          status: backendAppointment.status,
+          type: backendAppointment.type,
+          priority: backendAppointment.priority,
+          location: backendAppointment.location,
+          creator_name: backendAppointment.creator_name,
+          attendee_name: backendAppointment.attendee_name,
+          ...backendAppointment
+        };
+
+        // Mevcut randevulara ekle veya güncelle
+        setAppointments(prevAppointments => {
+          const existingIndex = prevAppointments.findIndex(apt => apt.id === newAppointment.id);
+          if (existingIndex !== -1) {
+            // Mevcut randevuyu güncelle
+            const updated = [...prevAppointments];
+            updated[existingIndex] = newAppointment;
+            console.log('✅ Calendar: Mevcut randevu güncellendi:', newAppointment.id);
+            return updated;
+          } else {
+            // Yeni randevu ekle
+            console.log('✅ Calendar: Yeni randevu eklendi:', newAppointment.id);
+            return [...prevAppointments, newAppointment];
+          }
+        });
+      }
     };
 
-    // Randevu güncelleme event'i
+    // Randevu güncelleme event'i - Chat mantığı gibi spesifik güncelleme
     const handleAppointmentUpdated = (data) => {
-      console.log('📅 Calendar: Randevu güncellendi:', data);
-      loadAppointments(); // Randevuları yeniden yükle
+      console.log('📅 Calendar: Socket appointment-updated event alındı:', data);
+      
+      if (data && data.appointment) {
+        // Backend'den gelen randevu verisini formatla
+        const backendAppointment = data.appointment;
+        const updatedAppointment = {
+          id: backendAppointment.id,
+          title: backendAppointment.title || backendAppointment.subject,
+          date: backendAppointment.date,
+          start_time: backendAppointment.start_time,
+          end_time: backendAppointment.end_time,
+          color: backendAppointment.color || '#29CC39',
+          description: backendAppointment.description,
+          status: backendAppointment.status,
+          type: backendAppointment.type,
+          priority: backendAppointment.priority,
+          location: backendAppointment.location,
+          creator_name: backendAppointment.creator_name,
+          attendee_name: backendAppointment.attendee_name,
+          ...backendAppointment
+        };
+
+        // Mevcut randevuları güncelle
+        setAppointments(prevAppointments => {
+          const updated = prevAppointments.map(apt => 
+            apt.id === updatedAppointment.id ? updatedAppointment : apt
+          );
+          console.log('✅ Calendar: Randevu güncellendi:', updatedAppointment.id);
+          return updated;
+        });
+      }
     };
 
-    // Randevu silme event'i
+    // Randevu silme event'i - Chat mantığı gibi spesifik silme
     const handleAppointmentDeleted = (data) => {
-      console.log('📅 Calendar: Randevu silindi:', data);
-      loadAppointments(); // Randevuları yeniden yükle
+      console.log('📅 Calendar: Socket appointment-deleted event alındı:', data);
+      
+      // Backend'den gelen format: { appointmentId: id, appointment: appointmentObj, message: 'Randevu silindi' }
+      if (data && (data.appointmentId || data.appointment?.id)) {
+        const deletedId = data.appointmentId || data.appointment?.id;
+        
+        console.log('🔍 Calendar DEBUG - Silme işlemi detayları:', {
+          deletedId,
+          deletedIdType: typeof deletedId,
+          deletedIdValue: deletedId
+        });
+        
+        // Mevcut randevulardan sil
+        setAppointments(prevAppointments => {
+          console.log('🔍 Calendar DEBUG - Mevcut randevular:', prevAppointments.map(apt => ({
+            id: apt.id,
+            idType: typeof apt.id,
+            title: apt.title
+          })));
+          
+          // Type conversion için hem string hem number karşılaştırması yap
+          const filtered = prevAppointments.filter(apt => {
+            const shouldKeep = apt.id != deletedId; // != kullanarak type conversion yap
+            console.log(`🔍 Calendar DEBUG - ID karşılaştırma: ${apt.id} (${typeof apt.id}) != ${deletedId} (${typeof deletedId}) = ${shouldKeep}`);
+            return shouldKeep;
+          });
+          
+          console.log('✅ Calendar: Randevu silindi:', deletedId, 'Önceki sayı:', prevAppointments.length, 'Kalan sayı:', filtered.length);
+          return filtered;
+        });
+      } else {
+        console.error('❌ Calendar: appointment-deleted event: appointmentId bulunamadı', data);
+      }
     };
 
     // Event listener'ları ekle
@@ -135,7 +231,7 @@ const Calendar = memo(({
       socket.off('appointment-updated', handleAppointmentUpdated);
       socket.off('appointment-deleted', handleAppointmentDeleted);
     };
-  }, [socket, loadAppointments]);
+  }, [socket]);
 
   // Seçili günün randevularını getir - useMemo ile optimize edildi
   const getSelectedDayAppointments = useMemo(() => {
@@ -613,84 +709,10 @@ const Calendar = memo(({
                       <div className="event-time">
                         {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
                       </div>
-                      <div className="event-status" style={{ color: getStatusColor(appointment.status) }}>
-                        {getStatusText(appointment.status)}
-                      </div>
+                     
                     </div>
                     <div className="event-details">
                       <div className="event-title">{appointment.title}</div>
-                      {appointment.description && (
-                        <div className="event-subtitle">{appointment.description}</div>
-                      )}
-                      {appointment.location && (
-                        <div className="event-location">
-                          <span>📍 Konum: </span>{appointment.location}
-                        </div>
-                      )}
-                      {appointment.created_by_name && (
-                        <div className="event-creator">
-                          <span>👤 Oluşturan: </span>{appointment.created_by_name}
-                          {appointment.created_by_email && (
-                            <span> ({appointment.created_by_email})</span>
-                          )}
-                        </div>
-                      )}
-                      {appointment.attendee_name && (
-                        <div className="event-attendee">
-                          <span>🎯 Katılımcı: </span>{appointment.attendee_name}
-                          {appointment.attendee_email && (
-                            <span> ({appointment.attendee_email})</span>
-                          )}
-                          {appointment.attendee_phone && (
-                            <span> - {appointment.attendee_phone}</span>
-                          )}
-                        </div>
-                      )}
-                      {invitees.length > 0 && (
-                        <div className="event-invitees">
-                          <span>📧 Davetliler: </span>
-                          {invitees.map((invitee, index) => (
-                            <span key={index}>
-                              {invitee.name} ({invitee.email})
-                              {index < invitees.length - 1 ? ', ' : ''}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {attendees.length > 0 && (
-                        <div className="event-attendees">
-                          <span>👥 Katılanlar: </span>
-                          {attendees.map((attendee, index) => (
-                            <span key={index}>
-                              {attendee.name || attendee.email}
-                              {index < attendees.length - 1 ? ', ' : ''}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {appointment.repeat_type && appointment.repeat_type !== 'TEKRARLANMAZ' && (
-                        <div className="event-repeat">
-                          <span>🔄 Tekrar: </span>{appointment.repeat_type}
-                        </div>
-                      )}
-                      {appointment.source && (
-                        <div className="event-source">
-                          <span>📱 Kaynak: </span>{appointment.source}
-                        </div>
-                      )}
-                      {(appointment.notification_email || appointment.notification_sms) && (
-                        <div className="event-notifications">
-                          <span>🔔 Bildirimler: </span>
-                          {appointment.notification_email && <span>Email </span>}
-                          {appointment.notification_sms && <span>SMS</span>}
-                        </div>
-                      )}
-                      {appointment.reminder_value && appointment.reminder_unit && (
-                        <div className="event-reminder">
-                          <span>⏰ Hatırlatma: </span>
-                          {appointment.reminder_value} {appointment.reminder_unit} önce
-                        </div>
-                      )}
                     </div>
                   </div>
                 );

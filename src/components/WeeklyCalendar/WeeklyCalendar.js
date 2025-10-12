@@ -586,30 +586,138 @@ const WeeklyCalendar = ({
 
     console.log('🔌 WeeklyCalendar: Socket event listenerlari ekleniyor...');
 
-    // Randevu ekleme event'i
+    // Randevu ekleme event'i - Chat mantığı gibi spesifik güncelleme
     const handleAppointmentCreated = (data) => {
-      console.log('📅 Yeni randevu eklendi:', data);
+      console.log('📅 Socket: appointment-created event alındı:', data);
       
-      // Bugünün randevusu mu kontrol et
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
-      const appointmentDate = data.date ? data.date.split('T')[0] : null;
-      
+      if (data && data.appointment) {
+        // Backend'den gelen randevu verisini formatla
+        const backendAppointment = data.appointment;
+        const formattedAppointment = {
+          id: backendAppointment.id,
+          title: backendAppointment.title || backendAppointment.subject,
+          time: backendAppointment.start_time,
+          endTime: backendAppointment.end_time,
+          attendee: backendAppointment.attendee_name || backendAppointment.client_name || backendAppointment.user_name,
+          color: backendAppointment.color || '#29CC39',
+          date: backendAppointment.date,
+          description: backendAppointment.description,
+          location: backendAppointment.location,
+          priority: backendAppointment.priority,
+          status: backendAppointment.status,
+          user_id: backendAppointment.user_id,
+          client_id: backendAppointment.client_id,
+          // Diğer backend alanları
+          ...backendAppointment
+        };
 
-      
-      loadAppointments(); // Randevuları yeniden yükle
+        // Randevunun bu haftaya ait olup olmadığını kontrol et
+        const dayIndex = calculateDayIndex(formattedAppointment.date);
+        if (dayIndex >= 0) {
+          // Modal açık olsa bile state güncellemesi yapılabilir - bu modal verilerini etkilemez
+          setAppointments(prevAppointments => {
+            // Aynı ID'ye sahip randevu varsa güncelle, yoksa ekle
+            const existingIndex = prevAppointments.findIndex(apt => apt.id === formattedAppointment.id);
+            if (existingIndex !== -1) {
+              const updated = [...prevAppointments];
+              updated[existingIndex] = formattedAppointment;
+              console.log('✅ Mevcut randevu güncellendi:', formattedAppointment.id);
+              return updated;
+            } else {
+              console.log('✅ Yeni randevu eklendi:', formattedAppointment.id);
+              return [...prevAppointments, formattedAppointment];
+            }
+          });
+        } else {
+          console.log('ℹ️ Randevu bu haftaya ait değil, state güncellenmedi');
+        }
+      }
     };
 
-    // Randevu güncelleme event'i
+    // Randevu güncelleme event'i - Chat mantığı gibi spesifik güncelleme
     const handleAppointmentUpdated = (data) => {
-      console.log('📅 Randevu güncellendi:', data);
-      loadAppointments(); // Randevuları yeniden yükle
+      console.log('📅 Socket: appointment-updated event alındı:', data);
+      
+      if (data && data.appointment) {
+        // Backend'den gelen randevu verisini formatla
+        const backendAppointment = data.appointment;
+        const formattedAppointment = {
+          id: backendAppointment.id,
+          title: backendAppointment.title || backendAppointment.subject,
+          time: backendAppointment.start_time,
+          endTime: backendAppointment.end_time,
+          attendee: backendAppointment.attendee_name || backendAppointment.client_name || backendAppointment.user_name,
+          color: backendAppointment.color || '#29CC39',
+          date: backendAppointment.date,
+          description: backendAppointment.description,
+          location: backendAppointment.location,
+          priority: backendAppointment.priority,
+          status: backendAppointment.status,
+          user_id: backendAppointment.user_id,
+          client_id: backendAppointment.client_id,
+          // Diğer backend alanları
+          ...backendAppointment
+        };
+
+        // Modal açık olsa bile state güncellemesi yapılabilir - bu modal verilerini etkilemez
+        setAppointments(prevAppointments => {
+          const existingIndex = prevAppointments.findIndex(apt => apt.id === formattedAppointment.id);
+          if (existingIndex !== -1) {
+            // Randevu bulundu, güncelle
+            const updated = [...prevAppointments];
+            updated[existingIndex] = formattedAppointment;
+            console.log('✅ Randevu güncellendi:', formattedAppointment.id);
+            return updated;
+          } else {
+            // Randevu bulunamadı, yeni randevu olarak ekle (bu haftaya aitse)
+            const dayIndex = calculateDayIndex(formattedAppointment.date);
+            if (dayIndex >= 0) {
+              console.log('✅ Güncellenen randevu yeni olarak eklendi:', formattedAppointment.id);
+              return [...prevAppointments, formattedAppointment];
+            } else {
+              console.log('ℹ️ Güncellenen randevu bu haftaya ait değil');
+              return prevAppointments;
+            }
+          }
+        });
+      }
     };
 
-    // Randevu silme event'i
+    // Randevu silme event'i - Chat mantığı gibi spesifik güncelleme
     const handleAppointmentDeleted = (data) => {
-      console.log('📅 Randevu silindi:', data);
-      loadAppointments(); // Randevuları yeniden yükle
+      console.log('📅 Socket: appointment-deleted event alındı:', data);
+      
+      // Backend'den gelen format: { appointmentId: id, appointment: appointmentObj, message: 'Randevu silindi' }
+      if (data && (data.appointmentId || data.appointment?.id)) {
+        const deletedId = data.appointmentId || data.appointment?.id;
+        
+        console.log('🔍 DEBUG - Silme işlemi detayları:', {
+          deletedId,
+          deletedIdType: typeof deletedId,
+          deletedIdValue: deletedId
+        });
+        
+        // Modal açık olsa bile state güncellemesi yapılabilir - bu modal verilerini etkilemez
+        setAppointments(prevAppointments => {
+          console.log('🔍 DEBUG - Mevcut randevular:', prevAppointments.map(apt => ({
+            id: apt.id,
+            idType: typeof apt.id,
+            title: apt.title
+          })));
+          
+          // Type conversion için hem string hem number karşılaştırması yap
+           const filtered = prevAppointments.filter(apt => {
+             const shouldKeep = apt.id != deletedId; // != kullanarak type conversion yap
+             console.log(`🔍 DEBUG - ID karşılaştırma: ${apt.id} (${typeof apt.id}) != ${deletedId} (${typeof deletedId}) = ${shouldKeep}`);
+             return shouldKeep;
+           });
+          
+          console.log('✅ Randevu silindi:', deletedId, 'Önceki sayı:', prevAppointments.length, 'Kalan sayı:', filtered.length);
+          return filtered;
+        });
+      } else {
+        console.error('❌ appointment-deleted event: appointmentId bulunamadı', data);
+      }
     };
 
     // Event listener'ları ekle

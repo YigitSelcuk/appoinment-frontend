@@ -14,7 +14,7 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
   // Toast hook'u
   const { showSuccess, showError, showWarning, showInfo } = useSimpleToast();
   // Auth hook'u
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -92,8 +92,13 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
         setLoadingUsers(true);
         const response = await getUsers(accessToken);
         const usersData = response.data || [];
-        setUsers(usersData);
-        setFilteredUsers(usersData);
+        
+        // Mevcut kullanıcıyı filtrele (kendi listede görünmemeli)
+        const currentUserId = user?.id;
+        const filteredUsersData = usersData.filter(u => u.id !== currentUserId);
+        
+        setUsers(usersData); // Tüm kullanıcıları sakla (başka yerlerde kullanılabilir)
+        setFilteredUsers(filteredUsersData); // Filtrelenmiş listeyi göster
         if (usersData.length > 0) {
         } else {
         }
@@ -310,10 +315,14 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
     // Seçilmiş kullanıcıları al
     const selectedUserIds = formData.visibleToUsers ? formData.visibleToUsers.map(u => u.id) : [];
     
+    // Mevcut kullanıcıyı filtrele (kendi listede görünmemeli)
+    const currentUserId = user?.id;
+    const availableUsers = users.filter(u => u.id !== currentUserId);
+    
     if (searchTerm.trim() === '') {
       // Seçilmiş kullanıcıları en üste koy, seçilmemişleri alt kısma
-      const selectedUsers = users.filter(user => selectedUserIds.includes(user.id));
-      const unselectedUsers = users.filter(user => !selectedUserIds.includes(user.id));
+      const selectedUsers = availableUsers.filter(user => selectedUserIds.includes(user.id));
+      const unselectedUsers = availableUsers.filter(user => !selectedUserIds.includes(user.id));
       
       // Her iki grubu da alfabetik sırala
       const sortedSelected = selectedUsers.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' }));
@@ -321,9 +330,9 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
       
       setFilteredUsers([...sortedSelected, ...sortedUnselected]);
       // Arama terimi boş olduğunda da dropdown'u göster
-      setShowUserDropdown(users.length > 0);
+      setShowUserDropdown(availableUsers.length > 0);
     } else {
-      const filtered = users.filter(user => 
+      const filtered = availableUsers.filter(user => 
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -381,6 +390,9 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
       visibleToAll: !prev.visibleToAll,
       visibleToUsers: !prev.visibleToAll ? [] : prev.visibleToUsers // TÜMÜ seçiliyse bireysel seçimleri temizle
     }));
+    
+    // Dropdown'u kapat
+    setShowUserDropdown(false);
     
     if (!formData.visibleToAll) {
       showInfo('Randevu tüm kullanıcılara görünür olarak ayarlandı');
@@ -527,11 +539,12 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
     
-    // Tüm gün seçeneği işaretlendiğinde bitiş saatini 23:59 yap
+    // Tüm gün seçeneği işaretlendiğinde başlangıç saatini 00:00, bitiş saatini 23:59 yap
     if (name === 'isAllDay' && newValue === true) {
       setFormData(prev => ({
         ...prev,
         [name]: newValue,
+        startTime: '00:00',
         endTime: '23:59'
       }));
     } else {
@@ -1163,24 +1176,18 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
                             })}
                           </span>
                           <span className="appointment-time-text">
-                            {appointment.start_time?.substring(0, 5)}
+                            {appointment.start_time?.substring(0, 5)} - {appointment.end_time?.substring(0, 5)}
                           </span>
                         </div>
-                        <div className="appointment-title-row">
-                          <div className="appointment-title-text">{appointment.title}</div>
-                          <div className="appointment-invitees-text">
-                            Davetliler: {appointment.invitees && appointment.invitees.length > 0 
-                              ? appointment.invitees.map(inv => inv.name).join(', ') 
-                              : 'Davetli yok'}
-                          </div>
-                        </div>
+                        <div className="appointment-title-text">{appointment.title}</div>
                       </div>
                       <div className="appointment-status-right">
                         <span className="status-label" style={{color: appointment.color || '#ff6b35'}}>
-                          {appointment.status === 'confirmed' ? 'GÖRÜŞME YAPILDI' : 
-                           appointment.status === 'pending' ? 'RANDEVU TEKRARI' : 
-                           appointment.status === 'cancelled' ? 'İPTAL EDİLDİ' : 
-                           'RANDEVU TEKRARI'}
+                          {appointment.status === 'COMPLETED' ? 'GÖRÜŞME YAPILDI' : 
+                           appointment.status === 'CONFIRMED' ? 'ONAYLANMIŞ' :
+                           appointment.status === 'RESCHEDULED' ? 'RANDEVU TEKRARI' : 
+                           appointment.status === 'CANCELLED' ? 'İPTAL EDİLDİ' : 
+                           'ZAMANLANMIŞ'}
                         </span>
                       </div>
                     </div>
@@ -1570,22 +1577,33 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
                     }}
                     className="visibility-search-input"
                   />
-                  <label className="visibility-all-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={formData.visibleToAll}
-                      onChange={handleSelectAllUsers}
-                      className="visibility-checkbox"
-                    />
-                    <span className="visibility-checkbox-custom"></span>
-                    <span className="visibility-checkbox-text">TÜMÜ</span>
-                  </label>
+
                 </div>
                 
                 {/* Kullanıcı Arama Dropdown */}
-                {showUserDropdown && filteredUsers.length > 0 && (
+                {showUserDropdown && (
                   <div className="user-dropdown">
-                    {filteredUsers.map(user => {
+                    {/* Tümü Seçeneği */}
+                    <div 
+                      className={`user-option all-users-option ${formData.visibleToAll ? 'selected' : ''}`}
+                      onClick={handleSelectAllUsers}
+                    >
+                      <div className="user-option-avatar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2"/>
+                          <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                      </div>
+                      <div className="user-option-info">
+                        <div className="user-option-name">TÜMÜ</div>
+                        <div className="user-option-email">Tüm kullanıcılara görünür</div>
+                      </div>
+                    </div>
+                    
+                    {/* Kullanıcı Listesi */}
+                     {filteredUsers.map(user => {
                       const isSelected = formData.visibleToUsers && formData.visibleToUsers.find(u => u.id === user.id);
                       return (
                       <div 
