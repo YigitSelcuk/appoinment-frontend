@@ -5,6 +5,7 @@ import Calendar from '../../components/Calendar/Calendar';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 import chatService from '../../services/chatService';
+import { getAvatarUrl } from '../../services/profileService';
 import './MessagingPanel.css';
 import './ContactsPanel.css';
 
@@ -62,7 +63,11 @@ const MessagingPanel = () => {
     try {
       const response = await chatService.getAllUsers(accessToken);
       if (response.success) {
-        setAvailableUsers(response.data);
+        // Eğer data nested array ise flatten et
+        const users = Array.isArray(response.data) && Array.isArray(response.data[0]) 
+          ? response.data.flat() 
+          : response.data;
+        setAvailableUsers(users);
       }
     } catch (error) {
       console.error('Kullanıcıları yüklerken hata:', error);
@@ -74,28 +79,48 @@ const MessagingPanel = () => {
     try {
       setShowUserDropdown(false);
       
-      // Zaten bu kullanıcıyla sohbet var mı kontrol et
-      const existingRoom = chatRooms.find(room => room.contact_id === targetUser.id);
-      if (existingRoom) {
-        // Varolan sohbeti seç
-        await handleRoomSelect({
-          id: existingRoom.contact_id,
-          name: existingRoom.contact_name,
-          avatar: existingRoom.contact_avatar,
-          is_online: existingRoom.is_online
-        });
+      // Kullanıcının kendi kendisiyle chat oluşturmasını engelle
+      if (targetUser.id === user.id) {
+        setError('Kendinizle sohbet oluşturamazsınız');
         return;
       }
       
-      // Yeni chat için direkt kullanıcıyı seç (backend'de otomatik oluşacak)
-      const newRoom = {
-        id: targetUser.id,
-        name: targetUser.name,
-        avatar: targetUser.avatar,
-        is_online: targetUser.is_online
-      };
-      
-      await handleRoomSelect(newRoom);
+      // Direct chat oluştur veya mevcut olanı getir
+      const response = await chatService.createOrGetDirectChat(accessToken, targetUser.id);
+      console.log('Backend response:', response);
+      if (response.success) {
+        const roomData = response.data;
+        console.log('Room data:', roomData);
+        
+        // room_id kontrolü
+        if (!roomData || !roomData.room_id) {
+          console.error('Backend\'den geçersiz room_id geldi:', roomData);
+          setError('Sohbet odası oluşturulamadı');
+          return;
+        }
+        
+        // Backend'den gelen room_id'yi id olarak dönüştür
+        const room = {
+          id: roomData.room_id,
+          type: 'direct',
+          name: targetUser.name,
+          avatar: targetUser.avatar,
+          other_user: targetUser
+        };
+        console.log('Created room object:', room);
+        
+        // Yeni room'u chat listesine ekle (eğer yoksa)
+        setChatRooms(prev => {
+          const exists = prev.find(r => r.id === room.id);
+          if (!exists) {
+            return [room, ...prev];
+          }
+          return prev;
+        });
+        
+        // Room'u seç
+        await handleRoomSelect(room);
+      }
       
     } catch (error) {
       console.error('Yeni chat başlatırken hata:', error);
@@ -118,34 +143,102 @@ const MessagingPanel = () => {
     console.log('Chat susturma özelliği gelecekte eklenecek');
   };
 
-  const togglePinChat = async (contactId) => {
-    console.log('Chat sabitleme özelliği gelecekte eklenecek');
+  const togglePinChat = async (roomId, isPinned) => {
+    try {
+      const response = await chatService.pinChat(accessToken, roomId, isPinned);
+      if (response.success) {
+        // Chat listesini güncelle
+        setChatRooms(prev => prev.map(room => 
+          room.id === roomId ? { ...room, is_pinned: isPinned } : room
+        ));
+        
+        // Chat listesini yeniden sırala (sabitlenmiş chatler üstte)
+        setChatRooms(prev => [...prev].sort((a, b) => {
+          // Önce sabitlenmiş chatler
+          if (a.is_pinned && !b.is_pinned) return -1;
+          if (!a.is_pinned && b.is_pinned) return 1;
+          
+          // Sonra son mesaj zamanına göre
+          const aTime = new Date(a.last_message_time || a.created_at);
+          const bTime = new Date(b.last_message_time || b.created_at);
+          return bTime - aTime;
+        }));
+        
+        console.log(isPinned ? 'Chat başa sabitlendi' : 'Chat sabitleme kaldırıldı');
+      }
+    } catch (error) {
+      console.error('Chat sabitleme hatası:', error);
+    }
+  };
+
+  const handlePinChat = async (roomId) => {
+    const room = chatRooms.find(r => r.id === roomId);
+    if (room) {
+      await togglePinChat(roomId, !room.is_pinned);
+    }
   };
 
   // Chat odalarını yükle
   const loadChatRooms = async () => {
     try {
       setLoading(true);
-      const response = await chatService.getConversations(accessToken);
+      const response = await chatService.getChatRooms(accessToken);
       if (response.success) {
-        const rooms = response.data || [];
+        const rawRooms = response.data || [];
+        // Backend response'unu frontend'in beklediği formata map et
+        const rooms = rawRooms.map(room => {
+          // Direct chat için diğer kullanıcının department bilgisini al
+          let department = room.description;
+          if (room.room_type === 'direct' && room.participants && room.participants.length > 0) {
+            const otherUser = room.participants.find(p => p.user_id !== user.id);
+            if (otherUser && otherUser.department) {
+              department = otherUser.department;
+            }
+          }
+          
+          return {
+            id: room.room_id,
+            name: room.display_name,
+            avatar: room.display_avatar,
+            type: room.room_type,
+            description: room.description,
+            department: department,
+            is_online: room.is_online || 0,
+            unread_count: room.unread_count || 0,
+            last_message: room.last_message,
+            last_message_time: room.last_message_time,
+            last_sender_name: room.last_sender_name,
+            is_pinned: room.is_pinned,
+            is_muted: room.is_muted,
+            is_archived: room.is_archived,
+            custom_name: room.custom_name,
+            created_at: room.room_created_at,
+            participants: room.participants || []
+          };
+        });
         setChatRooms(rooms);
         
-        // URL parametresinden userId kontrolü
-        const userId = searchParams.get('userId');
-        if (userId && !selectedRoom) {
-          const targetRoom = rooms.find(room => room.contact_id === parseInt(userId));
+        // URL parametresinden roomId kontrolü
+        const roomId = searchParams.get('roomId');
+        const userId = searchParams.get('userId'); // Backward compatibility
+        
+        if (roomId && !selectedRoom) {
+          const targetRoom = rooms.find(room => room.id === parseInt(roomId));
           if (targetRoom) {
-            // URL'den gelen kullanıcı için manual seçim olarak işaretle (mesajları okundu yap)
-            await handleRoomSelect({
-              id: targetRoom.contact_id,
-              name: targetRoom.contact_name,
-              avatar: targetRoom.contact_avatar,
-              is_online: targetRoom.is_online
-            });
+            await handleRoomSelect(targetRoom);
+            return;
+          }
+        } else if (userId && !selectedRoom) {
+          // Backward compatibility: userId ile direct chat bul
+          const targetRoom = rooms.find(room => 
+            room.type === 'direct' && 
+            room.participants?.some(p => p.user_id === parseInt(userId) && p.user_id !== user.id)
+          );
+          if (targetRoom) {
+            await handleRoomSelect(targetRoom);
             return;
           } else {
-            // Kullanıcı mevcut chat odalarında yoksa, kullanıcı listesinden bul ve yeni chat başlat
+            // Kullanıcı ile yeni chat başlat
             try {
               const usersResponse = await chatService.getAllUsers(accessToken);
               if (usersResponse.success) {
@@ -161,19 +254,11 @@ const MessagingPanel = () => {
           }
         }
         
-        // Seçili oda kontrolü (varsa koru, yoksa ilkini seç) - Otomatik seçim, okundu işaretleme
-        if (!selectedRoom && rooms.length > 0) {
-          const firstRoom = {
-            id: rooms[0].contact_id,
-            name: rooms[0].contact_name,
-            avatar: rooms[0].contact_avatar,
-            is_online: rooms[0].is_online
-          };
-          setSelectedRoom(firstRoom);
-          // Otomatik seçimde mesajları okundu işaretleme
-          await loadMessages(firstRoom.id, false);
-          // localStorage'a kaydet
-          localStorage.setItem('selectedRoomId', firstRoom.id.toString());
+        // Seçili oda kontrolü (varsa koru, yoksa ilkini seç)
+        if (!selectedRoom && rooms.length > 0 && rooms[0].id) {
+          setSelectedRoom(rooms[0]);
+          await loadMessages(rooms[0].id, false);
+          localStorage.setItem('selectedRoomId', rooms[0].id.toString());
         }
       }
     } catch (error) {
@@ -184,7 +269,7 @@ const MessagingPanel = () => {
     }
   };
 
-  // Seçili odanın mesajlarını yükle (sadece mesajları getir, okundu işaretleme)
+  // Seçili odanın mesajlarını yükle
   const loadMessages = async (roomId, markAsRead = false) => {
     if (!roomId) {
       setMessages([]);
@@ -194,17 +279,21 @@ const MessagingPanel = () => {
     
     try {
       setLoadingMessages(true);
-      // Önce mesajları temizle
       setMessages([]);
       
-      const response = await chatService.getMessages(accessToken, roomId, 1, 50, markAsRead);
+      const response = await chatService.getMessages(accessToken, roomId, 1, 50);
       if (response.success) {
         setMessages(response.data || []);
+        
+        // Mesajları okundu olarak işaretle
+        if (markAsRead) {
+          await chatService.markMessagesAsRead(accessToken, roomId);
+        }
+        
         // Chat açıldığında hemen en alta scroll et
         setTimeout(() => {
-          scrollToBottom(false); // Instant scroll, smooth değil
+          scrollToBottom(false);
         }, 50);
-        // Biraz daha bekleyip tekrar scroll et (DOM tam yüklendiğinde)
         setTimeout(() => {
           scrollToBottom(false);
         }, 200);
@@ -234,12 +323,10 @@ const MessagingPanel = () => {
     }
 
     const messageText = newMessage.trim();
-    const wasFirstMessage = !selectedRoom.last_message || selectedRoom.last_message === null;
     
     console.log('Mesaj gönderiliyor:', { 
       roomId: selectedRoom.id, 
-      message: messageText, 
-      wasFirstMessage 
+      message: messageText
     });
     
     setNewMessage('');
@@ -250,25 +337,9 @@ const MessagingPanel = () => {
       if (response.success) {
         console.log('Mesaj başarıyla gönderildi:', response.data);
         
-        // Eğer bu ilk mesajsa, seçili odayı ve chat listesini güncelle
-        if (wasFirstMessage) {
-          const updatedRoom = {
-            ...selectedRoom,
-            last_message: messageText,
-            last_message_time: new Date().toISOString()
-          };
-          
-          setSelectedRoom(updatedRoom);
-          
-          // Chat listesinde de güncelle
-          setChatRooms(prev => prev.map(room => 
-            room.id === selectedRoom.id ? updatedRoom : room
-          ));
-        }
-        
         // Mesaj gönderildikten sonra scroll'u en alta getir
         setTimeout(() => {
-          scrollToBottom(true); // Smooth scroll
+          scrollToBottom(true);
         }, 100);
         
       } else {
@@ -291,33 +362,28 @@ const MessagingPanel = () => {
 
   // Dosya yükle
   const handleFileUpload = async (file) => {
+    if (!selectedRoom || !file) {
+      return;
+    }
+
     setUploading(true);
     
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('message', file.name);
-
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/chat/${selectedRoom.id}/file`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error('Dosya gönderilemedi');
+      const response = await chatService.sendFileMessage(accessToken, selectedRoom.id, file);
+      
+      if (response.success) {
+        console.log('Dosya başarıyla gönderildi:', response.data);
+        
+        // Mesaj gönderildikten sonra scroll'u en alta getir
+        setTimeout(() => {
+          scrollToBottom(true);
+        }, 100);
+        
+      } else {
+        alert('Dosya gönderilemedi: ' + response.message);
       }
-
-      const result = await response.json();
-      console.log('Dosya gönderildi:', result);
-      
-      // Mesajları yeniden yükle
-      loadMessages(selectedRoom.id);
-      
     } catch (error) {
-      console.error('Dosya gönderme hatası:', error);
+      console.error('Dosya yükleme hatası:', error);
       alert('Dosya gönderilemedi: ' + error.message);
     } finally {
       setUploading(false);
@@ -328,32 +394,36 @@ const MessagingPanel = () => {
     }
   };
 
-  // Sohbeti başa sabitle
-  const handlePinChat = async (contactId) => {
-    try {
-      console.log('Sohbet sabitlendi:', contactId);
-      // Burada backend'e istek gönderilecek
-      // Şimdilik sadece console log
-      setShowChatMenu(false);
-    } catch (error) {
-      console.error('Sohbet sabitleme hatası:', error);
-    }
-  };
+
 
   // Tüm mesajları sil
-  const handleDeleteAllMessages = async (contactId) => {
+  const handleDeleteAllMessages = async (roomId) => {
     if (!window.confirm('Tüm mesajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
       return;
     }
 
     try {
-      console.log('Tüm mesajlar siliniyor:', contactId);
-      // Burada backend'e istek gönderilecek
-      // Şimdilik sadece console log ve mesajları temizle
-      setMessages([]);
-      setShowChatMenu(false);
+      const response = await chatService.deleteAllMessages(accessToken, roomId);
+      
+      if (response.success) {
+        // Chat listesinden bu chat'i kaldır
+        setChatRooms(prevRooms => prevRooms.filter(room => room.id !== roomId));
+        
+        // Eğer silinen chat seçili ise, seçimi temizle
+        if (selectedRoom?.id === roomId) {
+          setSelectedRoom(null);
+          setMessages([]);
+        }
+        
+        setShowChatMenu(false);
+        console.log('Chat başarıyla silindi');
+      } else {
+        console.error('Chat silme hatası:', response.message);
+        alert('Chat silinemedi: ' + response.message);
+      }
     } catch (error) {
-      console.error('Mesaj silme hatası:', error);
+      console.error('Chat silme hatası:', error);
+      alert('Chat silinemedi. Lütfen tekrar deneyin.');
     }
   };
 
@@ -428,6 +498,13 @@ const MessagingPanel = () => {
   // Odayı seç
   const handleRoomSelect = async (room) => {
     try {
+      // Room ID kontrolü
+      if (!room || !room.id) {
+        console.error('Geçersiz room objesi:', room);
+        setError('Geçersiz sohbet odası');
+        return;
+      }
+
       // Aynı oda seçilmişse işlem yapma
       if (selectedRoom && selectedRoom.id === room.id) {
         return;
@@ -489,18 +566,34 @@ const MessagingPanel = () => {
 
   // Mesaj zamanını formatla
   const formatMessageTime = (timestamp) => {
+    if (!timestamp) {
+      return '';
+    }
+    
+    // MySQL datetime formatı: "2024-01-15 14:30:00"
+    // Bu zaten Türkiye saati olarak kaydedildi, direkt kullan
     const date = new Date(timestamp);
+    
+    if (isNaN(date.getTime())) {
+      return '';
+    }
+    
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
     
     if (isToday) {
-      return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString('tr-TR', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        timeZone: 'Europe/Istanbul'
+      });
     } else {
       return date.toLocaleDateString('tr-TR', { 
         day: '2-digit', 
         month: '2-digit',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'Europe/Istanbul'
       });
     }
   };
@@ -566,10 +659,15 @@ const MessagingPanel = () => {
   };
 
   // Filtrelenmiş odalar
-  const filteredRooms = chatRooms.filter(room =>
-    room.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (room.last_message && room.last_message.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredRooms = chatRooms.filter(room => {
+    const roomName = room.name || '';
+    
+    const searchTermLower = searchTerm.toLowerCase();
+    const roomNameMatch = roomName && roomName.toLowerCase().includes(searchTermLower);
+    const messageMatch = room.last_message && room.last_message.toLowerCase().includes(searchTermLower);
+    
+    return roomNameMatch || messageMatch;
+  });
 
   // Component mount edildiğinde
   useEffect(() => {
@@ -589,8 +687,6 @@ const MessagingPanel = () => {
     };
   }, []);
 
-  // Seçili oda değiştiğinde - Manuel seçim handleRoomSelect ile yapılıyor, otomatik yeniden yükleme yok
-
   // WebSocket olayları dinleyicisi
   useEffect(() => {
     if (socket && isConnected) {
@@ -599,11 +695,8 @@ const MessagingPanel = () => {
         onMessage(async (message) => {
         console.log('Yeni mesaj alındı:', message);
         
-        // Sadece aktif sohbetteki mesajları göster
-        if (selectedRoom && 
-            (message.sender_id === selectedRoom.id || 
-             message.sender_id === user.id)) {
-          
+        // Aktif sohbetteki mesajları göster
+        if (selectedRoom && message.room_id === selectedRoom.id) {
           setMessages(prev => {
             // Aynı mesajın tekrar eklenmesini önle
             const exists = prev.find(m => m.id === message.id);
@@ -620,7 +713,7 @@ const MessagingPanel = () => {
           // Eğer mesaj başkasından geliyorsa ve aktif chat'teyse okundu olarak işaretle
           if (message.sender_id !== user.id) {
             try {
-              await chatService.markAsRead(accessToken, selectedRoom.id);
+              await chatService.markMessagesAsRead(accessToken, selectedRoom.id);
             } catch (error) {
               console.error('Mesajları okundu olarak işaretlerken hata:', error);
             }
@@ -630,43 +723,39 @@ const MessagingPanel = () => {
         // Eğer mesaj başkasından geliyorsa bildirim göster ve sayacı artır
         if (message.sender_id !== user.id) {
           // Sayfa aktif değilse veya farklı chat açıksa bildirim göster
-          if (document.hidden || !selectedRoom || selectedRoom.id !== message.sender_id) {
+          if (document.hidden || !selectedRoom || selectedRoom.id !== message.room_id) {
             showNotification(
               `${message.sender_name} - Yeni Mesaj`,
-              message.message,
+              message.content,
               message.sender_avatar
             );
           }
           
           // Eğer mesaj seçili olmayan bir chat'ten geliyorsa sayacı artır
-          if (!selectedRoom || selectedRoom.id !== message.sender_id) {
+          if (!selectedRoom || selectedRoom.id !== message.room_id) {
             setUnreadCounts(prev => ({
               ...prev,
-              [message.sender_id]: (prev[message.sender_id] || 0) + 1
+              [message.room_id]: (prev[message.room_id] || 0) + 1
             }));
           } else {
             // Aktif chat'te mesaj geldiğinde sayacı sıfırla
             setUnreadCounts(prev => ({
               ...prev,
-              [message.sender_id]: 0
+              [message.room_id]: 0
             }));
           }
         }
         
         // Chat rooms listesini güncelle (son mesaj için)
         setChatRooms(prev => prev.map(room => {
-          // Mesajın gönderildiği veya alındığı chat room'u güncelle
-          const isMyMessage = message.sender_id === user.id;
-          const otherUserId = isMyMessage ? message.receiver_id : message.sender_id;
-          
-          if (room.contact_id === otherUserId) {
+          if (room.id === message.room_id) {
             // Aktif chat'te mesaj geldiğinde unread_count'u sıfırla
-            const unreadCount = (selectedRoom && selectedRoom.id === otherUserId && message.sender_id !== user.id) ? 0 : room.unread_count;
+            const unreadCount = (selectedRoom && selectedRoom.id === message.room_id && message.sender_id !== user.id) ? 0 : room.unread_count;
             
             return {
               ...room,
-              last_message: message.message,
-              last_message_time: message.created_at,
+              last_message: message.content,
+              last_message_at: message.created_at,
               unread_count: unreadCount
             };
           }
@@ -681,125 +770,111 @@ const MessagingPanel = () => {
           loadChatRooms(); // Chat listesini yeniden yükle
         }) : () => {};
 
-      // Mesaj okundu dinleyicisi
-      const unsubscribeMessagesRead = socket.on ? 
-        (() => {
-          const handler = (data) => {
-            console.log('Mesajlar okundu:', data);
-            
-            // Mesajları okundu olarak işaretle
-            setMessages(prev => prev.map(msg => 
-              data.messageIds.includes(msg.id) 
-                ? { ...msg, is_read_by_me: true }
-                : msg
-            ));
-            
-            // Chat rooms'da unread count'ları güncelle
-            setChatRooms(prev => prev.map(room => 
-              room.contact_id === data.readerId 
-                ? { ...room, unread_count: Math.max(0, (room.unread_count || 0) - data.messageIds.length) }
-                : room
-            ));
-            
-            // Chat listesini güncelle
-            loadChatRooms();
-          };
-          
-          socket.on('messages-read', handler);
-          return () => socket.off('messages-read', handler);
-        })() 
-        : () => {};
-
-      // Online/Offline durumu dinleyicisi
-      const unsubscribeUserOnline = socket.on ? 
-        (() => {
-          const onlineHandler = (data) => {
-            console.log('Kullanıcı online:', data);
-            setChatRooms(prev => prev.map(room => 
-              room.contact_id === data.userId 
-                ? { ...room, is_online: true }
-                : room
-            ));
-          };
-          
-          const offlineHandler = (data) => {
-            console.log('Kullanıcı offline:', data);
-            setChatRooms(prev => prev.map(room => 
-              room.contact_id === data.userId 
-                ? { ...room, is_online: false }
-                : room
-            ));
-          };
-          
-          socket.on('user-online', onlineHandler);
-          socket.on('user-offline', offlineHandler);
-          
-          return () => {
-            socket.off('user-online', onlineHandler);
-            socket.off('user-offline', offlineHandler);
-          };
-        })() 
-        : () => {};
-
       return () => {
         if (typeof unsubscribeMessage === 'function') unsubscribeMessage();
         if (typeof unsubscribeChatList === 'function') unsubscribeChatList();
-        if (typeof unsubscribeMessagesRead === 'function') unsubscribeMessagesRead();
-        if (typeof unsubscribeUserOnline === 'function') unsubscribeUserOnline();
       };
     }
   }, [socket, isConnected, onMessage, onChatListUpdate, selectedRoom, user.id]);
-
-
 
   // Kullanıcı online/offline durumu dinleyicisi
   useEffect(() => {
     if (socket && isConnected) {
       const handleUserOnline = (data) => {
-        console.log('Kullanıcı online oldu:', data);
+        console.log('🟢 Kullanıcı online oldu (MessagingPanel):', data);
         const userId = parseInt(data.userId);
-        setChatRooms(prev => prev.map(room => 
-          room.id === userId ? { ...room, is_online: true } : room
+        
+        // Available users listesini güncelle
+        setAvailableUsers(prev => prev.map(user =>
+          user.id === userId ? { ...user, is_online: true, last_seen: data.last_seen } : user
         ));
         
-        // Seçili oda güncellemesi
-        if (selectedRoom && selectedRoom.id === userId) {
-          setSelectedRoom(prev => ({ ...prev, is_online: true }));
-        }
-
-        // Available users listesini de güncelle
-        setAvailableUsers(prev => prev.map(user =>
-          user.id === userId ? { ...user, is_online: true } : user
-        ));
+        // Chat rooms'taki participants bilgisini güncelle
+        setChatRooms(prev => prev.map(room => {
+          if (room.participants && room.participants.length > 0) {
+            const updatedParticipants = room.participants.map(participant =>
+              participant.user_id === userId ? { ...participant, is_online: true, last_seen: data.last_seen } : participant
+            );
+            
+            // Direct chat ise ve bu kullanıcı diğer participant ise room'un is_online durumunu güncelle
+            let updatedRoom = { ...room, participants: updatedParticipants };
+            if (room.type === 'direct') {
+              const otherParticipant = room.participants.find(p => p.user_id !== user.id);
+              if (otherParticipant && otherParticipant.user_id === userId) {
+                updatedRoom.is_online = true;
+              }
+            }
+            
+            return updatedRoom;
+          }
+          return room;
+        }));
+        
+        // Seçili odayı da güncelle
+        setSelectedRoom(prev => {
+          if (prev && prev.participants && prev.participants.length > 0) {
+            const updatedParticipants = prev.participants.map(participant =>
+              participant.user_id === userId ? { ...participant, is_online: true, last_seen: data.last_seen } : participant
+            );
+            return { ...prev, participants: updatedParticipants };
+          }
+          return prev;
+        });
       };
 
       const handleUserOffline = (data) => {
-        console.log('Kullanıcı offline oldu:', data);
+        console.log('🔴 Kullanıcı offline oldu (MessagingPanel):', data);
         const userId = parseInt(data.userId);
-        setChatRooms(prev => prev.map(room => 
-          room.id === userId ? { ...room, is_online: false, last_seen: data.last_seen } : room
-        ));
         
-        // Seçili oda güncellemesi
-        if (selectedRoom && selectedRoom.id === userId) {
-          setSelectedRoom(prev => ({ ...prev, is_online: false, last_seen: data.last_seen }));
-        }
-
-        // Available users listesini de güncelle
+        // Available users listesini güncelle
         setAvailableUsers(prev => prev.map(user =>
           user.id === userId ? { ...user, is_online: false, last_seen: data.last_seen } : user
         ));
+        
+        // Chat rooms'taki participants bilgisini güncelle
+        setChatRooms(prev => prev.map(room => {
+          if (room.participants && room.participants.length > 0) {
+            const updatedParticipants = room.participants.map(participant =>
+              participant.user_id === userId ? { ...participant, is_online: false, last_seen: data.last_seen } : participant
+            );
+            
+            // Direct chat ise ve bu kullanıcı diğer participant ise room'un is_online durumunu güncelle
+            let updatedRoom = { ...room, participants: updatedParticipants };
+            if (room.type === 'direct') {
+              const otherParticipant = room.participants.find(p => p.user_id !== user.id);
+              if (otherParticipant && otherParticipant.user_id === userId) {
+                updatedRoom.is_online = false;
+              }
+            }
+            
+            return updatedRoom;
+          }
+          return room;
+        }));
+        
+        // Seçili odayı da güncelle
+        setSelectedRoom(prev => {
+          if (prev && prev.participants && prev.participants.length > 0) {
+            const updatedParticipants = prev.participants.map(participant =>
+              participant.user_id === userId ? { ...participant, is_online: false, last_seen: data.last_seen } : participant
+            );
+            return { ...prev, participants: updatedParticipants };
+          }
+          return prev;
+        });
       };
 
+      console.log('🔗 Socket event listener\'ları kuruluyor...');
       socket.on('user-online', handleUserOnline);
       socket.on('user-offline', handleUserOffline);
 
       return () => {
+        console.log('🔌 Socket event listener\'ları kaldırılıyor...');
         socket.off('user-online', handleUserOnline);
         socket.off('user-offline', handleUserOffline);
       };
     }
-  }, [socket, isConnected, selectedRoom]);
+  }, [socket, isConnected]);
 
   // Mesajlar değiştiğinde en alta kaydır
   useEffect(() => {
@@ -826,7 +901,7 @@ const MessagingPanel = () => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       // User dropdown'u da kapat
-      if (!event.target.closest('.add-user-btn') && !event.target.closest('.user-dropdown-menu')) {
+      if (!event.target.closest('.user-search-container')) {
         setShowUserDropdown(false);
       }
       
@@ -839,6 +914,38 @@ const MessagingPanel = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  // Seçili oda değiştiğinde mesajları okundu olarak işaretle
+  useEffect(() => {
+    const markMessagesAsReadDelayed = async () => {
+      if (selectedRoom && selectedRoom.id && accessToken && messages.length > 0) {
+        try {
+          // Biraz bekle ki mesajlar yüklensin
+          setTimeout(async () => {
+            await chatService.markMessagesAsRead(accessToken, selectedRoom.id);
+            console.log('Mesajlar okundu olarak işaretlendi:', selectedRoom.id);
+            
+            // Unread count'u sıfırla
+            setUnreadCounts(prev => ({
+              ...prev,
+              [selectedRoom.id]: 0
+            }));
+            
+            // Chat rooms listesindeki unread count'u da güncelle
+            setChatRooms(prev => prev.map(room => 
+              room.id === selectedRoom.id 
+                ? { ...room, unread_count: 0 }
+                : room
+            ));
+          }, 500);
+        } catch (error) {
+          console.error('Mesajları okundu işaretlerken hata:', error);
+        }
+      }
+    };
+
+    markMessagesAsReadDelayed();
+  }, [selectedRoom?.id, messages.length, accessToken]);
 
   return (
     <div className="messaging-panel-page">
@@ -861,149 +968,70 @@ const MessagingPanel = () => {
               <div className="messaging-contacts-panel">
                 <div className="messaging-contacts-header">
                   <div className="messaging-header-top">
-                    <div className="messaging-search-container">
-                      <input 
-                        type="text" 
-                        placeholder="Kullanıcı ara veya mesaj ara" 
-                        className="messaging-search-input"
-                        value={searchTerm}
-                        onChange={(e) => {
-                          setSearchTerm(e.target.value);
-                          console.log('Arama terimi:', e.target.value);
-                        }}
-                        onFocus={() => {
-                          if (searchTerm.length > 0) {
-                            setShowUserDropdown(true);
-                          }
-                        }}
-                      />
+                    <div className="user-search-container">
+                      <div className="search-input-wrapper">
+                        <input 
+                          type="text" 
+                          placeholder="Kullanıcı ara..." 
+                          className="user-search-input"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          onFocus={() => setShowUserDropdown(true)}
+                          onBlur={() => {
+                            setTimeout(() => setShowUserDropdown(false), 200);
+                          }}
+                        />
+                        <div className="search-icon">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </div>
                       
-{searchTerm.length > 0 && (
-                        <div className="messaging-search-dropdown" style={{
-                          position: 'absolute',
-                          top: '100%',
-                          left: '0',
-                          right: '0',
-                          background: 'white',
-                          border: '1px solid #e0e0e0',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                          zIndex: 9999,
-                          marginTop: '4px',
-                          maxHeight: '300px',
-                          overflowY: 'auto'
-                        }}>
-                          {/* Kullanıcı Arama Sonuçları */}
-                          {availableUsers.filter(user => 
-                            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            user.email.toLowerCase().includes(searchTerm.toLowerCase())
-                          ).length > 0 && (
-                            <>
-                              <div className="dropdown-header">Kullanıcılar</div>
-                              {availableUsers
-                                .filter(user => 
-                                  user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                  user.email.toLowerCase().includes(searchTerm.toLowerCase())
-                                )
-                                .map(user => (
-                                  <div
-                                    key={user.id}
-                                    onClick={() => {
-                                      console.log('Kullanıcı seçildi:', user);
-                                      startNewChat(user);
-                                      setSearchTerm('');
-                                    }}
-                                    className="user-dropdown-item"
-                                  >
-                                    <div className="user-dropdown-avatar">
-                                      <img 
-                                        src={user.avatar || "/assets/images/logo.png"} 
-                                        alt={user.name}
-                                        onError={(e) => {
-                                          e.target.src = "/assets/images/logo.png";
-                                        }}
-                                      />
-                                      <div className={`user-online-indicator ${user.is_online ? 'online' : 'offline'}`}></div>
-                                    </div>
-                                    <div className="user-dropdown-info">
-                                      <div className="user-dropdown-name">{user.name}</div>
-                                      <div className="user-dropdown-email">{user.department || user.email}</div>
-                                    </div>
-                                  </div>
-                                ))
-                              }
-                            </>
-                          )}
-                          
-                          {/* Mesaj Arama Sonuçları */}
-                          {chatRooms.filter(room => 
-                            room.last_message && 
-                            room.last_message.toLowerCase().includes(searchTerm.toLowerCase())
-                          ).length > 0 && (
-                            <>
-                              <div className="dropdown-header">Mesajlar</div>
-                              {chatRooms
-                                .filter(room => 
-                                  room.last_message && 
-                                  room.last_message.toLowerCase().includes(searchTerm.toLowerCase())
-                                )
-                                .map(room => (
-                                  <div
-                                    key={`message-${room.contact_id}`}
-                                    onClick={() => {
-                                      console.log('Mesaj seçildi:', room);
-                                      const roomData = {
-                                        id: room.contact_id,
-                                        name: room.contact_name,
-                                        avatar: room.contact_avatar,
-                                        is_online: room.is_online
-                                      };
-                                      handleRoomSelect(roomData);
-                                      setSearchTerm('');
-                                    }}
-                                    className="user-dropdown-item"
-                                  >
-                                    <div className="user-dropdown-avatar">
-                                      <img 
-                                        src={room.contact_avatar || "/assets/images/logo.png"} 
-                                        alt={room.contact_name}
-                                        onError={(e) => {
-                                          e.target.src = "/assets/images/logo.png";
-                                        }}
-                                      />
-                                    </div>
-                                    <div className="user-dropdown-info">
-                                      <div className="user-dropdown-name">{room.contact_name}</div>
-                                      <div className="user-dropdown-email" style={{
-                                        color: '#666',
-                                        fontSize: '12px',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                      }}>
-                                        {room.last_message.length > 50 
-                                          ? room.last_message.substring(0, 50) + '...' 
-                                          : room.last_message
-                                        }
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))
-                              }
-                            </>
-                          )}
-                          
-                          {/* Sonuç Bulunamadı */}
-                          {availableUsers.filter(user => 
-                            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            user.email.toLowerCase().includes(searchTerm.toLowerCase())
-                          ).length === 0 && 
-                          chatRooms.filter(room => 
-                            room.last_message && 
-                            room.last_message.toLowerCase().includes(searchTerm.toLowerCase())
-                          ).length === 0 && (
-                            <div className="dropdown-item disabled">Sonuç bulunamadı</div>
-                          )}
+                      {showUserDropdown && (
+                        <div className="user-search-dropdown">
+                          {(() => {
+                            const filteredUsers = availableUsers.filter(availableUser => 
+                              availableUser.id !== user.id && ( // Kendi kendisini hariç tut
+                                availableUser.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                availableUser.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                availableUser.department?.toLowerCase().includes(searchTerm.toLowerCase())
+                              )
+                            );
+                            
+                            if (filteredUsers.length === 0) {
+                              return (
+                                <div key="no-results" className="dropdown-no-results">
+                                  Kullanıcı bulunamadı
+                                </div>
+                              );
+                            }
+                            
+                            return filteredUsers.slice(0, 8).map((user, index) => (
+                              <div
+                                key={`user-${user.id || `temp-${index}`}`}
+                                className="user-dropdown-item"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  startNewChat(user);
+                                  setSearchTerm('');
+                                  setShowUserDropdown(false);
+                                }}
+                              >
+                                <div className="user-avatar">
+                                  <img 
+                                    src={user.avatar ? getAvatarUrl(user.avatar) : "/assets/images/logo.png"} 
+                                    alt={user.name}
+                                    onError={(e) => e.target.src = "/assets/images/logo.png"}
+                                  />
+                                </div>
+                                <div className="user-info">
+                                  <div className="user-name">{user.name}</div>
+                                  <div className="user-detail">{user.department || user.email}</div>
+                                </div>
+                              </div>
+                            ));
+                          })()}
                         </div>
                       )}
                     </div>
@@ -1023,23 +1051,16 @@ const MessagingPanel = () => {
                     </div>
                   )}
                   {filteredRooms.map((room, index) => {
-                    const roomData = {
-                      id: room.contact_id,
-                      name: room.contact_name,
-                      avatar: room.contact_avatar,
-                      is_online: room.is_online
-                    };
-                    
                     return (
                       <div 
-                        key={`room-${room.contact_id}-${index}`} 
-                        className={`messaging-contact-item ${selectedRoom?.id === room.contact_id ? 'active' : ''} ${room.is_online ? 'online' : 'offline'}`}
-                        onClick={() => handleRoomSelect(roomData)}
+                        key={`room-${room.id}-${index}`} 
+                        className={`messaging-contact-item ${selectedRoom?.id === room.id ? 'active' : ''} ${room.is_online ? 'online' : 'offline'}`}
+                        onClick={() => handleRoomSelect(room)}
                       >
                         <div className="messaging-contact-avatar">
                           <img 
-                            src={room.contact_avatar || "/assets/images/logo.png"} 
-                            alt={room.contact_name}
+                            src={room.avatar ? getAvatarUrl(room.avatar) : "/assets/images/logo.png"} 
+                            alt={room.name}
                             onError={(e) => {
                               e.target.src = "/assets/images/logo.png";
                             }}
@@ -1048,10 +1069,22 @@ const MessagingPanel = () => {
                         </div>
                         <div className="messaging-contact-info">
                           <div className="messaging-contact-name">
-                            {room.contact_name}
+                            {room.name}
+                            {room.is_pinned && (
+                              <svg 
+                                width="12" 
+                                height="12" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                className="pin-icon"
+                                style={{ marginLeft: '5px', color: '#007bff' }}
+                              >
+                                <path d="M16 4V2C16 1.45 15.55 1 15 1H9C8.45 1 8 1.45 8 2V4H7C6.45 4 6 4.45 6 5S6.45 6 7 6H8V12L6 14V15H10V22H14V15H18V14L16 12V6H17C17.55 6 18 5.55 18 5S17.55 4 17 4H16Z" fill="currentColor"/>
+                              </svg>
+                            )}
                           </div>
                           <div className="messaging-contact-description">
-                            {room.department || 'Bilgi yok'}
+                            {room.department || room.description || 'Kullanıcı'}
                           </div>
                           {room.last_message_time && (
                             <div className="messaging-contact-time">
@@ -1105,28 +1138,43 @@ const MessagingPanel = () => {
                   <div className="chat-contact-info">
                     <div className="chat-avatar">
                       <img 
-                            src={selectedRoom.avatar || "/assets/images/logo.png"} 
+                            src={selectedRoom.avatar ? getAvatarUrl(selectedRoom.avatar) : "/assets/images/logo.png"} 
                             alt={selectedRoom.name}
                         onError={(e) => {
                           e.target.src = "/assets/images/logo.png";
                         }}
                       />
-                      <div className={`online-indicator ${selectedRoom.is_online ? 'active' : ''}`}></div>
+                      <div className={`online-indicator ${
+                        selectedRoom.type === 'direct' 
+                          ? selectedRoom.participants?.find(p => p.user_id !== user.id)?.is_online ? 'active' : ''
+                          : ''
+                      }`}></div>
                     </div>
                     <div className="chat-contact-details">
-                          <div className="chat-contact-name">{selectedRoom.name}</div>
-                          <div className="chat-contact-description">
-                            {selectedRoom.is_online ? (
-                              <span style={{ color: '#28a745', fontWeight: '500' }}>Çevrimiçi</span>
-                            ) : (
-                              <span style={{ color: '#6c757d' }}>
-                                {selectedRoom.last_seen ? 
-                                  `Son görülme: ${formatMessageTime(selectedRoom.last_seen)}` : 
-                                  'Çevrimdışı'
-                                }
-                              </span>
-                            )}
-                          </div>
+                      <div className="chat-contact-name">
+                        {selectedRoom.type === 'direct' 
+                          ? selectedRoom.participants?.find(p => p.user_id !== user.id)?.user_name || 'Bilinmeyen'
+                          : selectedRoom.name
+                        }
+                      </div>
+                      <div className="chat-contact-description">
+                        {selectedRoom.type === 'direct' ? (
+                          selectedRoom.participants?.find(p => p.user_id !== user.id)?.is_online ? (
+                            <span style={{ color: '#28a745', fontWeight: '500' }}>Çevrimiçi</span>
+                          ) : (
+                            <span style={{ color: '#6c757d' }}>
+                              {selectedRoom.participants?.find(p => p.user_id !== user.id)?.last_seen ? 
+                                `Son görülme: ${formatMessageTime(selectedRoom.participants.find(p => p.user_id !== user.id).last_seen)}` : 
+                                'Çevrimdışı'
+                              }
+                            </span>
+                          )
+                        ) : (
+                          <span style={{ color: '#6c757d' }}>
+                            {selectedRoom.participants?.length || 0} üye
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="chat-actions">
@@ -1150,7 +1198,7 @@ const MessagingPanel = () => {
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                             <path d="M16 4V2C16 1.45 15.55 1 15 1H9C8.45 1 8 1.45 8 2V4H7C6.45 4 6 4.45 6 5S6.45 6 7 6H8V12L6 14V15H10V22H14V15H18V14L16 12V6H17C17.55 6 18 5.55 18 5S17.55 4 17 4H16Z" fill="currentColor"/>
                           </svg>
-                          Başa Sabitle
+                          {selectedRoom.is_pinned ? 'Sabitlemeyi Kaldır' : 'Başa Sabitle'}
                         </Dropdown.Item>
                         
                         <Dropdown.Item 
@@ -1200,8 +1248,8 @@ const MessagingPanel = () => {
                                     <div style={{ display: 'none' }}>
                                       📷 {message.file_name}
                                     </div>
-                                    {message.message && message.message !== message.file_name && (
-                                      <div className="message-text">{message.message}</div>
+                                    {message.content && message.content !== message.file_name && (
+                                      <div className="message-text">{message.content}</div>
                                     )}
                                   </div>
                                 ) : message.message_type === 'file' && message.file_url ? (
@@ -1209,31 +1257,29 @@ const MessagingPanel = () => {
                                     <div className="file-info">
                                       <div className="file-icon">
                                         {message.file_type?.includes('pdf') ? '📄' :
-                                         message.file_type?.includes('excel') || message.file_type?.includes('spreadsheet') ? '📊' :
+                                         message.file_type?.includes('excel') || message.file_type?.includes('sheet') ? '📊' :
                                          message.file_type?.includes('word') || message.file_type?.includes('document') ? '📝' :
+                                         message.file_type?.includes('powerpoint') || message.file_type?.includes('presentation') ? '📽️' :
                                          message.file_type?.includes('zip') || message.file_type?.includes('rar') ? '🗜️' :
                                          '📎'}
                                       </div>
                                       <div className="file-details">
                                         <div className="file-name">{message.file_name}</div>
-                                        <div className="file-size">
-                                          {message.file_size ? (message.file_size / 1024 / 1024).toFixed(2) + ' MB' : ''}
-                                        </div>
+                                        <div className="file-size">{message.file_size || 'Bilinmeyen boyut'}</div>
                                       </div>
                                       <button 
-                                        className="file-download"
+                                        className="file-download-btn"
                                         onClick={() => downloadFile(getFileUrl(message.file_url), message.file_name)}
-                                        title="Dosyayı İndir"
                                       >
                                         ⬇️
                                       </button>
                                     </div>
-                                    {message.message && message.message !== message.file_name && (
-                                      <div className="message-text">{message.message}</div>
+                                    {message.content && message.content !== message.file_name && (
+                                      <div className="message-text">{message.content}</div>
                                     )}
                                   </div>
                                 ) : (
-                                  <div className="message-text">{message.message}</div>
+                                  <div className="message-text">{message.content}</div>
                                 )}
                                 
                                 <div className="message-time">

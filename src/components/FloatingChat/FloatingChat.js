@@ -1,22 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 import chatService from '../../services/chatService';
-import axios from 'axios';
+import { getAvatarUrl } from '../../services/profileService';
 import './FloatingChat.css';
 
 const FloatingChat = () => {
   const navigate = useNavigate();
   const { user, accessToken } = useAuth();
-  const { socket, isConnected } = useSocket();
-  const [isOnline, setIsOnline] = useState(false);
+  const { socket, isConnected, onlineUsers } = useSocket();
   const [chatRooms, setChatRooms] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
+
+  // Component mount olduğunda unread count'ları temizle
+  useEffect(() => {
+    setUnreadCounts({});
+  }, []);
 
   // Messaging paneline git
   const handleMessagingClick = () => {
     navigate('/messaging-panel');
+  };
+
+  // Belirli bir chat ile messaging paneline git
+  const handleChatClick = (roomId) => {
+    navigate(`/messaging-panel?roomId=${roomId}`);
   };
 
   // Chat odalarını yükle
@@ -24,93 +33,79 @@ const FloatingChat = () => {
     if (!user || !accessToken) return;
     
     try {
-      const response = await chatService.getConversations(accessToken);
+      const response = await chatService.getChatRooms(accessToken);
       
       if (response.success) {
+        // Backend'den gelen veriyi frontend formatına çevir
+        const mappedRooms = response.data.map(room => ({
+          ...room,
+          id: room.room_id, // Backend room_id'yi frontend id'ye map et
+          name: room.display_name,
+          avatar: room.display_avatar,
+          last_message_at: room.last_message_time
+        }));
+        
         // Son mesaj tarihine göre sırala
-        const sortedRooms = response.data.sort((a, b) => {
-          return new Date(b.last_message_time || 0) - new Date(a.last_message_time || 0);
+        const sortedRooms = mappedRooms.sort((a, b) => {
+          return new Date(b.last_message_at || 0) - new Date(a.last_message_at || 0);
         });
         
         // En fazla 5 oda göster
         const topRooms = sortedRooms.slice(0, 5);
         setChatRooms(topRooms);
         
-        // Unread count'ları güncelle
-        updateUnreadCounts(response.data);
+        // Unread count'ları güncelle - SADECE gösterilen odalar için
+        const counts = {};
+        topRooms.forEach(room => {
+          if (room.unread_count && room.unread_count > 0) {
+            counts[room.id] = room.unread_count;
+          }
+        });
+        setUnreadCounts(counts);
       }
     } catch (error) {
       console.error('Chat odaları yüklenirken hata:', error);
     }
   };
 
-  // Okunmamış mesaj sayılarını güncelle (getConversations'dan alıyoruz artık)
-  const updateUnreadCounts = (rooms) => {
-    const counts = {};
-    rooms.forEach(room => {
-      if (room.unread_count > 0) {
-        counts[room.contact_id] = room.unread_count;
+  // Chat room'un diğer katılımcısının online durumunu kontrol et
+  const isRoomOnline = (room) => {
+    // Backend'den gelen is_online bilgisini kullan
+    return room.is_online || false;
+  };
+
+  // Chat room'un görünen adını al
+  const getRoomDisplayName = (room) => {
+    // Backend'den gelen display_name'i kullan
+    return room.name || room.display_name || 'Bilinmeyen Kullanıcı';
+  };
+
+  // Chat room'un avatar'ını al
+  const getRoomAvatar = (room) => {
+    // Backend'den gelen display_avatar'ı kullan
+    if (room.avatar) {
+      // Eğer avatar tam URL değilse profileService'deki getAvatarUrl kullan
+      if (room.avatar.startsWith('http')) {
+        return room.avatar;
+      } else {
+        return getAvatarUrl(room.avatar);
       }
-    });
-    setUnreadCounts(counts);
+    }
+    
+    // Fallback olarak default avatar
+    return "/assets/images/logo.png";
   };
 
 
 
-  // Başlangıçta gerçek online durumunu kontrol et
+  // Başlangıçta chat odalarını yükle
   useEffect(() => {
-    const checkOnlineStatus = async () => {
-      if (user) {
-        try {
-          const token = localStorage.getItem('token');
-          const response = await axios.get(`${process.env.REACT_APP_API_URL}/users/online-status`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (response.data.success) {
-            setIsOnline(response.data.data.isOnline);
-          }
-        } catch (error) {
-          console.error('Online durum kontrolü hatası:', error);
-          setIsOnline(false);
-        }
-      }
-    };
-    
-    checkOnlineStatus();
     loadChatRooms();
   }, [user, accessToken]);
 
   // Socket event listener'ları
   useEffect(() => {
     if (socket && isConnected && user) {
-      // Kullanıcı durumu değişikliklerini dinle
-      const handleUserOnline = (data) => {
-        const userId = parseInt(data.userId);
-        if (userId === user.id) {
-          setIsOnline(true);
-        }
-        
-        // Chat rooms'da online durumu güncelle
-        setChatRooms(prev => prev.map(room => 
-          room.contact_id === userId ? { ...room, is_online: true } : room
-        ));
-      };
-      
-      const handleUserOffline = (data) => {
-        const userId = parseInt(data.userId);
-        if (userId === user.id) {
-          setIsOnline(false);
-        }
-        
-        // Chat rooms'da offline durumu güncelle
-        setChatRooms(prev => prev.map(room => 
-          room.contact_id === userId ? { ...room, is_online: false, last_seen: data.last_seen } : room
-        ));
-      };
-      
       // Chat açıldığında unread count'u sıfırla ve mesajları okundu olarak işaretle
       const handleChatOpened = async (event) => {
         const { roomId } = event.detail;
@@ -121,7 +116,7 @@ const FloatingChat = () => {
         
         // Mesajları okundu olarak işaretle
         try {
-          await chatService.markAsRead(roomId);
+          await chatService.markMessagesAsRead(accessToken, roomId);
         } catch (error) {
           console.error('Mesajları okundu olarak işaretlerken hata:', error);
         }
@@ -137,91 +132,119 @@ const FloatingChat = () => {
       const handleNewMessage = async (data) => {
         console.log('Yeni mesaj alındı:', data);
         
-        // Mesaj verisinden sender_id'yi al
-        const senderId = data.sender_id || data.senderId;
+        const { room_id, sender_id } = data;
         
         setChatRooms(prev => {
           const updatedRooms = prev.map(room => {
-            if (room.id === senderId) {
-              return { ...room, last_message_time: new Date().toISOString() };
+            if (room.id === room_id) {
+              return { 
+                ...room, 
+                last_message_at: new Date().toISOString(),
+                last_message: data.content || data.message
+              };
             }
             return room;
           });
           
-          // Yeniden sırala: Pin edilenler önce, sonra son mesaj tarihine göre
+          // Yeniden sırala: Son mesaj tarihine göre
           return updatedRooms.sort((a, b) => {
-            if (a.is_pinned && !b.is_pinned) return -1;
-            if (!a.is_pinned && b.is_pinned) return 1;
-            return new Date(b.last_message_time || 0) - new Date(a.last_message_time || 0);
+            return new Date(b.last_message_at || 0) - new Date(a.last_message_at || 0);
           });
         });
         
-        // Eğer mesaj başkasından geliyorsa
-        if (senderId && senderId !== user.id) {
-          // MessagingPanel'de aktif chat kontrol et
-          const currentPath = window.location.pathname;
-          const isMessagingPanelOpen = currentPath === '/messaging-panel';
+        // Eğer mesaj başkasından geliyorsa unread count'u artır
+        if (sender_id && sender_id !== user.id) {
+          // Sadece gösterilen odalar için unread count güncelle
+          const isRoomDisplayed = chatRooms.some(room => room.id === room_id);
           
-          // Eğer MessagingPanel açık ve bu chat aktifse mesajları okundu olarak işaretle
-          if (isMessagingPanelOpen) {
-            // Aktif chat'i localStorage'dan kontrol et
-            const selectedRoomId = localStorage.getItem('selectedRoomId');
+          if (isRoomDisplayed) {
+            // MessagingPanel'de aktif chat kontrol et
+            const currentPath = window.location.pathname;
+            const isMessagingPanelOpen = currentPath === '/messaging-panel';
             
-            // Sadece aktif chat'teki mesajları okundu işaretle
-            if (selectedRoomId && parseInt(selectedRoomId) === senderId) {
-              try {
-                console.log('Aktif chat mesajları okundu olarak işaretleniyor:', senderId);
-                await chatService.markAsRead(senderId);
-                // Okunmamış sayacı sıfırla
+            // Eğer MessagingPanel açık ve bu chat aktifse mesajları okundu olarak işaretle
+            if (isMessagingPanelOpen) {
+              // Aktif chat'i localStorage'dan kontrol et
+              const selectedRoomId = localStorage.getItem('selectedRoomId');
+              
+              // Sadece aktif chat'teki mesajları okundu işaretle
+              if (selectedRoomId && parseInt(selectedRoomId) === room_id) {
+                try {
+                  console.log('Aktif chat mesajları okundu olarak işaretleniyor:', room_id);
+                  await chatService.markMessagesAsRead(accessToken, room_id);
+                  // Okunmamış sayacı sıfırla
+                  setUnreadCounts(prev => ({
+                    ...prev,
+                    [room_id]: 0
+                  }));
+                } catch (error) {
+                  console.error('Mesajları okundu olarak işaretlerken hata:', error);
+                  // Hata durumunda sayacı artır
+                  console.log('Okunmamış sayacı artırılıyor:', room_id);
+                  setUnreadCounts(prev => ({
+                    ...prev,
+                    [room_id]: (prev[room_id] || 0) + 1
+                  }));
+                }
+              } else {
+                // Aktif chat değilse sayacı artır
+                console.log('Aktif chat değil, okunmamış sayacı artırılıyor:', room_id);
                 setUnreadCounts(prev => ({
                   ...prev,
-                  [senderId]: 0
-                }));
-              } catch (error) {
-                console.error('Mesajları okundu olarak işaretlerken hata:', error);
-                // Hata durumunda sayacı artır
-                console.log('Okunmamış sayacı artırılıyor:', senderId);
-                setUnreadCounts(prev => ({
-                  ...prev,
-                  [senderId]: (prev[senderId] || 0) + 1
+                  [room_id]: (prev[room_id] || 0) + 1
                 }));
               }
             } else {
-              // Aktif chat değilse sayacı artır
-              console.log('Aktif chat değil, okunmamış sayacı artırılıyor:', senderId);
+              // MessagingPanel açık değilse sayacı artır
+              console.log('MessagingPanel açık değil, okunmamış sayacı artırılıyor:', room_id);
               setUnreadCounts(prev => ({
                 ...prev,
-                [senderId]: (prev[senderId] || 0) + 1
+                [room_id]: (prev[room_id] || 0) + 1
               }));
             }
-          } else {
-            // MessagingPanel açık değilse sayacı artır
-            console.log('MessagingPanel açık değil, okunmamış sayacı artırılıyor:', senderId);
-            setUnreadCounts(prev => ({
-              ...prev,
-              [senderId]: (prev[senderId] || 0) + 1
-            }));
           }
         }
       };
+
+      // Mesaj okundu durumu güncellemesi
+      const handleMessageRead = (data) => {
+        const { room_id, user_id } = data;
+        
+        // Sadece gösterilen odalar için unread count'u sıfırla
+        const isRoomDisplayed = chatRooms.some(room => room.id === room_id);
+        
+        if (isRoomDisplayed) {
+          setUnreadCounts(prev => ({
+            ...prev,
+            [room_id]: 0
+          }));
+        }
+      };
+
+      // Room güncelleme
+      const handleRoomUpdate = (data) => {
+        setChatRooms(prev => prev.map(room => 
+          room.id === data.room_id ? { ...room, ...data.updates } : room
+        ));
+      };
       
-      socket.on('user-online', handleUserOnline);
-      socket.on('user-offline', handleUserOffline);
       socket.on('new-message', handleNewMessage);
+      socket.on('message-read', handleMessageRead);
+      socket.on('room-update', handleRoomUpdate);
       socket.on('chat-list-update', handleChatListUpdate);
       
       // Custom event listener'ı ekle
       window.addEventListener('chatOpened', handleChatOpened);
       
       return () => {
-        socket.off('user-online', handleUserOnline);
-        socket.off('user-offline', handleUserOffline);
         socket.off('new-message', handleNewMessage);
+        socket.off('message-read', handleMessageRead);
+        socket.off('room-update', handleRoomUpdate);
         socket.off('chat-list-update', handleChatListUpdate);
         window.removeEventListener('chatOpened', handleChatOpened);
       };
     }
-  }, [socket, isConnected, user]);
+  }, [socket, isConnected, user, accessToken]);
 
   return (
     <div className="floating-chat">
@@ -234,31 +257,29 @@ const FloatingChat = () => {
       <div className="chat-avatars">
         {chatRooms.map((room, index) => (
           <div 
-            key={`chat-${room.contact_id}-${index}`}
+            key={`chat-${room.id}-${index}`}
             className="chat-avatar"
-            onClick={handleMessagingClick}
-            title={room.contact_name}
+            onClick={() => handleChatClick(room.id)}
+            title={getRoomDisplayName(room)}
           >
             <img 
-              src={room.contact_avatar || "/assets/images/logo.png"} 
-              alt={room.contact_name}
+              src={getRoomAvatar(room)} 
+              alt={getRoomDisplayName(room)}
               onError={(e) => {
                 e.target.src = "/assets/images/logo.png";
               }}
             />
-            <div className={`online-status ${room.is_online ? 'online' : 'offline'}`}></div>
+            <div className={`online-status ${isRoomOnline(room) ? 'online' : 'offline'}`}></div>
             
             {/* Okunmamış mesaj sayısı */}
-            {room.unread_count > 0 && (
+            {unreadCounts[room.id] && unreadCounts[room.id] > 0 && (
               <div className="unread-badge">
-                {room.unread_count > 99 ? '99+' : room.unread_count}
+                {unreadCounts[room.id] > 99 ? '99+' : unreadCounts[room.id]}
               </div>
             )}
           </div>
         ))}
       </div>
-
-
     </div>
   );
 };

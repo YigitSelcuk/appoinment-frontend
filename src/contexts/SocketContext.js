@@ -17,10 +17,18 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const { user, accessToken } = useAuth();
+  const { user, accessToken, loading } = useAuth();
 
   useEffect(() => {
-    if (user) {
+    // Loading tamamlanana kadar bekle
+    if (loading) {
+      console.log('⏳ SocketContext: Auth loading, socket bağlantısı bekleniyor...');
+      return;
+    }
+    
+    if (user && accessToken) {
+      console.log('🔐 SocketContext: Token mevcut, socket bağlantısı kuruluyor...', { userId: user.id, hasToken: !!accessToken });
+      
       // Socket.IO bağlantısını oluştur
       const socketUrl = process.env.REACT_APP_API_URL?.replace('/api', '');
       const newSocket = io(socketUrl, {
@@ -28,22 +36,21 @@ export const SocketProvider = ({ children }) => {
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 5,
-        reconnectionDelay: 1000
+        reconnectionDelay: 1000,
+        auth: {
+          token: accessToken
+        }
       });
 
       // Bağlantı olaylarını dinle
       newSocket.on('connect', async () => {
         console.log('Socket.IO bağlantısı kuruldu:', newSocket.id);
         setIsConnected(true);
-        
-        // Kullanıcıyı kendi odasına ekle
         console.log(`Kullanıcı ${user.id} odaya katılıyor: user-${user.id}`);
         newSocket.emit('join-room', `user-${user.id}`);
-        
-        // Online durumunu güncelle
         try {
-          await chatService.updateOnlineStatus(accessToken, true);
-          console.log('Kullanıcı online durumuna geçirildi');
+          newSocket.emit('update-status', { isOnline: true });
+          console.log('Kullanıcı online durumuna geçirildi (socket event)');
         } catch (error) {
           console.error('Online durum güncelleme hatası:', error);
         }
@@ -63,9 +70,8 @@ export const SocketProvider = ({ children }) => {
       newSocket.on('user-joined', (data) => {
         console.log('Kullanıcı katıldı:', data);
         setOnlineUsers(prev => {
-          const exists = prev.find(u => u.userId === data.userId);
-          if (!exists) {
-            return [...prev, data];
+          if (!prev.includes(data.userId)) {
+            return [...prev, data.userId];
           }
           return prev;
         });
@@ -73,16 +79,23 @@ export const SocketProvider = ({ children }) => {
 
       newSocket.on('user-left', (data) => {
         console.log('Kullanıcı ayrıldı:', data);
-        setOnlineUsers(prev => prev.filter(u => u.userId !== data.userId));
+        setOnlineUsers(prev => prev.filter(userId => userId !== data.userId));
       });
 
       // Online/Offline durumu olaylarını dinle
       newSocket.on('user-online', (data) => {
-        console.log('Kullanıcı online oldu (SocketContext):', data);
+        console.log('🟢 Kullanıcı online oldu (SocketContext):', data);
+        setOnlineUsers(prev => {
+          if (!prev.includes(data.userId)) {
+            return [...prev, data.userId];
+          }
+          return prev;
+        });
       });
 
       newSocket.on('user-offline', (data) => {
-        console.log('Kullanıcı offline oldu (SocketContext):', data);
+        console.log('🔴 Kullanıcı offline oldu (SocketContext):', data);
+        setOnlineUsers(prev => prev.filter(userId => userId !== data.userId));
       });
 
       setSocket(newSocket);
@@ -90,28 +103,26 @@ export const SocketProvider = ({ children }) => {
       // Sayfa kapandığında offline yap
       const handleBeforeUnload = async () => {
         try {
-          await chatService.updateOnlineStatus(accessToken, false);
-          console.log('Kullanıcı offline durumuna geçirildi');
+          newSocket.emit('update-status', { isOnline: false });
+          console.log('Kullanıcı offline durumuna geçirildi (socket event)');
         } catch (error) {
           console.error('Offline durum güncelleme hatası:', error);
         }
       };
 
-      // Visibility change eventi (sayfa minimize/maximize)
+      // Visibility change eventi (sayfa minimize/maximize veya sekme değişikliği)
       const handleVisibilityChange = async () => {
         if (document.hidden) {
-          // Sayfa gizlendiğinde offline yap
           try {
-            await chatService.updateOnlineStatus(accessToken, false);
-            console.log('Sayfa gizlendi - offline yapıldı');
+            newSocket.emit('update-status', { isOnline: false });
+            console.log('Sayfa gizlendi - offline yapıldı (socket event)');
           } catch (error) {
             console.error('Offline durum güncelleme hatası:', error);
           }
         } else {
-          // Sayfa görünür olduğunda online yap
           try {
-            await chatService.updateOnlineStatus(accessToken, true);
-            console.log('Sayfa görünür - online yapıldı');
+            newSocket.emit('update-status', { isOnline: true });
+            console.log('Sayfa görünür - online yapıldı (socket event)');
           } catch (error) {
             console.error('Online durum güncelleme hatası:', error);
           }
@@ -125,17 +136,21 @@ export const SocketProvider = ({ children }) => {
       return () => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
-        
         // Offline yap
-        chatService.updateOnlineStatus(accessToken, false).catch(console.error);
-        
+        try {
+          newSocket.emit('update-status', { isOnline: false });
+        } catch (e) {}
         newSocket.disconnect();
         newSocket.close();
       };
     } else {
-      // User yoksa socket'i kapat
+      // User veya token yoksa socket'i kapat
       if (socket) {
-        console.log('Kullanıcı çıkış yaptı, Socket bağlantısı kapatılıyor');
+        console.log('❌ SocketContext: Kullanıcı veya token eksik, socket bağlantısı kapatılıyor...', { 
+          hasUser: !!user, 
+          hasToken: !!accessToken, 
+          loading 
+        });
         socket.disconnect();
         socket.close();
         setSocket(null);
@@ -143,7 +158,7 @@ export const SocketProvider = ({ children }) => {
         setOnlineUsers([]);
       }
     }
-  }, [user, accessToken]);
+  }, [user, accessToken, loading]);
 
   // Socket bağlantısını kapat
   const disconnect = () => {
@@ -186,7 +201,8 @@ export const SocketProvider = ({ children }) => {
       console.log('Mesaj dinleyicisi eklendi');
       
       const messageHandler = (message) => {
-        console.log('Socket.IO mesaj alındı:', message);
+        console.log('SocketContext: new-message event alındı:', message);
+        console.log('SocketContext: callback çağrılıyor...');
         callback(message);
       };
       
@@ -236,6 +252,41 @@ export const SocketProvider = ({ children }) => {
     }
   };
 
+  // Mesaj okundu dinleyicisi ekle
+  const onMessageRead = (callback) => {
+    if (socket) {
+      console.log('Mesaj okundu dinleyicisi eklendi');
+      
+      const readHandler = (data) => {
+        console.log('Mesaj okundu event alındı:', data);
+        if (typeof callback === 'function') {
+          callback(data);
+        }
+      };
+      
+      socket.on('message-read', readHandler);
+      
+      return () => {
+        console.log('Mesaj okundu dinleyicisi kaldırıldı');
+        socket.off('message-read', readHandler);
+      };
+    }
+  };
+
+  useEffect(() => {
+    if (socket && user) {
+      // Yeni online users list listener
+      socket.on('online-users-list', (data) => {
+        console.log('📡 Online users list alındı:', data);
+        setOnlineUsers(data.onlineUsers || []);
+      });
+
+      return () => {
+        socket.off('online-users-list');
+      };
+    }
+  }, [socket, user]);
+
   const value = {
     socket,
     isConnected,
@@ -245,6 +296,7 @@ export const SocketProvider = ({ children }) => {
     leaveRoom,
     sendMessage,
     onMessage,
+    onMessageRead,
     onChatListUpdate,
     onUserStatusChange
   };

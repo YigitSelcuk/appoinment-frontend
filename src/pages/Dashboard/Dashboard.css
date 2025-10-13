@@ -14,17 +14,18 @@ html, body {
 }
 
 .dashboard-content {
-  padding: 0px 20px 20px 20px;
+  padding: 0px 10px 10px 10px;
   padding-right: 5px;
   width: 100%;
   transition: all 0.3s ease;
 }
 
-/* Basit layout: ana içerik, sağ chat */
+/* Dashboard Layout: Ana içerik + FloatingChat */
 .dashboard__content {
   display: flex;
-  gap: -15px;
-  align-items: start;
+  gap: 20px;
+  align-items: flex-start;
+  min-height: 100vh;
 }
 
 .dashboard-main {
@@ -33,13 +34,18 @@ html, body {
   border-radius: 0;
   padding: 0;
   box-shadow: none;
+  min-width: 0; /* Flex shrinking için */
 }
 
+/* FloatingChat Container */
 .right-float-chat {
   position: sticky;
-  top: 16px;
-  width: 90px;
+  width: 61px;
+  height: calc(100vh - 40px);
   flex-shrink: 0;
+  border-radius: 15px;
+  overflow: hidden;
+  z-index: 100;
 }
 
 .dashboard-content.navbar-closed {
@@ -164,19 +170,35 @@ html, body {
   font-size: 16px;
   color: #6c757d;
 }
+/* FloatingChat Responsive Behavior */
+@media (min-width: 1201px) {
+  .right-float-chat {
+    display: flex !important;
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
-/* Responsive Design */
+@media (max-width: 1200px) {
+  .dashboard__content {
+    gap: 0;
+  }
+  
+  .right-float-chat {
+    display: none !important;
+  }
+  
+  .dashboard-main {
+    margin-right: 0;
+    width: 100%;
+  }
+}
+
 @media (max-width: 991px) {
   .dashboard__content {
     flex-direction: column;
     gap: 15px;
-  }
-  
-  .right-float-chat {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
+    min-height: auto;
   }
 }
 
