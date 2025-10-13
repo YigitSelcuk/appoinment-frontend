@@ -1025,6 +1025,17 @@
   pointer-events: none;
 }
 
+.input-with-icon .input-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  pointer-events: none;
+  color: #666;
+  font-size: 14px;
+}
+
 .input-with-icon input,
 .input-with-icon textarea {
   padding-left: 48px;

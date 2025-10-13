@@ -550,12 +550,110 @@ const WeeklyCalendar = ({
     setGoogleEvents([]);
   }, []);
 
-  // Randevuları yükle - sadece gerekli bağımlılıklar
+  // Ay görünümü için randevuları yükle
+  const loadMonthAppointments = useCallback(async () => {
+    if (!accessToken || !user) {
+      console.log('⚠️ loadMonthAppointments: accessToken veya user eksik');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      console.log('📅 Ay randevuları yükleniyor...', { 
+        currentDate: currentDate.toISOString(),
+        userId: user.id 
+      });
+      
+      // Ayın başlangıç ve bitiş tarihlerini hesapla
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      
+      // Tarih formatını hazırla (saat dilimi olmadan)
+      const startDateStr = `${startOfMonth.getFullYear()}-${String(startOfMonth.getMonth() + 1).padStart(2, '0')}-${String(startOfMonth.getDate()).padStart(2, '0')}`;
+      const endDateStr = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, '0')}-${String(endOfMonth.getDate()).padStart(2, '0')}`;
+      
+      // Randevuları getir
+      const response = await getAppointmentsByDateRange(accessToken, startDateStr, endDateStr);
+      
+      if (response.success && Array.isArray(response.data)) {
+        // Filtreleme ve formatlama işlemlerini ayrı fonksiyonlarla yap
+        const filteredAppointments = filterAppointments(response.data, user);
+        const formattedAppointments = formatAppointments(filteredAppointments);
+        
+        setAppointments(formattedAppointments);
+      } else {
+        setAppointments([]);
+      }
+      
+    } catch (error) {
+      console.error('❌ Ay randevuları yüklenirken hata:', error);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, currentDate, user, filterAppointments, formatAppointments]);
+
+  // Haftalık görünüm için randevuları yükle - sadece gerekli bağımlılıklar
   useEffect(() => {
-    if (accessToken && user) {
+    if (accessToken && user && viewMode === 'HAFTA') {
       loadAppointments();
     }
-  }, [selectedWeekStart, accessToken, user?.id, loadAppointments]);
+  }, [selectedWeekStart, accessToken, user?.id, loadAppointments, viewMode]);
+
+  // Gün görünümü için randevuları yükle
+  const loadDayAppointments = useCallback(async () => {
+    if (!accessToken || !user) {
+      console.log('⚠️ loadDayAppointments: accessToken veya user eksik');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      console.log('📅 Gün randevuları yükleniyor...', { 
+        currentDate: currentDate.toISOString(),
+        userId: user.id 
+      });
+      
+      // Seçilen günün tarihini al
+      const selectedDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+      
+      // Tarih formatını hazırla (saat dilimi olmadan)
+      const dateStr = `${selectedDay.getFullYear()}-${String(selectedDay.getMonth() + 1).padStart(2, '0')}-${String(selectedDay.getDate()).padStart(2, '0')}`;
+      
+      // Randevuları getir (aynı gün için başlangıç ve bitiş tarihi aynı)
+      const response = await getAppointmentsByDateRange(accessToken, dateStr, dateStr);
+      
+      if (response.success && Array.isArray(response.data)) {
+        // Filtreleme ve formatlama işlemlerini ayrı fonksiyonlarla yap
+        const filteredAppointments = filterAppointments(response.data, user);
+        const formattedAppointments = formatAppointments(filteredAppointments);
+        
+        setAppointments(formattedAppointments);
+      } else {
+        setAppointments([]);
+      }
+      
+    } catch (error) {
+      console.error('❌ Gün randevuları yüklenirken hata:', error);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, currentDate, user, filterAppointments, formatAppointments]);
+
+  // Ay görünümü için randevuları yükle
+  useEffect(() => {
+    if (accessToken && user && viewMode === 'AY') {
+      loadMonthAppointments();
+    }
+  }, [currentDate, accessToken, user?.id, loadMonthAppointments, viewMode]);
+
+  // Gün görünümü için randevuları yükle
+  useEffect(() => {
+    if (accessToken && user && viewMode === 'GÜN') {
+      loadDayAppointments();
+    }
+  }, [currentDate, accessToken, user?.id, loadDayAppointments, viewMode]);
 
   // Google Calendar durumu değiştiğinde etkinlik yükleme - DEVRE DIŞI
   // Google Calendar etkinlikleri artık çekilmiyor, sadece senkronizasyon aktif
@@ -924,25 +1022,32 @@ const WeeklyCalendar = ({
     }
     
     try {
-      // Google Calendar'dan da sil (eğer kullanıcı giriş yapmışsa ve Google Event ID varsa)
-      console.log('🔍 Debug - Google Calendar silme kontrolü:');
-      console.log('- isSignedIn:', googleCalendarService.isSignedIn());
-      console.log('- selectedAppointment:', selectedAppointment);
-      console.log('- googleEventId:', selectedAppointment?.googleEventId);
+      // Önce backend'den randevuyu sil ve Google Event ID'yi al
+      console.log('🔍 Backend\'den randevu siliniyor:', appointmentId);
+      const deleteResponse = await deleteAppointment(accessToken, appointmentId);
+      console.log('✅ Backend\'den randevu silindi, response:', deleteResponse);
       
-      if (googleCalendarService.isSignedIn() && selectedAppointment?.googleEventId) {
+      // Backend'den dönen Google Event ID'yi kullanarak Google Calendar'dan sil
+      const googleEventId = deleteResponse?.googleEventId || selectedAppointment?.googleEventId;
+      console.log('🔍 Google Calendar silme kontrolü:');
+      console.log('- isSignedIn:', googleCalendarService.isSignedIn());
+      console.log('- googleEventId (backend):', deleteResponse?.googleEventId);
+      console.log('- googleEventId (frontend):', selectedAppointment?.googleEventId);
+      console.log('- kullanılacak googleEventId:', googleEventId);
+      
+      if (googleCalendarService.isSignedIn() && googleEventId) {
         try {
-          console.log('📅 Google Calendar: Randevu siliniyor...', selectedAppointment.googleEventId);
-          await googleCalendarService.deleteEvent(selectedAppointment.googleEventId);
+          console.log('📅 Google Calendar: Randevu siliniyor...', googleEventId);
+          await googleCalendarService.deleteEvent(googleEventId);
           console.log('✅ Google Calendar: Randevu başarıyla silindi');
         } catch (googleError) {
           console.error('❌ Google Calendar: Randevu silinirken hata:', googleError);
+          // Google Calendar hatası randevu silme işlemini durdurmaz
         }
       } else {
         console.log('⚠️ Google Calendar silme atlandı - Koşullar sağlanmadı');
       }
       
-      await deleteAppointment(accessToken, appointmentId);
       await loadAppointments(); // Randevuları yeniden yükle
       setIsDeleteModalOpen(false);
       setSelectedAppointment(null);
@@ -1067,7 +1172,14 @@ const WeeklyCalendar = ({
 
   // Navigasyon fonksiyonları
   const goToPreviousWeek = () => {
-    if (viewMode === 'AY') {
+    if (viewMode === 'YIL') {
+      const prevYear = new Date(currentDate);
+      prevYear.setFullYear(currentDate.getFullYear() - 1);
+      setCurrentDate(prevYear);
+      if (onDateChange) {
+        onDateChange(prevYear);
+      }
+    } else if (viewMode === 'AY') {
       const prevMonth = new Date(currentDate);
       prevMonth.setMonth(currentDate.getMonth() - 1);
       setCurrentDate(prevMonth);
@@ -1093,7 +1205,14 @@ const WeeklyCalendar = ({
   };
 
   const goToNextWeek = () => {
-    if (viewMode === 'AY') {
+    if (viewMode === 'YIL') {
+      const nextYear = new Date(currentDate);
+      nextYear.setFullYear(currentDate.getFullYear() + 1);
+      setCurrentDate(nextYear);
+      if (onDateChange) {
+        onDateChange(nextYear);
+      }
+    } else if (viewMode === 'AY') {
       const nextMonth = new Date(currentDate);
       nextMonth.setMonth(currentDate.getMonth() + 1);
       setCurrentDate(nextMonth);
@@ -1494,87 +1613,127 @@ const WeeklyCalendar = ({
     const year = currentDate.getFullYear();
     const months = [];
     
+    // 12 ayın verilerini hazırla
     for (let month = 0; month < 12; month++) {
       const monthDate = new Date(year, month, 1);
-      months.push(monthDate);
+      const monthEvents = events.filter(event => {
+        const eventDate = new Date(event.start);
+        return eventDate.getFullYear() === year && 
+               eventDate.getMonth() === month;
+      });
+      
+      months.push({
+        date: monthDate,
+        events: monthEvents,
+        eventCount: monthEvents.length
+      });
     }
     
     return (
       <div className="year-view">
-        <div className="year-header">
-          <h3>Yıllık Görünüm - {year}</h3>
-        </div>
-        <div className="year-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '20px',
-          padding: '20px'
-        }}>
-          {months.map((monthDate, index) => (
-            <div key={index} style={{
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              padding: '10px',
-              backgroundColor: 'white',
-              cursor: 'pointer'
-            }}
-            onClick={() => {
-              setCurrentDate(monthDate);
-              setViewMode('AY');
-            }}>
-              <div style={{ height: '200px' }}>
-                <Calendar
-                  localizer={localizer}
-                  events={events.filter(event => {
-                    const eventDate = new Date(event.start);
-                    return eventDate.getFullYear() === year && 
-                           eventDate.getMonth() === monthDate.getMonth();
-                  })}
-                  startAccessor="start"
-                  endAccessor="end"
-                  style={{ height: '100%' }}
-                  view="month"
-                  views={['month']}
-                  date={monthDate}
-                  toolbar={false}
-                  eventPropGetter={(event) => {
-                    const color = event.resource.color || '#3174ad';
-                    const hexToRgb = (hex) => {
-                      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                      return result ? {
-                        r: parseInt(result[1], 16),
-                        g: parseInt(result[2], 16),
-                        b: parseInt(result[3], 16)
-                      } : null;
-                    };
-                    const rgb = hexToRgb(color);
-                    const rgbString = rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '49, 116, 173';
-                    
-                    return {
-                      style: {
-                        backgroundColor: `rgba(${rgbString}, 0.15)`,
-                        borderColor: color,
-                        color: '#1F2937',
-                        fontSize: '10px'
-                      }
-                    };
-                  }}
-                  formats={{
-                    dayHeaderFormat: (date, culture, localizer) =>
-                      localizer.format(date, 'dd', culture)
-                  }}
-                />
+        <div className="year-grid">
+          {months.map((monthData, index) => {
+            const monthName = format(monthData.date, 'MMMM', { locale: tr });
+            const isCurrentMonth = new Date().getFullYear() === year && 
+                                  new Date().getMonth() === index;
+            
+            return (
+              <div 
+                key={index} 
+                className={`month-card ${isCurrentMonth ? 'current-month' : ''}`}
+                onClick={() => {
+                  setCurrentDate(monthData.date);
+                  setViewMode('AY');
+                  if (onDateChange) {
+                    onDateChange(monthData.date);
+                  }
+                }}
+              >
+                <div className="month-card-header">
+                  <h4 className="month-name">{monthName}</h4>
+                </div>
+                
+                <div className="month-calendar-container">
+                  <Calendar
+                    localizer={localizer}
+                    events={monthData.events}
+                    startAccessor="start"
+                    endAccessor="end"
+                    style={{ height: '100%' }}
+                    view="month"
+                    views={['month']}
+                    date={monthData.date}
+                    toolbar={false}
+                    popup={false}
+                    eventPropGetter={(event) => {
+                      const color = event.resource?.color || '#3C02AA';
+                      const hexToRgb = (hex) => {
+                        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                        return result ? {
+                          r: parseInt(result[1], 16),
+                          g: parseInt(result[2], 16),
+                          b: parseInt(result[3], 16)
+                        } : null;
+                      };
+                      const rgb = hexToRgb(color);
+                      const rgbString = rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '60, 2, 170';
+                      
+                      return {
+                        style: {
+                          backgroundColor: `rgba(${rgbString}, 0.2)`,
+                          borderColor: color,
+                          color: '#1F2937',
+                          fontSize: '8px',
+                          padding: '1px 2px',
+                          borderRadius: '2px',
+                          border: `1px solid ${color}`,
+                          fontWeight: '500'
+                        }
+                      };
+                    }}
+                    formats={{
+                      dayHeaderFormat: (date, culture, localizer) =>
+                        localizer.format(date, 'dd', culture),
+                      eventTimeRangeFormat: () => '', // Saat gösterme
+                      dayFormat: (date, culture, localizer) =>
+                        localizer.format(date, 'd', culture)
+                    }}
+                    components={{
+                      event: ({ event }) => (
+                        <div style={{ 
+                          fontSize: '7px', 
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {event.title}
+                        </div>
+                      )
+                    }}
+                    messages={{
+                      showMore: (total) => `+${total}`
+                    }}
+                  />
+                </div>
+                
+                <div className="month-stats">
+                  <div className="month-event-count">
+                    <div className="month-event-dot"></div>
+                    <span>{monthData.eventCount} randevu</span>
+                  </div>
+                  {isCurrentMonth && (
+                    <span style={{ 
+                      color: '#3C02AA', 
+                      fontWeight: '600',
+                      fontSize: '11px'
+                    }}>
+                      Bu Ay
+                    </span>
+                  )}
+                </div>
               </div>
-              <div style={{
-                textAlign: 'center',
-                marginTop: '10px',
-                fontWeight: 'bold',
-                color: '#333'
-              }}>
-                {format(monthDate, 'MMMM', { locale: tr })}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -1620,78 +1779,117 @@ const WeeklyCalendar = ({
         </div>
         
         <div className="header-controls">
-          <div className="date-navigation">
-            <button className="nav-btn" onClick={goToPreviousWeek}>
-              <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
-                <path d="M7 1L2 6L7 11" stroke="#666" strokeWidth="2"/>
+          {/* Sol Kontroller - Bugün ve Refresh */}
+          <div className="left-controls">
+            <button className="today-btn" onClick={goToToday}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M19 3H18V1C18 0.45 17.55 0 17 0C16.45 0 16 0.45 16 1V3H8V1C8 0.45 7.55 0 7 0C6.45 0 6 0.45 6 1V3H5C3.89 3 3.01 3.9 3.01 5L3 19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V8H19V19Z" fill="currentColor"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+              </svg>
+              BUGÜN
+            </button>
+            <button className="refresh-btn" onClick={() => {
+              if (viewMode === 'HAFTA') {
+                loadAppointments();
+              } else if (viewMode === 'AY') {
+                loadMonthAppointments();
+              } else if (viewMode === 'GÜN') {
+                loadDayAppointments();
+              }
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z" fill="currentColor"/>
               </svg>
             </button>
-            <div className="date-selector">
-              <span className="current-date" onClick={goToToday}>
-                {viewMode === 'AY' 
-                  ? `${getMonthName(currentDate).toUpperCase()} ${currentDate.getFullYear()}`
-                  : getWeekRange()
-                }
-              </span>
-              <input
-                type="date"
-                className="date-input"
-                value={viewMode === 'AY' 
-                  ? currentDate.toISOString().split('T')[0]
-                  : selectedWeekStart.toISOString().split('T')[0]
-                }
-                onChange={(e) => handleDateSelect(e.target.value)}
-              />
+          </div>
+
+          {/* Orta Kontroller - Navigasyon */}
+          <div className="center-controls">
+            <div className="date-navigation">
+              <button className="nav-btn" onClick={goToPreviousWeek}>
+                <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
+                  <path d="M7 1L2 6L7 11" stroke="#666" strokeWidth="2"/>
+                </svg>
+              </button>
+              <div className="date-selector">
+                <span className="current-date">
+                  {viewMode === 'YIL' 
+                    ? `${currentDate.getFullYear()}`
+                    : viewMode === 'AY' 
+                      ? `${getMonthName(currentDate).toUpperCase()} ${currentDate.getFullYear()}`
+                      : viewMode === 'GÜN'
+                        ? `${currentDate.toLocaleDateString('tr-TR', { 
+                            day: 'numeric', 
+                            month: 'long', 
+                            year: 'numeric', 
+                            weekday: 'long' 
+                          }).toUpperCase()}`
+                        : getWeekRange()
+                  }
+                </span>
+                <input
+                  type="date"
+                  className="date-input"
+                  value={viewMode === 'AY' || viewMode === 'YIL' || viewMode === 'GÜN'
+                    ? currentDate.toISOString().split('T')[0]
+                    : selectedWeekStart.toISOString().split('T')[0]
+                  }
+                  onChange={(e) => handleDateSelect(e.target.value)}
+                />
+              </div>
+              <button className="nav-btn" onClick={goToNextWeek}>
+                <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
+                  <path d="M1 1L6 6L1 11" stroke="#666" strokeWidth="2"/>
+                </svg>
+              </button>
             </div>
-            <button className="nav-btn" onClick={goToNextWeek}>
-              <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
-                <path d="M1 1L6 6L1 11" stroke="#666" strokeWidth="2"/>
-              </svg>
-            </button>
           </div>
           
-          <div className="view-controls">
-            <button 
-              className={`view-btn ${viewMode === 'YIL' ? 'active' : ''}`}
-              onClick={() => handleViewChange('YIL')}
-            >
-              YIL
-            </button>
-            <button 
-              className={`view-btn ${viewMode === 'AY' ? 'active' : ''}`}
-              onClick={() => handleViewChange('AY')}
-            >
-              AY
-            </button>
-            <button 
-              className={`view-btn ${viewMode === 'HAFTA' ? 'active' : ''}`}
-              onClick={() => handleViewChange('HAFTA')}
-            >
-              HAFTA
-            </button>
-            <button 
-              className={`view-btn ${viewMode === 'GÜN' ? 'active' : ''}`}
-              onClick={() => handleViewChange('GÜN')}
-            >
-              GÜN
-            </button>
-          </div>
-          
-          {/* Google Calendar Kontrolleri */}
-          <div className="google-calendar-controls">
-            <button 
-              className={`google-auth-btn ${isGoogleSignedIn ? 'signed-in' : 'signed-out'}`}
-              onClick={isGoogleSignedIn ? handleGoogleSignOut : handleGoogleSignIn}
-              disabled={googleLoading}
-            >
-              <i className={`fas ${isGoogleSignedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'}`}></i>
-              <span className="btn-text">
-                {googleLoading 
-                  ? (isGoogleSignedIn ? 'Çıkış yapılıyor...' : 'Bağlanıyor...')
-                  : (isGoogleSignedIn ? 'Google Çıkış' : 'Google Giriş')
-                }
-              </span>
-            </button>
+          {/* Sağ Kontroller - Görünüm ve Google */}
+          <div className="right-controls">
+            <div className="view-controls">
+              <button 
+                className={`view-btn ${viewMode === 'YIL' ? 'active' : ''}`}
+                onClick={() => handleViewChange('YIL')}
+              >
+                YIL
+              </button>
+              <button 
+                className={`view-btn ${viewMode === 'AY' ? 'active' : ''}`}
+                onClick={() => handleViewChange('AY')}
+              >
+                AY
+              </button>
+              <button 
+                className={`view-btn ${viewMode === 'HAFTA' ? 'active' : ''}`}
+                onClick={() => handleViewChange('HAFTA')}
+              >
+                HAFTA
+              </button>
+              <button 
+                className={`view-btn ${viewMode === 'GÜN' ? 'active' : ''}`}
+                onClick={() => handleViewChange('GÜN')}
+              >
+                GÜN
+              </button>
+            </div>
+            
+            {/* Google Calendar Kontrolleri */}
+            <div className="google-calendar-controls">
+              <button 
+                className={`google-auth-btn ${isGoogleSignedIn ? 'signed-in' : 'signed-out'}`}
+                onClick={isGoogleSignedIn ? handleGoogleSignOut : handleGoogleSignIn}
+                disabled={googleLoading}
+              >
+                <i className={`fas ${isGoogleSignedIn ? 'fa-sign-out-alt' : 'fa-sign-in-alt'}`}></i>
+                <span className="btn-text">
+                  {googleLoading 
+                    ? (isGoogleSignedIn ? 'Çıkış yapılıyor...' : 'Bağlanıyor...')
+                    : (isGoogleSignedIn ? 'Google Çıkış' : 'Google Giriş')
+                  }
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

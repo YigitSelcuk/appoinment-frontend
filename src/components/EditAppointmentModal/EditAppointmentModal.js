@@ -1503,6 +1503,7 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
           {/* Konum */}
           <div className="form-group location-input">
             <div className="input-with-icon">
+              <i className="fas fa-map-marker-alt input-icon"></i>
               <input
                 type="text"
                 name="location"
