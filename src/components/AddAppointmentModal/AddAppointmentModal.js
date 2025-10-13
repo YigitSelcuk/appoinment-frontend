@@ -596,6 +596,32 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
       setConflictTimeout(newTimeout);
     }
 
+    // Hatırlatma değerleri değiştiğinde geçmiş zaman kontrolü
+    if (['reminderBefore', 'reminderValue', 'reminderUnit', 'date', 'startTime'].includes(name)) {
+      const currentData = { ...formData, [name]: newValue };
+      
+      if (currentData.reminderBefore && currentData.date && currentData.startTime) {
+        // Hatırlatma zamanını hesapla
+        const appointmentDateTime = new Date(`${currentData.date}T${currentData.startTime}:00+03:00`);
+        const reminderValue = parseInt(currentData.reminderValue);
+        let reminderDateTime = null;
+        
+        if (currentData.reminderUnit === 'minutes') {
+          reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 60 * 1000));
+        } else if (currentData.reminderUnit === 'hours') {
+          reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 60 * 60 * 1000));
+        } else if (currentData.reminderUnit === 'days') {
+          reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 24 * 60 * 60 * 1000));
+        }
+
+        // Geçmiş zaman kontrolü
+        const currentTime = new Date();
+        if (reminderDateTime && reminderDateTime <= currentTime) {
+          showWarning('⚠️ Hatırlatma zamanı geçmiş bir zamana denk geliyor. Lütfen daha uzak bir hatırlatma süresi seçin.');
+        }
+      }
+    }
+
     // Hataları temizle
     if (errors[name]) {
       setErrors(prev => ({
@@ -793,6 +819,14 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
           reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 60 * 60 * 1000));
         } else if (formData.reminderUnit === 'days') {
           reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 24 * 60 * 60 * 1000));
+        }
+
+        // Geçmiş zaman kontrolü
+        const currentTime = new Date();
+        if (reminderDateTime && reminderDateTime <= currentTime) {
+          showError('Hatırlatma zamanı geçmiş bir zamana denk geliyor. Lütfen daha uzak bir hatırlatma süresi seçin.');
+          setIsSubmitting(false);
+          return;
         }
       }
 

@@ -97,17 +97,21 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
       }
       console.log('Final formattedDate:', formattedDate);
       
+      // StartTime ve endTime için güvenli değerler
+      const safeStartTime = appointmentData.start_time || appointmentData.startTime ;
+      const safeEndTime = appointmentData.end_time || appointmentData.endTime;
+      
       setFormData({
         title: appointmentData.title || '',
         description: appointmentData.description || '',
         date: formattedDate,
-        startTime: appointmentData.start_time || appointmentData.startTime || '',
-        endTime: appointmentData.end_time || appointmentData.endTime || '',
+        startTime: safeStartTime,
+        endTime: safeEndTime,
         location: appointmentData.location || '',
-        color: appointmentData.color || '#3B82F6',
+        color: appointmentData.color,
         isAllDay: appointmentData.isAllDay || false,
-        repeat: appointmentData.repeat_type || appointmentData.repeat || 'TEKRARLANMAZ',
-        assignedTo: appointmentData.assignedTo || 'YAKIP',
+        repeat: appointmentData.repeat_type || appointmentData.repeat,
+        assignedTo: appointmentData.assignedTo ,
         startOffice: appointmentData.startOffice || '',
         notification: appointmentData.notification || false,
         reminderBefore: appointmentData.reminderBefore || false,
@@ -130,8 +134,8 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
       // Orijinal değerleri sakla (tarih/saat değişikliği algılamak için)
       setOriginalValues({
         date: formattedDate,
-        startTime: appointmentData.start_time || appointmentData.startTime || '',
-        endTime: appointmentData.end_time || appointmentData.endTime || ''
+        startTime: safeStartTime,
+        endTime: safeEndTime
       });
       
       // Davetlileri yükle
@@ -712,6 +716,39 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
       setConflictTimeout(newTimeout);
     }
 
+    // Hatırlatma değerleri değiştiğinde geçmiş zaman kontrolü
+    if (['reminderBefore', 'reminderValue', 'reminderUnit', 'date', 'startTime'].includes(name)) {
+      const currentData = { ...formData, [name]: newValue };
+      
+      if (currentData.reminderBefore && currentData.date && currentData.startTime) {
+        // Tarih ve saat formatını kontrol et
+        if (currentData.date.match(/^\d{4}-\d{2}-\d{2}$/) && currentData.startTime.match(/^\d{2}:\d{2}$/)) {
+          // Hatırlatma zamanını hesapla
+          const appointmentDateTime = new Date(`${currentData.date}T${currentData.startTime}:00+03:00`);
+          
+          // Tarih geçerliliğini kontrol et
+          if (!isNaN(appointmentDateTime.getTime())) {
+            const reminderValue = parseInt(currentData.reminderValue);
+            let reminderDateTime = null;
+            
+            if (currentData.reminderUnit === 'minutes') {
+              reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 60 * 1000));
+            } else if (currentData.reminderUnit === 'hours') {
+              reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 60 * 60 * 1000));
+            } else if (currentData.reminderUnit === 'days') {
+              reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 24 * 60 * 60 * 1000));
+            }
+
+            // Geçmiş zaman kontrolü
+            const currentTime = new Date();
+            if (reminderDateTime && reminderDateTime <= currentTime) {
+              showWarning('⚠️ Hatırlatma zamanı geçmiş bir zamana denk geliyor. Lütfen daha uzak bir hatırlatma süresi seçin.');
+            }
+          }
+        }
+      }
+    }
+
     // Hataları temizle
     if (errors[name]) {
       setErrors(prev => ({
@@ -908,8 +945,29 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
       // Hatırlatma zamanını hesapla
       let reminderDateTime = null;
       if (formData.reminderBefore && formData.date && formData.startTime) {
+        // Tarih ve saat formatını kontrol et
+        if (!formData.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          showError('Geçersiz tarih formatı. Lütfen geçerli bir tarih seçin.');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (!formData.startTime.match(/^\d{2}:\d{2}$/)) {
+          showError('Geçersiz saat formatı. Lütfen geçerli bir başlangıç saati seçin.');
+          setIsSubmitting(false);
+          return;
+        }
+        
         // Türkiye saati için doğru timezone hesaplaması
         const appointmentDateTime = new Date(`${formData.date}T${formData.startTime}:00+03:00`);
+        
+        // Tarih geçerliliğini kontrol et
+        if (isNaN(appointmentDateTime.getTime())) {
+          showError('Geçersiz tarih/saat kombinasyonu. Lütfen geçerli bir tarih ve saat seçin.');
+          setIsSubmitting(false);
+          return;
+        }
+        
         const reminderValue = parseInt(formData.reminderValue);
         
         if (formData.reminderUnit === 'minutes') {
@@ -918,6 +976,14 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
           reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 60 * 60 * 1000));
         } else if (formData.reminderUnit === 'days') {
           reminderDateTime = new Date(appointmentDateTime.getTime() - (reminderValue * 24 * 60 * 60 * 1000));
+        }
+
+        // Geçmiş zaman kontrolü
+        const currentTime = new Date();
+        if (reminderDateTime && reminderDateTime <= currentTime) {
+          showError('Hatırlatma zamanı geçmiş bir zamana denk geliyor. Lütfen daha uzak bir hatırlatma süresi seçin.');
+          setIsSubmitting(false);
+          return;
         }
       }
 
@@ -1374,6 +1440,24 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
               )}
             </div>
           )}
+       {/* Bildirim Toggle'ları - Yan Yana */}
+          <div className="notification-toggles-row">
+        
+
+            <div className="toggle-group">
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  name="reminderBefore"
+                  checked={formData.reminderBefore}
+                  onChange={handleInputChange}
+                  className="toggle-input"
+                />
+                <span className="toggle-slider"></span>
+                <span className="toggle-text">RANDEVU ÖNCESİ BİLGİLENDİR</span>
+              </label>
+            </div>
+          </div>
 
        
 

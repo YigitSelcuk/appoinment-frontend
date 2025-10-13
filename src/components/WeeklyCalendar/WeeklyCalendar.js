@@ -231,21 +231,36 @@ const WeeklyCalendar = ({
     try {
       if (!dateString) return -1;
       
-      // Randevu tarihini parse et
-      const appointmentDateStr = dateString.split('T')[0];
-      const [year, month, day] = appointmentDateStr.split('-').map(Number);
-      const appointmentDate = new Date(year, month - 1, day);
+      console.log('🔍 calculateDayIndex DEBUG:');
+      console.log('- dateString:', dateString);
+      console.log('- selectedWeekStart:', selectedWeekStart);
       
-      // Hafta başlangıcını hesapla (Pazartesi)
-      const weekStart = new Date(selectedWeekStart);
-      const weekStartLocal = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
+      // UTC tarihini yerel tarihe dönüştür
+      const utcDate = new Date(dateString);
+      console.log('- utcDate:', utcDate);
+      
+      // Yerel saat diliminde tarihi al (sadece tarih kısmı)
+      const localYear = utcDate.getFullYear();
+      const localMonth = utcDate.getMonth();
+      const localDay = utcDate.getDate();
+      const appointmentDate = new Date(localYear, localMonth, localDay);
+      console.log('- appointmentDate (yerel):', appointmentDate);
+      
+      // Hafta başlangıcını hesapla (Pazartesi) - date-fns ile tutarlılık için
+      const weekStartLocal = startOfWeek(selectedWeekStart, { weekStartsOn: 1 });
+      console.log('- weekStartLocal:', weekStartLocal);
       
       // Hafta sonunu hesapla (Pazar)
       const weekEndLocal = new Date(weekStartLocal);
       weekEndLocal.setDate(weekEndLocal.getDate() + 6);
+      console.log('- weekEndLocal:', weekEndLocal);
       
       // Randevunun bu haftaya ait olup olmadığını kontrol et
+      console.log('- appointmentDate < weekStartLocal:', appointmentDate < weekStartLocal);
+      console.log('- appointmentDate > weekEndLocal:', appointmentDate > weekEndLocal);
+      
       if (appointmentDate < weekStartLocal || appointmentDate > weekEndLocal) {
+        console.log('❌ Randevu bu haftaya ait değil');
         return -1; // Bu haftaya ait değil
       }
       
@@ -278,6 +293,11 @@ const WeeklyCalendar = ({
   // Randevu filtreleme mantığı - ayrı fonksiyon
   const filterAppointments = useCallback((appointments, user) => {
     return appointments.filter(appointment => {
+      // İptal edilen ve tamamlanan randevuları filtrele
+      if (appointment.status === 'CANCELLED' || appointment.status === 'COMPLETED') {
+        return false;
+      }
+      
       // BAŞKAN departmanı, admin veya başkan rolündeki kullanıcılar tüm randevuları görebilir
       const canViewAll = user?.role === 'admin' || 
                         user?.role === 'başkan' || 
@@ -415,19 +435,20 @@ const WeeklyCalendar = ({
   useEffect(() => {
     if (externalSelectedDate) {
       const selectedDateObj = new Date(externalSelectedDate);
-      const startOfWeek = getStartOfWeek(selectedDateObj);
-      setSelectedWeekStart(startOfWeek);
+      const weekStart = startOfWeek(selectedDateObj, { weekStartsOn: 1 });
+      
+      // Sadece gerçekten değişmişse güncelle
+      if (weekStart.getTime() !== selectedWeekStart.getTime()) {
+        setSelectedWeekStart(weekStart);
+      }
     }
-  }, [externalSelectedDate]);
+  }, [externalSelectedDate, selectedWeekStart]);
 
   // Anlık saat çizgisi useEffect'i kaldırıldı - pozisyonlama sistemi sıfırdan yazılacak
 
-  // Haftanın başlangıcını hesapla (Pazartesi)
+  // Haftanın başlangıcını hesapla (Pazartesi) - date-fns ile tutarlılık için
   const getStartOfWeek = (date) => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Pazartesi'yi başlangıç yap
-    return new Date(d.setDate(diff));
+    return startOfWeek(date, { weekStartsOn: 1 }); // Pazartesi başlangıçlı hafta
   };
 
   // Hafta sonunu hesapla
@@ -490,9 +511,8 @@ const WeeklyCalendar = ({
       });
       
       // Hafta tarih aralığını hesapla (Pazartesi-Pazar = 7 gün)
-      // Saat dilimi sorununu önlemek için local tarih kullan
-      const weekStart = new Date(selectedWeekStart);
-      const startOfWeekLocal = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
+      // date-fns ile tutarlılık için startOfWeek kullan
+      const startOfWeekLocal = startOfWeek(selectedWeekStart, { weekStartsOn: 1 });
       const endOfWeekLocal = new Date(startOfWeekLocal);
       endOfWeekLocal.setDate(endOfWeekLocal.getDate() + 6); // +6 gün = 7 günlük hafta (Pazartesi-Pazar)
       
@@ -500,47 +520,16 @@ const WeeklyCalendar = ({
       const startDateStr = `${startOfWeekLocal.getFullYear()}-${String(startOfWeekLocal.getMonth() + 1).padStart(2, '0')}-${String(startOfWeekLocal.getDate()).padStart(2, '0')}`;
       const endDateStr = `${endOfWeekLocal.getFullYear()}-${String(endOfWeekLocal.getMonth() + 1).padStart(2, '0')}-${String(endOfWeekLocal.getDate()).padStart(2, '0')}`;
       
-      console.log('🔴 HAFTA TARİH ARALIĞI:', {
-        selectedWeekStart: selectedWeekStart.toISOString(),
-        startOfWeekLocal: startOfWeekLocal.toISOString(),
-        endOfWeekLocal: endOfWeekLocal.toISOString(),
-        startDateStr,
-        endDateStr
-      });
-      
       // Randevuları getir
       const response = await getAppointmentsByDateRange(accessToken, startDateStr, endDateStr);
       
       if (response.success && Array.isArray(response.data)) {
-        console.log('🔴 BACKEND RESPONSE:', {
-          totalAppointments: response.data.length,
-          appointments: response.data.map(apt => ({
-            id: apt.id,
-            title: apt.title,
-            date: apt.date,
-            dayOfWeek: new Date(apt.date).getDay()
-          }))
-        });
-        
         // Filtreleme ve formatlama işlemlerini ayrı fonksiyonlarla yap
         const filteredAppointments = filterAppointments(response.data, user);
         const formattedAppointments = formatAppointments(filteredAppointments);
         
-        console.log('🔴 FILTERED & FORMATTED:', {
-          filteredCount: filteredAppointments.length,
-          formattedCount: formattedAppointments.length,
-          formattedAppointments: formattedAppointments.map(apt => ({
-            id: apt.id,
-            title: apt.title,
-            date: apt.date,
-            day: apt.day
-          }))
-        });
-        
         setAppointments(formattedAppointments);
-        console.log('✅ Randevular başarıyla yüklendi:', formattedAppointments.length);
       } else {
-        console.warn('⚠️ Randevu verisi alınamadı:', response);
         setAppointments([]);
       }
       
@@ -559,16 +548,11 @@ const WeeklyCalendar = ({
   const loadGoogleEvents = useCallback(async () => {
     // Google Calendar etkinliklerini çekme işlemi devre dışı bırakıldı
     setGoogleEvents([]);
-    console.log('ℹ️ Google Calendar etkinlikleri çekme işlemi devre dışı - sadece senkronizasyon aktif');
   }, []);
 
   // Randevuları yükle - sadece gerekli bağımlılıklar
   useEffect(() => {
     if (accessToken && user) {
-      console.log('📅 WeeklyCalendar: Randevular yükleniyor...', {
-        selectedWeekStart: selectedWeekStart.toISOString(),
-        userId: user.id
-      });
       loadAppointments();
     }
   }, [selectedWeekStart, accessToken, user?.id, loadAppointments]);
@@ -577,162 +561,133 @@ const WeeklyCalendar = ({
   // Google Calendar etkinlikleri artık çekilmiyor, sadece senkronizasyon aktif
   useEffect(() => {
     // Google Calendar etkinliklerini yükleme işlemi devre dışı
-    console.log('ℹ️ Google Calendar etkinlik yükleme devre dışı');
   }, [googleCalendarEnabled, isGoogleSignedIn]);
+
+  // Socket event handler'ları - useCallback ile optimize edildi
+  const handleAppointmentCreated = useCallback((data) => {
+    console.log('🔥 handleAppointmentCreated çağrıldı:', data);
+    
+    if (data && data.appointment) {
+      const newAppointment = data.appointment;
+      console.log('📅 Yeni randevu verisi:', newAppointment);
+      
+      // Randevunun mevcut haftaya ait olup olmadığını kontrol et
+      const dayIndex = calculateDayIndex(newAppointment.date);
+      console.log('📊 calculateDayIndex sonucu:', dayIndex, 'randevu tarihi:', newAppointment.date);
+      
+      if (dayIndex >= 0) {
+        console.log('✅ Randevu mevcut haftaya ait, işleniyor...');
+        
+        // Filtreleme ve formatlama işlemlerini yap
+        const filteredAppointments = filterAppointments([newAppointment], user);
+        console.log('🔍 Filtreleme sonucu:', filteredAppointments.length, 'randevu');
+        
+        if (filteredAppointments.length > 0) {
+          const formattedAppointments = formatAppointments(filteredAppointments);
+          console.log('🎨 Formatlanmış randevular:', formattedAppointments);
+          
+          // Mevcut haftaya ait - state'e ekle
+          setAppointments(prevAppointments => {
+            // Aynı ID'li randevu zaten var mı kontrol et (çift eklemeyi önle)
+            const exists = prevAppointments.some(apt => apt.id === newAppointment.id);
+            if (exists) {
+              console.log('⚠️ Randevu zaten mevcut, eklenmedi');
+              return prevAppointments;
+            }
+            
+            console.log('🚀 Randevu state\'e ekleniyor...');
+            return [...prevAppointments, ...formattedAppointments];
+          });
+        } else {
+          console.log('❌ Filtreleme sonucu randevu görünür değil');
+        }
+      } else {
+        console.log('❌ Randevu mevcut haftaya ait değil');
+      }
+    } else {
+      console.log('❌ Geçersiz veri formatı:', data);
+    }
+  }, [calculateDayIndex, filterAppointments, formatAppointments, user]);
+
+  const handleAppointmentUpdated = useCallback((data) => {
+    if (data && data.appointment) {
+      const updatedAppointment = data.appointment;
+      
+      // Filtreleme ve formatlama işlemlerini yap
+      const filteredAppointments = filterAppointments([updatedAppointment], user);
+      
+      setAppointments(prevAppointments => {
+        // Eğer filtreleme sonucu randevu görünür değilse, mevcut listeden kaldır
+        if (filteredAppointments.length === 0) {
+          return prevAppointments.filter(apt => apt.id !== updatedAppointment.id);
+        }
+        
+        const formattedAppointments = formatAppointments(filteredAppointments);
+        const formattedAppointment = formattedAppointments[0];
+        
+        // Mevcut randevuyu bul ve güncelle
+        const found = prevAppointments.some(apt => apt.id === updatedAppointment.id);
+        
+        if (found) {
+          // Randevu mevcut listede var - güncelle
+          const dayIndex = calculateDayIndex(updatedAppointment.date);
+          if (dayIndex >= 0) {
+            // Hala mevcut haftaya ait - güncelle
+            return prevAppointments.map(apt => 
+              apt.id === updatedAppointment.id ? formattedAppointment : apt
+            );
+          } else {
+            // Artık mevcut haftaya ait değil - kaldır
+            return prevAppointments.filter(apt => apt.id !== updatedAppointment.id);
+          }
+        } else {
+          // Randevu mevcut listede yok - mevcut haftaya aitse ekle
+          const dayIndex = calculateDayIndex(updatedAppointment.date);
+          if (dayIndex >= 0) {
+            return [...prevAppointments, formattedAppointment];
+          }
+        }
+        
+        return prevAppointments;
+      });
+    }
+  }, [calculateDayIndex, filterAppointments, formatAppointments, user]);
+
+  const handleAppointmentDeleted = useCallback((data) => {
+    if (data && (data.appointmentId || data.appointment?.id)) {
+      const deletedId = data.appointmentId || data.appointment?.id;
+      
+      setAppointments(prevAppointments => {
+        const filtered = prevAppointments.filter(apt => apt.id != deletedId); // != ile type conversion
+        return filtered;
+      });
+    }
+  }, []);
 
   // Socket.IO real-time güncellemeler
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.log('❌ Socket mevcut değil');
+      return;
+    }
 
-    console.log('🔌 WeeklyCalendar: Socket event listenerlari ekleniyor...');
-
-    // Randevu ekleme event'i - Chat mantığı gibi spesifik güncelleme
-    const handleAppointmentCreated = (data) => {
-      console.log('📅 Socket: appointment-created event alındı:', data);
-      
-      if (data && data.appointment) {
-        // Backend'den gelen randevu verisini formatla
-        const backendAppointment = data.appointment;
-        const formattedAppointment = {
-          id: backendAppointment.id,
-          title: backendAppointment.title || backendAppointment.subject,
-          time: backendAppointment.start_time,
-          endTime: backendAppointment.end_time,
-          attendee: backendAppointment.attendee_name || backendAppointment.client_name || backendAppointment.user_name,
-          color: backendAppointment.color || '#29CC39',
-          date: backendAppointment.date,
-          description: backendAppointment.description,
-          location: backendAppointment.location,
-          priority: backendAppointment.priority,
-          status: backendAppointment.status,
-          user_id: backendAppointment.user_id,
-          client_id: backendAppointment.client_id,
-          // Diğer backend alanları
-          ...backendAppointment
-        };
-
-        // Randevunun bu haftaya ait olup olmadığını kontrol et
-        const dayIndex = calculateDayIndex(formattedAppointment.date);
-        if (dayIndex >= 0) {
-          // Modal açık olsa bile state güncellemesi yapılabilir - bu modal verilerini etkilemez
-          setAppointments(prevAppointments => {
-            // Aynı ID'ye sahip randevu varsa güncelle, yoksa ekle
-            const existingIndex = prevAppointments.findIndex(apt => apt.id === formattedAppointment.id);
-            if (existingIndex !== -1) {
-              const updated = [...prevAppointments];
-              updated[existingIndex] = formattedAppointment;
-              console.log('✅ Mevcut randevu güncellendi:', formattedAppointment.id);
-              return updated;
-            } else {
-              console.log('✅ Yeni randevu eklendi:', formattedAppointment.id);
-              return [...prevAppointments, formattedAppointment];
-            }
-          });
-        } else {
-          console.log('ℹ️ Randevu bu haftaya ait değil, state güncellenmedi');
-        }
-      }
-    };
-
-    // Randevu güncelleme event'i - Chat mantığı gibi spesifik güncelleme
-    const handleAppointmentUpdated = (data) => {
-      console.log('📅 Socket: appointment-updated event alındı:', data);
-      
-      if (data && data.appointment) {
-        // Backend'den gelen randevu verisini formatla
-        const backendAppointment = data.appointment;
-        const formattedAppointment = {
-          id: backendAppointment.id,
-          title: backendAppointment.title || backendAppointment.subject,
-          time: backendAppointment.start_time,
-          endTime: backendAppointment.end_time,
-          attendee: backendAppointment.attendee_name || backendAppointment.client_name || backendAppointment.user_name,
-          color: backendAppointment.color || '#29CC39',
-          date: backendAppointment.date,
-          description: backendAppointment.description,
-          location: backendAppointment.location,
-          priority: backendAppointment.priority,
-          status: backendAppointment.status,
-          user_id: backendAppointment.user_id,
-          client_id: backendAppointment.client_id,
-          // Diğer backend alanları
-          ...backendAppointment
-        };
-
-        // Modal açık olsa bile state güncellemesi yapılabilir - bu modal verilerini etkilemez
-        setAppointments(prevAppointments => {
-          const existingIndex = prevAppointments.findIndex(apt => apt.id === formattedAppointment.id);
-          if (existingIndex !== -1) {
-            // Randevu bulundu, güncelle
-            const updated = [...prevAppointments];
-            updated[existingIndex] = formattedAppointment;
-            console.log('✅ Randevu güncellendi:', formattedAppointment.id);
-            return updated;
-          } else {
-            // Randevu bulunamadı, yeni randevu olarak ekle (bu haftaya aitse)
-            const dayIndex = calculateDayIndex(formattedAppointment.date);
-            if (dayIndex >= 0) {
-              console.log('✅ Güncellenen randevu yeni olarak eklendi:', formattedAppointment.id);
-              return [...prevAppointments, formattedAppointment];
-            } else {
-              console.log('ℹ️ Güncellenen randevu bu haftaya ait değil');
-              return prevAppointments;
-            }
-          }
-        });
-      }
-    };
-
-    // Randevu silme event'i - Chat mantığı gibi spesifik güncelleme
-    const handleAppointmentDeleted = (data) => {
-      console.log('📅 Socket: appointment-deleted event alındı:', data);
-      
-      // Backend'den gelen format: { appointmentId: id, appointment: appointmentObj, message: 'Randevu silindi' }
-      if (data && (data.appointmentId || data.appointment?.id)) {
-        const deletedId = data.appointmentId || data.appointment?.id;
-        
-        console.log('🔍 DEBUG - Silme işlemi detayları:', {
-          deletedId,
-          deletedIdType: typeof deletedId,
-          deletedIdValue: deletedId
-        });
-        
-        // Modal açık olsa bile state güncellemesi yapılabilir - bu modal verilerini etkilemez
-        setAppointments(prevAppointments => {
-          console.log('🔍 DEBUG - Mevcut randevular:', prevAppointments.map(apt => ({
-            id: apt.id,
-            idType: typeof apt.id,
-            title: apt.title
-          })));
-          
-          // Type conversion için hem string hem number karşılaştırması yap
-           const filtered = prevAppointments.filter(apt => {
-             const shouldKeep = apt.id != deletedId; // != kullanarak type conversion yap
-             console.log(`🔍 DEBUG - ID karşılaştırma: ${apt.id} (${typeof apt.id}) != ${deletedId} (${typeof deletedId}) = ${shouldKeep}`);
-             return shouldKeep;
-           });
-          
-          console.log('✅ Randevu silindi:', deletedId, 'Önceki sayı:', prevAppointments.length, 'Kalan sayı:', filtered.length);
-          return filtered;
-        });
-      } else {
-        console.error('❌ appointment-deleted event: appointmentId bulunamadı', data);
-      }
-    };
-
+    console.log('🔌 Socket event listener\'ları ekleniyor...');
+    
     // Event listener'ları ekle
     socket.on('appointment-created', handleAppointmentCreated);
     socket.on('appointment-updated', handleAppointmentUpdated);
     socket.on('appointment-deleted', handleAppointmentDeleted);
 
+    console.log('✅ Socket event listener\'ları eklendi');
+
     // Cleanup function
     return () => {
-      console.log('🔌 WeeklyCalendar: Socket event listenerlari kaldiriliyor...');
+      console.log('🧹 Socket event listener\'ları temizleniyor...');
       socket.off('appointment-created', handleAppointmentCreated);
       socket.off('appointment-updated', handleAppointmentUpdated);
       socket.off('appointment-deleted', handleAppointmentDeleted);
     };
-  }, [socket, loadAppointments]);
+  }, [socket, handleAppointmentCreated, handleAppointmentUpdated, handleAppointmentDeleted]);
 
   // İki saat arasındaki süreyi hesapla
   const calculateDurationFromTimes = (startTime, endTime) => {

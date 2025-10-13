@@ -1183,3 +1183,9 @@
 .rbc-month-view .rbc-event:hover {
   opacity: 0.9 !important;
 }
+
+/* Mevcut saat çizgisi - Turuncu ve kalın */
+.rbc-current-time-indicator {
+  background-color: #FF6B35 !important; /* Turuncu renk */
+  height: 2px !important; /* Daha kalın - 3px */
+}
