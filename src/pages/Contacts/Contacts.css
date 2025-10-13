@@ -6,18 +6,7 @@
 }
 
 /* Sağ Panel - FloatingChat */
-.right-panel {
-  width: 100px;
-  min-width: 100px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  position: absolute;
-  right: 0px;
-  top: 8px;
-  z-index: 10;
-}
+/* Right panel styles are now defined in FloatingChat.css */
 
 .contacts-page .floating-chat {
   width: 100%;
@@ -63,7 +52,7 @@
   padding: 0;
   position: relative;
   z-index: 1;
-  margin-right: 70px !important; /* FloatingChat için minimal alan */
+  margin-right: -10px !important; /* FloatingChat için 5px gap + 5px sağ boşluk */
 }
 
 .page-header {

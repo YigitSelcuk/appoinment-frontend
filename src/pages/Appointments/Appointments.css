@@ -12,7 +12,7 @@
   height: calc(100vh - 80px); /* Navbar yüksekliği çıkarıldı */
   min-height: 800px;
   gap: 12px; /* Boşluğu artırdım */
-  padding: 8px 5px 8px 20px; /* Sağ padding azaltıldı */
+  padding: 8px 0px 8px 20px; /* Sağ padding kaldırıldı */
   position: relative;
 }
 
@@ -34,23 +34,11 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  min-width: 0; /* Flexbox shrinking için */
-  margin-right: 50px; /* FloatingChat için minimal alan */
+  min-width: 0; 
+  margin-right: 60px !important; /* FloatingChat için 5px gap + 5px sağ boşluk */
 }
 
-/* Sağ Panel - FloatingChat - En sağa kaydırıldı */
-.right-panel {
-  width: 100px; /* Daha geniş */
-  min-width: 100px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  position: absolute; /* Absolute positioning ile en sağa */
-  right: 0px; /* Sağ kenara yapıştır */
-  top: 8px; /* Üstten boşluk */
-  z-index: 10; /* Üstte olsun */
-}
+/* Right panel stilleri FloatingChat.css'te tanımlandı */
 
 /* Üst Başlık */
 .main-header {
@@ -315,11 +303,7 @@
   border-radius: 50%;
 }
 
-.right-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
+
 
 .messaging-section {
   display: flex;
@@ -423,7 +407,7 @@
 /* Desktop Large (1400px+) */
 @media (min-width: 1400px) {
   .appointments-container {
-    padding: 8px 5px 8px 20px;
+    padding: 8px 0px 8px 20px;
     gap: 16px;
   }
   
@@ -432,21 +416,17 @@
     min-width: 350px;
   }
   
-  .right-panel {
-    width: 110px; /* Büyük ekranlarda daha geniş */
-    min-width: 110px;
-    right: 0;
-  }
+  /* Right panel stilleri FloatingChat.css'te tanımlandı */
   
   .weekly-calendar-section {
-    margin-right: 50px; /* Right panel + boşluk */
+    margin-right: 75px; /* FloatingChat için 5px gap */
   }
 }
 
 /* Desktop Medium (1200px - 1399px) */
 @media (max-width: 1399px) and (min-width: 1200px) {
   .appointments-container {
-    padding: 8px 5px 8px 20px;
+    padding: 8px 0px 8px 20px;
     gap: 14px;
   }
   
@@ -455,21 +435,17 @@
     min-width: 330px;
   }
   
-  .right-panel {
-    width: 100px;
-    min-width: 100px;
-    right: 0;
-  }
+  /* Right panel stilleri FloatingChat.css'te tanımlandı */
   
   .weekly-calendar-section {
-    margin-right: 70px; /* Right panel + boşluk */
+    margin-right: 75px; /* FloatingChat için 5px gap */
   }
 }
 
 /* Desktop Small (1000px - 1199px) */
 @media (max-width: 1199px) and (min-width: 1000px) {
   .appointments-container {
-    padding: 8px 5px 8px 20px;
+    padding: 8px 0px 8px 20px;
     gap: 10px;
     height: calc(100vh - 80px);
     min-height: 900px;
@@ -482,14 +458,10 @@
     min-height: 800px;
   }
   
-  .right-panel {
-    width: 85px;
-    min-width: 85px;
-    right: 0;
-  }
+  /* Right panel stilleri FloatingChat.css'te tanımlandı */
   
   .weekly-calendar-section {
-    margin-right: 20px; /* Right panel + boşluk */
+    margin-right: 75px; /* FloatingChat için 5px gap */
     flex: 1;
   }
   
@@ -511,7 +483,7 @@
 /* Desktop Medium Small (992px - 999px) */
 @media (max-width: 999px) and (min-width: 992px) {
   .appointments-container {
-    padding: 8px 5px 8px 20px;
+    padding: 8px 0px 8px 20px;
     gap: 12px;
     height: calc(100vh - 80px);
     min-height: 850px;
@@ -524,14 +496,10 @@
     min-height: 750px;
   }
   
-  .right-panel {
-    width: 90px;
-    min-width: 90px;
-    right: 0;
-  }
+
   
   .weekly-calendar-section {
-    margin-right: 25px; 
+    margin-right: 75px; /* FloatingChat için 5px gap */
   }
   
   .avatar {
@@ -632,17 +600,7 @@
     margin-top: 0;
   }
   
-  .right-panel {
-    width: 100%;
-    min-width: unset;
-    height: auto;
-    min-height: 300px;
-    order: 3;
-    position: relative; /* Tablet'te relative position */
-    right: auto;
-    top: auto;
-    z-index: auto;
-  }
+  
   
   .messaging-section {
     flex-direction: row;
@@ -714,18 +672,7 @@
     order: 2;
     margin-right: 0;
   }
-  
-  .right-panel {
-    width: 100%;
-    min-width: unset;
-    height: auto;
-    min-height: 250px;
-    order: 3;
-    position: relative; /* Mobile'de relative position */
-    right: auto;
-    top: auto;
-    z-index: auto;
-  }
+
   
   .messaging-section {
     flex-direction: row;
@@ -839,18 +786,6 @@
     border-radius: 8px;
   }
   
-  .right-panel {
-    width: 100%;
-    min-width: unset;
-    height: auto;
-    min-height: 200px;
-    order: 3;
-    position: relative; /* Mobile'de relative position */
-    right: auto;
-    top: auto;
-    z-index: auto;
-    border-radius: 8px;
-  }
   
   .messaging-section {
     flex-direction: row;
@@ -968,8 +903,5 @@
   .weekly-calendar-section {
     min-height: 320px;
   }
-  
-  .right-panel {
-    min-height: 180px;
-  }
+
 }

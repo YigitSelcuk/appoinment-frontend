@@ -54,6 +54,8 @@
   justify-content: space-between;
   width: 100%;
   gap: 24px;
+  flex-wrap: nowrap;
+  min-height: 40px;
 }
 
 /* Sol Kontroller */
@@ -1053,16 +1055,108 @@
   }
 }
 
+@media (max-width: 2000px) {
+  .header-controls {
+    gap: 20px;
+  }
+  
+  .left-controls {
+    flex: 0 0 auto;
+    min-width: 200px;
+  }
+  
+  .center-controls {
+    flex: 1;
+    max-width: 400px;
+  }
+  
+  .right-controls {
+    flex: 0 0 auto;
+    min-width: 250px;
+  }
+}
+
+@media (max-width: 1800px) {
+  .header-controls {
+    gap: 18px;
+  }
+  
+  .left-controls {
+    min-width: 180px;
+  }
+  
+  .center-controls {
+    max-width: 350px;
+  }
+  
+  .right-controls {
+    min-width: 220px;
+  }
+}
+
+@media (max-width: 1523px) {
+  .calendar-header {
+    padding: 16px 12px;
+  }
+  
+  .header-controls {
+    gap: 16px;
+  }
+  
+  .left-controls {
+    gap: 8px;
+    min-width: 160px;
+  }
+  
+  .today-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .center-controls {
+    max-width: 300px;
+  }
+  
+  .right-controls {
+    gap: 12px;
+    min-width: 200px;
+  }
+  
+  .date-selector {
+    gap: 8px;
+  }
+}
+
 @media (max-width: 992px) {
   .calendar-header {
     flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
+    gap: 12px;
+    align-items: stretch;
   }
   
   .header-controls {
     width: 100%;
+    flex-direction: row;
     justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .left-controls {
+    order: 1;
+    flex: 0 0 auto;
+  }
+  
+  .center-controls {
+    order: 2;
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .right-controls {
+    order: 3;
+    flex: 0 0 auto;
   }
   
   .weekly-grid {
@@ -1554,6 +1648,165 @@
 
 .rbc-month-view .rbc-event:hover {
   opacity: 0.9 !important;
+}
+
+/* Mobile Menü Stilleri */
+.mobile-menu-btn {
+  display: none;
+  background: #F3F4F6;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  color: #374151;
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-btn:hover {
+  background: #E5E7EB;
+}
+
+.mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 16px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-menu-section {
+  margin-bottom: 20px;
+}
+
+.mobile-menu-section:last-child {
+  margin-bottom: 0;
+}
+
+.mobile-menu-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mobile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  background: #F9FAFB;
+  border: none;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 8px;
+}
+
+.mobile-menu-item:last-child {
+  margin-bottom: 0;
+}
+
+.mobile-menu-item:hover {
+  background: #F3F4F6;
+  color: #1F2937;
+}
+
+.mobile-menu-item.google-item.signed-in {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.mobile-menu-item.google-item.signed-out {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.mobile-view-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mobile-view-btn {
+  padding: 10px 16px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  color: #6B7280;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mobile-view-btn:hover {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+}
+
+.mobile-view-btn.active {
+  background: #3C02AA;
+  border-color: #3C02AA;
+  color: white;
+}
+
+/* Desktop/Mobile Görünürlük Kontrolleri */
+.desktop-only {
+  display: flex;
+}
+
+/* 1490px üstü ekranlar için center-controls ortalama */
+@media (min-width: 1491px) {
+  .center-controls {
+    justify-content: center;
+    flex: 1;
+  }
+}
+
+/* Responsive Düzenlemeler */
+@media (max-width: 1490px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .center-controls {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .header-controls {
+    position: relative;
+    justify-content: center;
+  }
 }
 
 /* Mevcut saat çizgisi - Turuncu ve kalın */
