@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { getAppointments } from '../../../services/appointmentsService';
 import { useAuth } from '../../../contexts/AuthContext';
 import './CalendarWidget.css';
 
 const CalendarWidget = () => {
   const { accessToken } = useAuth();
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -149,7 +151,7 @@ const CalendarWidget = () => {
             onClick={() => setActiveTab('appointments')}
           >
             <span className="tab-icon">📅</span>
-            RANDEVULARIMIZ
+            RANDEVULAR
           </button>
         </div>
       </div>
@@ -249,11 +251,7 @@ const CalendarWidget = () => {
                     </span>
                   </div>
                 </div>
-              ) : (
-                <div className="appointment-date-header">
-                  <h5 className="mb-3" style={{color: '#6f42c1', fontWeight: 'bold'}}>RANDEVULAR</h5>
-                </div>
-              )}
+              ) : null}
               
               <div className="appointment-list">
                 {selectedDate ? (
@@ -323,52 +321,77 @@ const CalendarWidget = () => {
                 )}
                 
                 {!selectedDate && appointments.length > 0 && (
-                  appointments.map((appointment, index) => {
-                    const formattedAppointment = formatAppointmentForDisplay(appointment);
-                    const date = new Date(appointment.date);
-                    const dayNumber = date.getDate();
-                    const dayName = date.toLocaleDateString('tr-TR', { weekday: 'short' }).toUpperCase();
-                    const appointmentColor = appointment.color || '#3b82f6';
-                    
-                    return (
-                       <div key={appointment.id} className="postponed-appointment-item" style={{ position: 'relative' }}>
-                         <div className="postponed-date-circle">
-                           <span className="postponed-date-number">{dayNumber}</span>
-                         </div>
-                         <div className="postponed-appointment-content">
-                           <div className="postponed-day-label">{dayName}</div>
-                           <div className="postponed-time-item">
-                             <div 
-                               className="postponed-time-pin" 
-                               style={{ backgroundColor: appointmentColor }}
-                             ></div>
-                             <span className="postponed-time-text">{formattedAppointment.time}</span>
-                             <span className="postponed-appointment-desc">{formattedAppointment.title}</span>
-                           </div>
-                         </div>
-                         {/* Tamamlanmış randevular için yeşil tik */}
-                         {appointment.status === 'COMPLETED' && (
-                           <div style={{
-                             position: 'absolute',
-                             top: '4px',
-                             right: '4px',
-                             width: '16px',
-                             height: '16px',
-                             backgroundColor: '#10B981',
-                             borderRadius: '50%',
-                             display: 'flex',
-                             alignItems: 'center',
-                             justifyContent: 'center',
-                             zIndex: 10
-                           }}>
-                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                               <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                             </svg>
-                           </div>
-                         )}
-                       </div>
-                     );
-                  })
+                  // Randevuları tarihe göre grupla
+                  (() => {
+                    const groupedAppointments = appointments.reduce((groups, appointment) => {
+                      const date = new Date(appointment.date);
+                      const dateKey = date.toISOString().split('T')[0];
+                      if (!groups[dateKey]) {
+                        groups[dateKey] = [];
+                      }
+                      groups[dateKey].push(appointment);
+                      return groups;
+                    }, {});
+
+                    return Object.entries(groupedAppointments)
+                      .sort(([a], [b]) => new Date(a) - new Date(b))
+                      .slice(0, 4) // Sadece ilk 4 günü göster
+                      .map(([dateKey, dayAppointments]) => {
+                        const date = new Date(dateKey);
+                        const dayNumber = date.getDate();
+                        const dayName = date.toLocaleDateString('tr-TR', { weekday: 'short' }).toUpperCase();
+                        const monthName = date.toLocaleDateString('tr-TR', { month: 'short' }).toUpperCase();
+                        
+                        return (
+                          <div key={dateKey} className="appointment-day-group">
+                            <div className="appointment-day-header">
+                              <div className="day-number-large">{dayNumber}</div>
+                              <div className="day-info">
+                                <div className="day-name">{dayName}, {monthName}</div>
+                              </div>
+                            </div>
+                            <div className="appointment-day-list">
+                              {dayAppointments.map((appointment, index) => {
+                                const formattedAppointment = formatAppointmentForDisplay(appointment);
+                                const appointmentColor = appointment.color || '#3b82f6';
+                                
+                                return (
+                                  <div key={appointment.id} className="appointment-time-row">
+                                    <div className="appointment-time-info">
+                                      <div 
+                                        className="time-color-dot" 
+                                        style={{ backgroundColor: appointmentColor }}
+                                      ></div>
+                                      <span className="appointment-time">{formattedAppointment.time}</span>
+                                    </div>
+                                    <div className="appointment-title-text">{formattedAppointment.title}</div>
+                                    {appointment.status === 'COMPLETED' && (
+                                      <div className="completed-check">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                                          <path d="M9 12l2 2 4-4" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      });
+                  })()
+                )}
+                
+                {/* TÜMÜNÜ GÖSTER Butonu */}
+                {!selectedDate && appointments.length > 0 && (
+                  <div className="show-all-button-container">
+                    <button 
+                      className="show-all-button"
+                      onClick={() => navigate('/appointments')}
+                    >
+                      TÜMÜNÜ GÖSTER
+                    </button>
+                  </div>
                 )}
                 
 

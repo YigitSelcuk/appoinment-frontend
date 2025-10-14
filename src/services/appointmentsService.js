@@ -172,9 +172,9 @@ export const updateReminderTime = async (token, appointmentId, reminderValue, re
 };
 
 // Randevu istatistiklerini getir
-export const getAppointmentStats = async (token) => {
+export const getAppointmentStats = async (token, period = 'HAFTALIK') => {
   try {
-    return await apiCall('/appointments/stats', token);
+    return await apiCall(`/appointments/stats?period=${period}`, token);
   } catch (error) {
     console.error('Randevu istatistikleri getirme hatası:', error);
     throw error;

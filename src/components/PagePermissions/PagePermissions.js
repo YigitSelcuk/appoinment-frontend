@@ -33,18 +33,12 @@ const PagePermissions = ({ selectedPermissions = [], onChange, disabled = false 
 
   // Mevcut sayfa listesi
   const availablePages = [
-    { key: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { key: 'users', label: 'Kullanıcılar', icon: '👥' },
     { key: 'contacts', label: 'Kişiler', icon: '📞' },
     { key: 'appointments', label: 'Randevular', icon: '📅' },
     { key: 'tasks', label: 'Görevler', icon: '✅' },
-    { key: 'activities', label: 'Aktiviteler', icon: '📋' },
-    { key: 'messages', label: 'Mesajlar', icon: '💬' },
-    { key: 'messaging', label: 'Mesajlaşma', icon: '📨' },
     { key: 'requests', label: 'Talepler', icon: '📝' },
     { key: 'cv', label: 'CV Yönetimi', icon: '📄' },
     { key: 'categories', label: 'Kategoriler', icon: '🏷️' },
-    { key: 'profile', label: 'Profil', icon: '👤' }
   ];
 
   const handlePermissionChange = (pageKey) => {
