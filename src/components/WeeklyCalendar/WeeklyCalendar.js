@@ -1204,9 +1204,9 @@ const WeeklyCalendar = ({
 
     // Randevunun geçmiş olup olmadığını kontrol et - useMemo ile optimize edildi
     const isExpired = useMemo(() => {
-      // Türkiye saati (UTC+3) için şu anki zamanı al
+      // Doğru Türkiye saati hesaplaması
       const now = new Date();
-      const turkeyTime = new Date(now.getTime() + (3 * 60 * 60 * 1000)); // UTC+3
+      const turkeyTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Istanbul' }));
       
       const appointmentDateTime = new Date(event.end); // event.end randevunun bitiş zamanı
       const isPast = appointmentDateTime < turkeyTime;

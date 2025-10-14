@@ -592,16 +592,14 @@ const MessagingPanel = () => {
     if (isToday) {
       return date.toLocaleTimeString('tr-TR', { 
         hour: '2-digit', 
-        minute: '2-digit',
-        timeZone: 'Europe/Istanbul'
+        minute: '2-digit'
       });
     } else {
       return date.toLocaleDateString('tr-TR', { 
         day: '2-digit', 
         month: '2-digit',
         hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Europe/Istanbul'
+        minute: '2-digit'
       });
     }
   };

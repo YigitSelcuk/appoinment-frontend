@@ -32,15 +32,29 @@ const ViewUserModal = ({ show, onHide, user }) => {
 
   const formatLastSeen = (dateString) => {
     if (!dateString) return 'Hiç giriş yapmamış';
+    
+    // MySQL datetime formatı: "2024-01-15 14:30:00"
+    // Bu zaten Türkiye saati olarak kaydedildi, direkt kullan
     const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) {
+      return 'Geçersiz tarih';
+    }
+    
     const now = new Date();
     const diffMs = now - date;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
     if (diffDays === 0) {
-      return `Bugün ${date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
+      return `Bugün ${date.toLocaleTimeString('tr-TR', { 
+        hour: '2-digit', 
+        minute: '2-digit'
+      })}`;
     } else if (diffDays === 1) {
-      return `Dün ${date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
+      return `Dün ${date.toLocaleTimeString('tr-TR', { 
+        hour: '2-digit', 
+        minute: '2-digit'
+      })}`;
     } else if (diffDays < 7) {
       return `${diffDays} gün önce`;
     } else {
