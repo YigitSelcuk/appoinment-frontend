@@ -1,0 +1,72 @@
+/* Requests Widget: Çözüm Merkezi tasarımı */
+.requests-widget {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.rw2-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+
+.rw2-left { display: flex; align-items: center; gap: 10px; }
+.rw2-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: #fff7ed; border: 1px solid #fde68a;
+  display: flex; align-items: center; justify-content: center;
+}
+.rw2-title {
+  margin: 0; font-size: 14px; font-weight: 700; color: #5b21b6; letter-spacing: 0.3px;
+}
+
+.rw2-right { display: flex; align-items: center; gap: 8px; }
+.rw2-period {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #f1f5f9; border: 1px solid #e2e8f0; color: #475569;
+  border-radius: 16px; padding: 6px 10px; font-size: 12px; font-weight: 600;
+}
+.rw2-menu {
+  width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+  border: none; background: #f1f5f9; border-radius: 50%; cursor: pointer;
+}
+.rw2-menu span { width: 3px; height: 3px; background: #475569; border-radius: 50%; margin: 1px; display: inline-block; }
+
+/* Rows */
+.rw2-list { flex: 1; overflow-y: auto; }
+.rw2-row {
+  display: grid;
+  grid-template-columns: 1fr 100px 100px 90px 56px;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eef2f7;
+}
+.rw2-col-name { color: #111827; font-size: 12px; font-weight: 600; }
+.rw2-col-num { color: #374151; font-size: 12px; text-align: center; }
+.rw2-col-pct { color: #374151; font-size: 12px; font-weight: 600; text-align: center; }
+.rw2-col-ring { display: flex; align-items: center; justify-content: center; }
+.rw-ring { filter: drop-shadow(0 1px 1px rgba(0,0,0,0.04)); }
+
+/* Footer */
+.rw2-footer { padding: 16px; flex-shrink: 0; }
+.rw2-show-all {
+  width: 100%; background: #5b21b6; color: white; border: none;
+  border-radius: 24px; padding: 10px 14px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: transform 0.15s ease, background-color 0.2s ease;
+}
+.rw2-show-all:hover { background: #4c1d95; transform: translateY(-1px); }
+
+@media (max-width: 768px) {
+  .rw2-row { grid-template-columns: 1fr 80px 80px 70px 48px; padding: 10px 12px; }
+}

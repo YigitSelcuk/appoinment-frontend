@@ -58,6 +58,33 @@ const AppointmentChart = () => {
     setPeriod(e.target.value);
   };
 
+  // Responsive için kısaltılmış metinler
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 576);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 576);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const getPeriodOptions = () => {
+    if (isMobile) {
+      return [
+        { value: 'HAFTALIK', label: 'H' },
+        { value: 'AYLIK', label: 'A' },
+        { value: 'YILLIK', label: 'Y' }
+      ];
+    }
+    return [
+      { value: 'HAFTALIK', label: 'HAFTALIK' },
+      { value: 'AYLIK', label: 'AYLIK' },
+      { value: 'YILLIK', label: 'YILLIK' }
+    ];
+  };
+
   const maxValue = chartData.length > 0 ? Math.max(...chartData.map(item => item.value)) : 1;
 
   if (loading) {
@@ -75,9 +102,11 @@ const AppointmentChart = () => {
                 onChange={handlePeriodChange}
                 className="period-select"
               >
-                <option value="HAFTALIK">HAFTALIK</option>
-                <option value="AYLIK">AYLIK</option>
-                <option value="YILLIK">YILLIK</option>
+                {getPeriodOptions().map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -107,16 +136,18 @@ const AppointmentChart = () => {
               onChange={handlePeriodChange}
               className="period-select"
             >
-              <option value="HAFTALIK">HAFTALIK</option>
-              <option value="AYLIK">AYLIK</option>
-              <option value="YILLIK">YILLIK</option>
+              {getPeriodOptions().map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
       </div>
       
       <div className="chart-container">
-        <div className="chart-bars">
+        <div className={`chart-bars ${period === 'YILLIK' ? 'annual' : ''}`}>
           {chartData.map((item, index) => (
             <div key={index} className="chart-bar-container">
               <div className="chart-bar-wrapper">

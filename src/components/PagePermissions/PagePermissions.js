@@ -39,6 +39,7 @@ const PagePermissions = ({ selectedPermissions = [], onChange, disabled = false 
     { key: 'requests', label: 'Talepler', icon: '📝' },
     { key: 'cv', label: 'CV Yönetimi', icon: '📄' },
     { key: 'categories', label: 'Kategoriler', icon: '🏷️' },
+    { key: 'management', label: 'Yönetim', icon: '🔧' },
   ];
 
   const handlePermissionChange = (pageKey) => {

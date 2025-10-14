@@ -1792,6 +1792,11 @@
 @media (max-width: 1490px) {
   .mobile-menu-btn {
     display: block;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2; /* Diğer kontrollerin üstünde olsun */
   }
   
   .desktop-only {
@@ -1875,4 +1880,65 @@
     rgba(156, 163, 175, 0.06) 8px
   ) !important;
   background-color: rgba(249, 250, 251, 0.3) !important;
+}
+
+/* Yıllık Görünüm - Mobil Responsive */
+@media (max-width: 768px) {
+  .year-view {
+    padding: 12px;
+    height: calc(100vh - 100px);
+  }
+  
+  .year-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-width: 100%;
+  }
+  
+  .month-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  
+  .month-name {
+    font-size: 16px;
+  }
+  
+  .month-calendar-container {
+    height: 180px;
+  }
+  
+  .month-card-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .year-view {
+    padding: 8px;
+    height: calc(100vh - 80px);
+  }
+  
+  .year-grid {
+    gap: 12px;
+  }
+  
+  .month-card {
+    padding: 8px;
+    border-radius: 8px;
+  }
+  
+  .month-name {
+    font-size: 14px;
+  }
+  
+  .month-calendar-container {
+    height: 160px;
+  }
+  
+  .month-card-header {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
 }

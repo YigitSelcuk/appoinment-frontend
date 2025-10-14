@@ -203,7 +203,7 @@ const Navbar = ({ user, onLogout }) => {
     {
       id: "management",
       name: "YÖNETİM",
-      path: (user?.role === 'admin' || user?.role === 'başkan' || user?.department === 'BAŞKAN') ? "/users" : "#",
+      path: "#", // Path will be determined by access control
       icon: (
         <svg
           width="21"
@@ -232,7 +232,7 @@ const Navbar = ({ user, onLogout }) => {
     cvbank: 'cv',
     requests: 'requests',
     reports: null,
-    management: null,
+    management: 'management', // Yönetim sekmesi için izin kontrolü
   };
 
   const menuItems = rawMenuItems.filter(item => {
@@ -268,6 +268,47 @@ const Navbar = ({ user, onLogout }) => {
   const handleMenuClick = (menuId, path) => {
     console.log('Navbar menü tıklandı:', { menuId, path }); // Debug log
     setActiveMenu(menuId);
+    
+    // Yönetim sekmesi için özel işlem
+    if (menuId === 'management') {
+      // Admin, başkan veya BAŞKAN departmanı ise users sayfasına git
+      if (user?.role === 'admin' || user?.role === 'başkan' || user?.department === 'BAŞKAN') {
+        navigate('/users');
+        return;
+      }
+      
+      // Kullanıcının management izni varsa users sayfasına git
+      if (user?.permissions) {
+        let hasManagementPermission = false;
+        
+        if (Array.isArray(user.permissions)) {
+          hasManagementPermission = user.permissions.includes('management');
+        } else if (typeof user.permissions === 'object') {
+          hasManagementPermission = Boolean(user.permissions.management);
+        } else if (typeof user.permissions === 'string') {
+          try {
+            const parsedPermissions = JSON.parse(user.permissions);
+            if (Array.isArray(parsedPermissions)) {
+              hasManagementPermission = parsedPermissions.includes('management');
+            } else if (typeof parsedPermissions === 'object') {
+              hasManagementPermission = Boolean(parsedPermissions.management);
+            }
+          } catch (e) {
+            console.warn('Navbar: permissions parse edilemedi:', user.permissions);
+          }
+        }
+        
+        if (hasManagementPermission) {
+          navigate('/users');
+          return;
+        }
+      }
+      
+      // İzin yoksa hiçbir şey yapma
+      return;
+    }
+    
+    // Diğer menüler için normal işlem
     if (path && path !== "#") {
       console.log('Navigasyon yapılıyor:', path); // Debug log
       navigate(path);
@@ -296,6 +337,47 @@ const Navbar = ({ user, onLogout }) => {
   const handleMobileMenuClick = (menuId, path) => {
     setActiveMenu(menuId);
     setShowMobileMenu(false);
+    
+    // Yönetim sekmesi için özel işlem
+    if (menuId === 'management') {
+      // Admin, başkan veya BAŞKAN departmanı ise users sayfasına git
+      if (user?.role === 'admin' || user?.role === 'başkan' || user?.department === 'BAŞKAN') {
+        navigate('/users');
+        return;
+      }
+      
+      // Kullanıcının management izni varsa users sayfasına git
+      if (user?.permissions) {
+        let hasManagementPermission = false;
+        
+        if (Array.isArray(user.permissions)) {
+          hasManagementPermission = user.permissions.includes('management');
+        } else if (typeof user.permissions === 'object') {
+          hasManagementPermission = Boolean(user.permissions.management);
+        } else if (typeof user.permissions === 'string') {
+          try {
+            const parsedPermissions = JSON.parse(user.permissions);
+            if (Array.isArray(parsedPermissions)) {
+              hasManagementPermission = parsedPermissions.includes('management');
+            } else if (typeof parsedPermissions === 'object') {
+              hasManagementPermission = Boolean(parsedPermissions.management);
+            }
+          } catch (e) {
+            console.warn('Navbar: permissions parse edilemedi:', user.permissions);
+          }
+        }
+        
+        if (hasManagementPermission) {
+          navigate('/users');
+          return;
+        }
+      }
+      
+      // İzin yoksa hiçbir şey yapma
+      return;
+    }
+    
+    // Diğer menüler için normal işlem
     if (path && path !== "#") {
       navigate(path);
     }

@@ -11,6 +11,9 @@ import AppointmentChart from '../../components/Dashboard/AppointmentChart/Appoin
 import CalendarWidget from '../../components/Dashboard/CalendarWidget/CalendarWidget';
 import TasksWidget from '../../components/Dashboard/TasksWidget/TasksWidget';
 import ContactsWidget from '../../components/Dashboard/ContactsWidget/ContactsWidget';
+import RequestsWidget from '../../components/Dashboard/RequestsWidget/RequestsWidget';
+import ActivitiesWidget from '../../components/Dashboard/ActivitiesWidget/ActivitiesWidget';
+import MessagesWidget from '../../components/Dashboard/MessagesWidget/MessagesWidget';
 
 import FloatingChat from '../../components/FloatingChat/FloatingChat';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -146,10 +149,16 @@ const Dashboard = () => {
                 </Col>
               </Row>
 
-              {/* Contacts Widget - Alt kısım */}
+              {/* Alt bölüm: 3 yeni widget (aynı tasarım) */}
               <Row className="mx-0">
-                <Col lg={12} className="mb-4">
-                  <ContactsWidget />
+                <Col lg={4} className="mb-4 px-2">
+                  <RequestsWidget />
+                </Col>
+                <Col lg={4} className="mb-4 px-2">
+                  <ActivitiesWidget />
+                </Col>
+                <Col lg={4} className="mb-4 px-2">
+                  <MessagesWidget />
                 </Col>
               </Row>
             </Container>
