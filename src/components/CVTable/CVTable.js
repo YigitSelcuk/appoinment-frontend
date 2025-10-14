@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { useSimpleToast } from "../../contexts/SimpleToastContext";
 import { cvsService } from "../../services/cvsService";
 import { fetchAllCategoriesForDropdown } from "../../services/categoriesService";
-import { smsService } from "../../services/smsService";
 import { ilceler, getMahalleler } from "../../data/istanbulData";
 import AddCVModal from "../AddCVModal/AddCVModal";
 import ViewCVModal from "../ViewCVModal/ViewCVModal";
@@ -55,10 +54,7 @@ const CVTable = () => {
   const [allCategories, setAllCategories] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Scrollbar state'leri
-  const [scrollbarVisible, setScrollbarVisible] = useState(false);
-  const [scrollbarLeft, setScrollbarLeft] = useState(0);
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
 
   // Modal state'leri
   const [showViewModal, setShowViewModal] = useState(false);
@@ -67,7 +63,6 @@ const CVTable = () => {
   const [showCVModal, setShowCVModal] = useState(false);
   const [showExcelImportModal, setShowExcelImportModal] = useState(false);
   const [selectedCV, setSelectedCV] = useState(null);
-  const [bulkSMSLoading, setBulkSMSLoading] = useState(false);
   // Portal menüye geçildi, açık dropdown state'i gereksiz
 
   // API'den CV'leri getir
@@ -85,7 +80,7 @@ const CVTable = () => {
       if (response.success) {
         setCvs(response.data);
         setTotalPages(response.pagination.totalPages);
-        setTotalRecords(response.pagination.total);
+        setTotalRecords(response.pagination.totalRecords);
       }
     } catch (error) {
       showError("CV'ler yüklenirken hata oluştu");
@@ -134,209 +129,9 @@ const CVTable = () => {
     fetchCvs();
   }, [currentPage, debouncedSearchTerm]);
 
-  // Özel scrollbar logic'i
-  useEffect(() => {
-    const updateScrollbar = () => {
-      if (!tableWrapperRef.current) return;
 
-      const wrapper = tableWrapperRef.current;
-      const table = wrapper.querySelector('.cvs-table');
-      
-      if (!table) return;
 
-      const wrapperWidth = wrapper.clientWidth;
-      const tableWidth = table.scrollWidth;
-      const scrollLeft = wrapper.scrollLeft;
-      const maxScroll = tableWidth - wrapperWidth;
 
-      console.log('Scrollbar Debug:', {
-        wrapperWidth,
-        tableWidth,
-        scrollLeft,
-        maxScroll,
-        shouldShow: tableWidth > wrapperWidth
-      });
-
-      // Scrollbar görünürlüğü
-      const shouldShow = tableWidth > wrapperWidth;
-      setScrollbarVisible(shouldShow);
-
-      if (shouldShow) {
-        // Scrollbar genişliği (wrapper genişliğinin oranı)
-        const thumbWidth = Math.max(30, (wrapperWidth / tableWidth) * wrapperWidth);
-        setScrollbarWidth(thumbWidth);
-
-        // Scrollbar pozisyonu - Bu kısım çok önemli!
-        const thumbLeft = maxScroll > 0 ? (scrollLeft / maxScroll) * (wrapperWidth - thumbWidth) : 0;
-        console.log('Updating thumb position:', {
-          scrollLeft,
-          maxScroll,
-          thumbLeft,
-          thumbWidth,
-          wrapperWidth
-        });
-        setScrollbarLeft(thumbLeft);
-      }
-    };
-
-    // Scroll event listener'ı ekle
-    const handleScroll = () => {
-      updateScrollbar();
-    };
-
-    const wrapper = tableWrapperRef.current;
-    if (wrapper) {
-      wrapper.addEventListener('scroll', handleScroll, { passive: true });
-      window.addEventListener('resize', updateScrollbar);
-      
-      // İlk yükleme - biraz gecikme ile
-      setTimeout(updateScrollbar, 100);
-      
-      // Tablo içeriği değiştiğinde de güncelle
-      const observer = new MutationObserver(() => {
-        setTimeout(updateScrollbar, 50);
-      });
-      observer.observe(wrapper, { childList: true, subtree: true });
-
-      return () => {
-        wrapper.removeEventListener('scroll', handleScroll);
-        window.removeEventListener('resize', updateScrollbar);
-        observer.disconnect();
-      };
-    }
-  }, [cvs]);
-
-  // Scrollbar thumb drag işlemleri
-  const handleScrollbarMouseDown = (e) => {
-    console.log('Scrollbar mousedown triggered');
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const startX = e.clientX;
-    const startLeft = scrollbarLeft;
-    const wrapper = tableWrapperRef.current;
-    
-    if (!wrapper) {
-      console.log('No wrapper found');
-      return;
-    }
-
-    const wrapperWidth = wrapper.clientWidth;
-    const table = wrapper.querySelector('.cvs-table');
-    
-    if (!table) {
-      console.log('No table found');
-      return;
-    }
-    
-    const maxScroll = table.scrollWidth - wrapperWidth;
-    const maxThumbLeft = wrapperWidth - scrollbarWidth;
-
-    console.log('Drag values:', {
-      startX,
-      startLeft,
-      wrapperWidth,
-      maxScroll,
-      maxThumbLeft,
-      scrollbarWidth
-    });
-
-    const handleMouseMove = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const deltaX = e.clientX - startX;
-      const newThumbLeft = Math.max(0, Math.min(maxThumbLeft, startLeft + deltaX));
-      
-      console.log('Mouse move:', {
-        deltaX,
-        newThumbLeft,
-        clientX: e.clientX
-      });
-      
-      if (maxThumbLeft > 0) {
-        const scrollRatio = newThumbLeft / maxThumbLeft;
-        const newScrollLeft = scrollRatio * maxScroll;
-        console.log('Setting scroll to:', newScrollLeft);
-        
-        // Scroll işlemini zorla yap
-        wrapper.scrollLeft = newScrollLeft;
-        
-        // Eğer scroll çalışmıyorsa, table'ı transform ile kaydır
-        const table = wrapper.querySelector('.cvs-table');
-        if (table && wrapper.scrollLeft !== newScrollLeft) {
-          console.log('Fallback: Using transform');
-          table.style.transform = `translateX(-${newScrollLeft}px)`;
-          
-          // Transform kullanıldığında scrollbar pozisyonunu manuel güncelle
-          const wrapperWidth = wrapper.clientWidth;
-          const maxThumbLeft = wrapperWidth - scrollbarWidth;
-          const newThumbLeft = maxThumbLeft > 0 ? (newScrollLeft / maxScroll) * maxThumbLeft : 0;
-          console.log('Manual thumb update:', newThumbLeft);
-          setScrollbarLeft(newThumbLeft);
-        } else if (table) {
-          // Normal scroll çalışıyorsa transform'u temizle
-          table.style.transform = '';
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      console.log('Mouse up');
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    };
-
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'grabbing';
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  // Scrollbar track click işlemi
-  const handleScrollbarTrackClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const wrapper = tableWrapperRef.current;
-    if (!wrapper) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const wrapperWidth = wrapper.clientWidth;
-    const table = wrapper.querySelector('.cvs-table');
-    
-    if (!table) return;
-    
-    const maxScroll = table.scrollWidth - wrapperWidth;
-    const maxThumbLeft = wrapperWidth - scrollbarWidth;
-    
-    if (maxThumbLeft > 0) {
-      const targetThumbLeft = Math.max(0, Math.min(maxThumbLeft, clickX - scrollbarWidth / 2));
-      const scrollRatio = targetThumbLeft / maxThumbLeft;
-      const newScrollLeft = scrollRatio * maxScroll;
-      
-      console.log('Track click - Setting scroll to:', newScrollLeft);
-      wrapper.scrollLeft = newScrollLeft;
-      
-      // Eğer scroll çalışmıyorsa, table'ı transform ile kaydır
-       if (wrapper.scrollLeft !== newScrollLeft) {
-         console.log('Track click - Fallback: Using transform');
-         table.style.transform = `translateX(-${newScrollLeft}px)`;
-         
-         // Transform kullanıldığında scrollbar pozisyonunu manuel güncelle
-         const maxThumbLeft = wrapperWidth - scrollbarWidth;
-         const newThumbLeft = maxThumbLeft > 0 ? (newScrollLeft / maxScroll) * maxThumbLeft : 0;
-         console.log('Track click - Manual thumb update:', newThumbLeft);
-         setScrollbarLeft(newThumbLeft);
-       } else {
-         // Normal scroll çalışıyorsa transform'u temizle
-         table.style.transform = '';
-       }
-    }
-  };
 
   // Arama terimi değiştiğinde sayfa numarasını sıfırla
   const handleSearchChange = (value) => {
@@ -446,6 +241,37 @@ const CVTable = () => {
   const handleDeleteCV = (cv) => {
     setSelectedCV(cv);
     setShowDeleteModal(true);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedCvs.length === 0) {
+      showWarning("Lütfen silinecek CV'leri seçin.");
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `Seçili ${selectedCvs.length} CV'yi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      setLoading(true);
+      await cvsService.deleteMultipleCVs(selectedCvs);
+      showSuccess(`${selectedCvs.length} CV başarıyla silindi.`);
+      
+      // Seçimleri temizle
+      setSelectedCvs([]);
+      setSelectAll(false);
+      
+      // CV listesini yenile
+      await fetchCvs();
+    } catch (error) {
+      console.error('Toplu CV silme hatası:', error);
+      showError(error.message || 'CV\'ler silinirken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleShowCV = (cv) => {
@@ -657,6 +483,22 @@ const CVTable = () => {
         </div>
 
         <div className="header-right">
+          {selectedCvs.length > 0 && (
+            <button
+              className="bulk-delete-btn"
+              onClick={handleBulkDelete}
+              title={`${selectedCvs.length} CV'yi Sil`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 6H5H21" stroke="#dc3545" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="#dc3545" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M10 11V17" stroke="#dc3545" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14 11V17" stroke="#dc3545" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span>SİL ({selectedCvs.length})</span>
+            </button>
+          )}
+          
           <button
             className="add-cv-btn"
             onClick={handleShowAddModal}
@@ -668,10 +510,6 @@ const CVTable = () => {
             </svg>
             <span>CV EKLE</span>
           </button>
-
-
-
-
         </div>
       </div>
 
@@ -767,12 +605,12 @@ const CVTable = () => {
                       onChange={(e) => handleStatusChange(cv.id, e.target.value)}
                       className={`status-dropdown ${getStatusBadgeClass(cv.durum)}`}
                       style={{ 
-                        fontSize: '12px', 
-                        padding: '4px 8px',
-                        minWidth: '50px',
-                        minHeight: '40px',
+                        fontSize: '13px', 
+                        padding: '2px 1px',
+                        minWidth: '15px !important',
+                        minHeight: '24px !important',
                         border: 'none',
-                        borderRadius: '20px',
+                        borderRadius: '10px',
                         fontWeight: '500',
                         color: 'white',
                         textAlign: 'center'
@@ -800,24 +638,7 @@ const CVTable = () => {
         </Table>
       </div>
 
-      {/* Özel Yatay Scrollbar */}
-      {scrollbarVisible && (
-        <div className="custom-scrollbar-container">
-          <div 
-            className="custom-scrollbar-track" 
-            onClick={handleScrollbarTrackClick}
-          >
-            <div
-              className="custom-scrollbar-thumb"
-              style={{
-                width: `${scrollbarWidth}px`,
-                left: `${scrollbarLeft}px`
-              }}
-              onMouseDown={handleScrollbarMouseDown}
-            />
-          </div>
-        </div>
-      )}
+
 
       {/* Alt Bilgi ve Sayfalama */}
       <div className="table-footer">

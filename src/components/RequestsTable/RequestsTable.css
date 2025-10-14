@@ -182,43 +182,6 @@
   font-size: 15px;
 }
 
-.requests-table-container .header-btn.bulk-sms-btn {
-  background-color: #28a745 !important;
-  border: 1px solid #28a745 !important;
-  color: white !important;
-  border-radius: 10px !important;
-  padding: 8px 16px !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  transition: all 0.2s ease !important;
-  min-width: 100px !important;
-  height: 45px !important;
-  width: auto !important;
-}
-
-.header-btn.bulk-sms-btn:hover {
-  background-color: #218838 !important;
-  border-color: #1e7e34 !important;
-  color: white !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.25) !important;
-}
-
-.header-btn.bulk-sms-btn:focus {
-  background-color: #218838 !important;
-  border-color: #1e7e34 !important;
-  color: white !important;
-  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
-}
-
-.header-btn.bulk-sms-btn:active {
-  background-color: #1e7e34 !important;
-  border-color: #1c7430 !important;
-  color: white !important;
-}
 
 /* Action Menu Button Stilleri */
 .action-menu-btn {
@@ -688,24 +651,47 @@
   padding: 20px 30px 20px 20px;
   border-top: 1px solid #e0e0e0;
   flex-shrink: 0;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
   flex-wrap: wrap;
   gap: 15px;
   position: relative;
   z-index: 10;
   min-height: 60px;
+  width: 100% !important;
+}
+
+/* Güçlü seçici ekle */
+.requests-table-container > .table-footer {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
 }
 
 .requests-table-container .total-records {
   font-size: 14px;
   font-weight: 600;
   color: #495057;
-  display: flex;
-  align-items: center;
-  text-align: left;
+  display: flex !important;
+  align-items: center !important;
+  text-align: left !important;
+  flex: 1 !important;
+  justify-content: flex-start !important;
+  order: 1 !important;
+}
+
+/* Güçlü seçici ekle */
+.requests-table-container .table-footer .total-records {
+  display: flex !important;
+  align-items: center !important;
+  text-align: left !important;
+  flex: 1 !important;
+  justify-content: flex-start !important;
+  order: 1 !important;
 }
 
 /* Action Button Stilleri - ContactsTable'dan kopyalandı */
@@ -833,16 +819,50 @@
 
 /* Sayfalama Stilleri - ContactsTable'dan kopyalandı */
 .requests-table-container .pagination-wrapper {
-  display: flex;
-  justify-content: center;
-  width: 100%;
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  flex: 2 !important;
+  order: 2 !important;
+  width: auto !important;
+  text-align: left !important;
+  margin: 0 !important;
+  padding-left: 50px !important;
+}
+
+/* Güçlü seçici ekle */
+.requests-table-container .table-footer .pagination-wrapper {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  flex: 2 !important;
+  order: 2 !important;
+  width: auto !important;
+  text-align: left !important;
+  margin: 0 !important;
+  padding-left: 50px !important;
+}
+
+.requests-table-container .table-footer .pagination-wrapper .custom-pagination {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  flex: 2 !important;
+  order: 2 !important;
+  width: auto !important;
+  text-align: left !important;
+  margin: 0 !important;
+  padding-left: 50px !important;
 }
 
 .requests-table-container .custom-pagination {
-  margin-bottom: 0;
+  margin-bottom: 0 !important;
   gap: 4px;
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: auto !important;
+  margin: 0 !important;
 }
 
 .requests-table-container .custom-pagination .page-item {
@@ -907,25 +927,38 @@
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* Tabloyu 1400px genişliğe sabitle - yatay scroll oluşsun */
+  /* Tabloyu 1600px genişliğe sabitle - yatay scroll oluşsun */
   .requests-table {
-    width: 1400px !important;
-    min-width: 1400px !important;
+    width: 1600px !important;
+    min-width: 1600px !important;
     table-layout: fixed !important;
   }
 
-  /* Native scrollbar'ı gizle - özel scrollbar kullanacağız */
+  /* Native scrollbar'ı görünür yap */
   .table-wrapper::-webkit-scrollbar {
-    height: 0px !important;
-    background: transparent !important;
+    height: 12px !important;
+    background: #f8f9fa !important;
   }
 
   .table-wrapper::-webkit-scrollbar-thumb {
-    background: transparent !important;
+    background: #007bff !important;
+    border-radius: 6px !important;
+    border: 1px solid #f8f9fa !important;
+  }
+
+  .table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #0056b3 !important;
   }
 
   .table-wrapper::-webkit-scrollbar-track {
-    background: transparent !important;
+    background: #f8f9fa !important;
+    border-radius: 6px !important;
+  }
+
+  /* Firefox için scrollbar stilleri */
+  .table-wrapper {
+    scrollbar-width: thin !important;
+    scrollbar-color: #007bff #f8f9fa !important;
   }
 
   /* Hücreleri tek satıra al - kaydırma net olsun */
@@ -935,161 +968,7 @@
   }
 }
 
-@media (max-width: 600px) {
-  /* Ana container */
-  .requests-table-container {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
 
-  /* Table wrapper - YATAY SCROLL */
-  .table-wrapper {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-    -webkit-overflow-scrolling: touch !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    position: relative !important;
-  }
-
-  /* Tablo genişliği - Ekrandan çok geniş yap */
-  .requests-table {
-    width: 1400px !important;
-    min-width: 1400px !important;
-    table-layout: fixed !important;
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-    margin: 0 !important;
-  }
-
-  /* Tüm hücreler için nowrap */
-  .requests-table th,
-  .requests-table td {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    padding: 10px 8px !important;
-    font-size: 12px !important;
-  }
-
-  /* Sütun genişlikleri - Toplam 1400px */
-  .requests-table th:nth-child(1), .requests-table td:nth-child(1) { width: 70px !important; }   /* Checkbox */
-  .requests-table th:nth-child(2), .requests-table td:nth-child(2) { width: 70px !important; }   /* Sıra */
-  .requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 180px !important; }  /* Adı */
-   .requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 180px !important; }  /* Soyadı */
-   .requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 140px !important; }  /* Kategori */
-   .requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 160px !important; }  /* İletişim */
-   .requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 150px !important; }  /* Telefon 2 */
-   .requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 140px !important; }  /* Ünvan */
-   .requests-table th:nth-child(9), .requests-table td:nth-child(9) { width: 140px !important; } /* Mahalle */
-   .requests-table th:nth-child(10), .requests-table td:nth-child(10) { width: 140px !important; } /* İşlem */
-
-  /* Avatar ve butonlar */
-  .action-btn {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 10px !important;
-    padding: 4px !important;
-  }
-
-  .action-btn svg {
-    width: 12px !important;
-    height: 12px !important;
-  }
-
-  /* Scrollbar görünür ve büyük yap */
-  .table-wrapper::-webkit-scrollbar {
-    height: 15px !important;
-    background: #f8f9fa !important;
-    border-radius: 0 !important;
-  }
-
-  .table-wrapper::-webkit-scrollbar-thumb {
-    background: #007bff !important;
-    border-radius: 8px !important;
-    border: 2px solid #f8f9fa !important;
-  }
-
-  .table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: #0056b3 !important;
-  }
-
-  .table-wrapper::-webkit-scrollbar-track {
-    background: #f8f9fa !important;
-    border-radius: 0 !important;
-  }
-
-  /* Header düzeni */
-  .requests-table-container .header-bar {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-    padding: 12px 15px !important;
-    width: 100vw !important;
-    max-width: 100vw !important;
-    margin: 0 !important;
-  }
-
-  .requests-table-container .header-left {
-    justify-self: center !important;
-    order: 1 !important;
-  }
-
-  .requests-table-container .header-center {
-    order: 2 !important;
-    width: 100% !important;
-  }
-
-  .requests-table-container .header-right {
-    justify-self: center !important;
-    order: 3 !important;
-  }
-
-  /* Footer */
-  .table-footer {
-    padding: 12px 15px !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-    width: 100vw !important;
-    max-width: 100vw !important;
-    margin: 0 !important;
-  }
-
-  .total-records {
-    font-size: 12px !important;
-    text-align: center !important;
-  }
-
-  .pagination-wrapper {
-    justify-content: center !important;
-  }
-
-  /* Checkbox ve form elementleri */
-  .requests-table input[type="checkbox"] {
-    transform: scale(1.2) !important;
-  }
-
-  /* Tablo başlıkları */
-  .requests-table thead th {
-    background: #f8f9fa !important;
-    font-weight: 600 !important;
-    color: #495057 !important;
-    text-align: center !important;
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 10 !important;
-  }
-
-  /* Satır hover efekti */
-  .requests-table tbody tr:hover {
-    background-color: #f8f9fa !important;
-  }
-}
 
 /* Tablo sütunları için temel genişlikler */
 .requests-table th:nth-child(1),
@@ -1153,6 +1032,47 @@
  .requests-table td:nth-child(10) { /* İŞLEM */
   width: 100px;
   min-width: 100px;
+}
+
+/* Toplu Silme Butonu Stilleri */
+.bulk-delete-btn {
+  background: white;
+  border: 2px solid #dc3545;
+  border-radius: 10px;
+  padding: 8px 16px;
+  color: #dc3545;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(220, 53, 69, 0.15);
+  min-height: 40px;
+  margin-right: 10px;
+}
+
+.bulk-delete-btn:hover {
+  background: #fff5f5;
+  border-color: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.25);
+  color: #c82333;
+}
+
+.bulk-delete-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
+}
+
+.bulk-delete-btn svg {
+  flex-shrink: 0;
+}
+
+.bulk-delete-btn span {
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 /* Talep Ekle Butonu Stilleri */

@@ -1814,3 +1814,65 @@
   background-color: #FF6B35 !important; /* Turuncu renk */
   height: 2px !important; /* Daha kalın - 3px */
 }
+
+/* Geçmiş günler için gri çizgili stil - React Big Calendar */
+/* Tüm gün sütunu için geçmiş tarih stili */
+.rbc-time-view .rbc-time-content .rbc-day-slot.past-date,
+.rbc-day-bg.past-date {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    rgba(156, 163, 175, 0.08) 5px,
+    rgba(156, 163, 175, 0.08) 8px
+  ) !important;
+  background-color: rgba(249, 250, 251, 0.4) !important;
+}
+
+.rbc-time-view .rbc-time-content .rbc-day-slot.past-date:hover,
+.rbc-day-bg.past-date:hover {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    rgba(156, 163, 175, 0.14) 5px,
+    rgba(156, 163, 175, 0.14) 8px
+  ) !important;
+  background-color: rgba(243, 244, 246, 0.5) !important;
+}
+
+/* Haftalık görünümde geçmiş günler için header stilleri */
+.rbc-header.past-date {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(156, 163, 175, 0.07) 4px,
+    rgba(156, 163, 175, 0.07) 7px
+  ) !important;
+  background-color: rgba(249, 250, 251, 0.5) !important;
+  color: rgba(107, 114, 128, 0.8) !important;
+}
+
+.rbc-header.past-date:hover {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(156, 163, 175, 0.12) 4px,
+    rgba(156, 163, 175, 0.12) 7px
+  ) !important;
+  background-color: rgba(243, 244, 246, 0.6) !important;
+}
+
+/* Haftalık ve günlük görünümde gün sütunlarının tamamı için */
+.rbc-time-view .rbc-time-content > * > .rbc-day-slot.past-date {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    rgba(156, 163, 175, 0.06) 5px,
+    rgba(156, 163, 175, 0.06) 8px
+  ) !important;
+  background-color: rgba(249, 250, 251, 0.3) !important;
+}

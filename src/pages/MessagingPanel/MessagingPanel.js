@@ -152,6 +152,14 @@ const MessagingPanel = () => {
           room.id === roomId ? { ...room, is_pinned: isPinned } : room
         ));
         
+        // Seçili room'u da güncelle (real-time buton metni için)
+        setSelectedRoom(prev => {
+          if (prev && prev.id === roomId) {
+            return { ...prev, is_pinned: isPinned };
+          }
+          return prev;
+        });
+        
         // Chat listesini yeniden sırala (sabitlenmiş chatler üstte)
         setChatRooms(prev => [...prev].sort((a, b) => {
           // Önce sabitlenmiş chatler

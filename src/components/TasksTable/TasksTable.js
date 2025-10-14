@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Table, Form, Pagination } from "react-bootstrap";
 import { FaCheck, FaTimes } from "react-icons/fa";
-import { getTasks, deleteTask, updateTaskApproval } from "../../services/tasksService";
+import { getTasks, deleteTask, updateTaskApproval, deleteMultipleTasks } from "../../services/tasksService";
 import AddTaskModal from "../AddTaskModal/AddTaskModal";
 import ViewTaskModal from "../ViewTaskModal/ViewTaskModal";
 import EditTaskModal from "../EditTaskModal/EditTaskModal";
@@ -50,6 +50,7 @@ const TasksTable = () => {
     'Tamamlandı': 0,
     'İptal Edildi': 0
   });
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
 
   // Modal state'leri
   const [showAddModal, setShowAddModal] = useState(false);
@@ -58,10 +59,7 @@ const TasksTable = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
-  // Scrollbar state'leri
-  const [scrollbarVisible, setScrollbarVisible] = useState(false);
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
-  const [scrollbarLeft, setScrollbarLeft] = useState(0);
+
   
   // Ref'ler
   const tableWrapperRef = useRef(null);
@@ -201,7 +199,29 @@ const TasksTable = () => {
     setSelectedTask(null);
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedTasks.length === 0) {
+      showError('Lütfen silmek istediğiniz görevleri seçin');
+      return;
+    }
 
+    const confirmMessage = `${selectedTasks.length} görevi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      await deleteMultipleTasks(accessToken, selectedTasks);
+      showSuccess(`${selectedTasks.length} görev başarıyla silindi`);
+      setSelectedTasks([]);
+      setSelectAll(false);
+      fetchTasksData(); // Listeyi yenile
+    } catch (error) {
+      console.error('Toplu silme hatası:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Bilinmeyen bir hata oluştu';
+      showError('Görevler silinirken hata oluştu: ' + errorMessage);
+    }
+  };
 
   // Sayfa değiştirme
   const handlePageChange = (pageNumber) => {
@@ -222,46 +242,7 @@ const TasksTable = () => {
     }
   };
 
-  // Scrollbar fonksiyonları
-  const handleScrollbarTrackClick = (e) => {
-    if (!tableWrapperRef.current) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const trackWidth = rect.width;
-    const scrollRatio = clickX / trackWidth;
-    
-    const maxScrollLeft = tableWrapperRef.current.scrollWidth - tableWrapperRef.current.clientWidth;
-    tableWrapperRef.current.scrollLeft = scrollRatio * maxScrollLeft;
-  };
 
-  const handleScrollbarMouseDown = (e) => {
-    e.preventDefault();
-    // Scrollbar sürükleme işlevi - basit implementasyon
-  };
-
-  // Scrollbar görünürlüğünü kontrol et
-  useEffect(() => {
-    const checkScrollbar = () => {
-      if (tableWrapperRef.current) {
-        const { scrollWidth, clientWidth, scrollLeft } = tableWrapperRef.current;
-        const isScrollable = scrollWidth > clientWidth;
-        setScrollbarVisible(isScrollable);
-        
-        if (isScrollable) {
-          const thumbWidth = (clientWidth / scrollWidth) * clientWidth;
-          const thumbLeft = (scrollLeft / (scrollWidth - clientWidth)) * (clientWidth - thumbWidth);
-          setScrollbarWidth(thumbWidth);
-          setScrollbarLeft(thumbLeft);
-        }
-      }
-    };
-
-    checkScrollbar();
-    window.addEventListener('resize', checkScrollbar);
-    
-    return () => window.removeEventListener('resize', checkScrollbar);
-  }, [tasks]);
 
   return (
     <div className="tasks-table-container">
@@ -274,8 +255,8 @@ const TasksTable = () => {
           <h2 className="header-title">GÖREV</h2>
         </div>
 
-        {/* Status Filter - Ortada */}
         <div className="header-center">
+          {/* Status Filter - Ortada */}
           <div className="status-buttons">
             {Object.keys(statusCounts).map((status, index) => (
               <div
@@ -292,6 +273,31 @@ const TasksTable = () => {
         </div>
 
         <div className="header-right">
+          {selectedTasks.length > 0 && (
+            <button
+              className="header-btn bulk-delete-btn"
+              onClick={handleBulkDelete}
+              title={`${selectedTasks.length} görevi sil`}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"
+                  stroke="#ffffff"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span>SİL ({selectedTasks.length})</span>
+            </button>
+          )}
+          
           <button
             className="add-task-btn"
             onClick={handleShowAddModal}
@@ -319,6 +325,48 @@ const TasksTable = () => {
             </svg>
             <span>GÖREV EKLE</span>
           </button>
+
+          {/* Header Actions Menu (1500px ve altı için gösterilecek) */}
+          <div className="dropdown header-actions-dropdown">
+            <button
+              className="header-btn dropdown-toggle action-menu-btn"
+              type="button"
+              aria-expanded={headerMenuOpen}
+              onClick={() => setHeaderMenuOpen(prev => !prev)}
+              title="Menü"
+            >
+              {/* Üç nokta ikon */}
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="5" cy="12" r="2" fill="#6c757d" />
+                <circle cx="12" cy="12" r="2" fill="#6c757d" />
+                <circle cx="19" cy="12" r="2" fill="#6c757d" />
+              </svg>
+            </button>
+            <div className={`dropdown-menu ${headerMenuOpen ? 'show' : ''}`}>
+              <button className="dropdown-item" onClick={() => { setHeaderMenuOpen(false); handleShowAddModal(); }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 5v14M5 12h14" stroke="#12B423" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                Görev Ekle
+              </button>
+              {selectedTasks.length > 0 && (
+                <button className="dropdown-item text-danger" onClick={() => { setHeaderMenuOpen(false); handleBulkDelete(); }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 6h18" stroke="#dc3545" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="#dc3545" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" stroke="#dc3545" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                  Toplu Sil ({selectedTasks.length})
+                </button>
+              )}
+            </div>
+          </div>
 
         </div>
       </div>
@@ -430,29 +478,12 @@ const TasksTable = () => {
         </Table>
       </div>
 
-      {/* Özel Yatay Scrollbar */}
-      {scrollbarVisible && (
-        <div className="custom-scrollbar-container">
-          <div 
-            className="custom-scrollbar-track" 
-            onClick={handleScrollbarTrackClick}
-          >
-            <div
-              className="custom-scrollbar-thumb"
-              style={{
-                width: `${scrollbarWidth}px`,
-                left: `${scrollbarLeft}px`
-              }}
-              onMouseDown={handleScrollbarMouseDown}
-            />
-          </div>
-        </div>
-      )}
+
 
       {/* Alt Bilgi ve Sayfalama */}
       <div className="table-footer">
         <div className="total-records">
-          TOPLAM {totalRecords.toLocaleString("tr-TR")} KİŞİ BULUNMAKTADIR
+          TOPLAM {totalRecords.toLocaleString("tr-TR")} GÖREV BULUNMAKTADIR
         </div>
         <div className="pagination-wrapper">
           <Pagination className="custom-pagination">

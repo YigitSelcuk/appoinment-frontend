@@ -595,14 +595,34 @@ const Calendar = memo(({
             const isTodayDate = isToday(dateObj.day, dateObj.month);
             const hasEvents = dateObj.events.length > 0;
             const visibleEvents = hasEvents ? dateObj.events.slice(0, 3) : [];
-            const extraEventsCount = dateObj.events.length > 3 ? dateObj.events.length - 3 : 0;
+            
+            // Geçmiş tarih kontrolü
+            const isPastDate = (() => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0); // Bugünün başlangıcı
+              
+              let dateToCheck;
+              if (dateObj.month === 'current') {
+                dateToCheck = new Date(currentYear, currentMonth, dateObj.day);
+              } else if (dateObj.month === 'prev') {
+                const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+                const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+                dateToCheck = new Date(prevYear, prevMonth, dateObj.day);
+              } else { // next month
+                const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
+                const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+                dateToCheck = new Date(nextYear, nextMonth, dateObj.day);
+              }
+              
+              return dateToCheck < today;
+            })();
             
             return (
               <div
                 key={`${dateObj.dateKey}-${index}`}
                 className={`calendar-day ${dateObj.month} ${
                   isSelected ? 'selected' : ''
-                } ${isTodayDate ? 'today' : ''}`}
+                } ${isTodayDate ? 'today' : ''} ${isPastDate ? 'past' : ''}`}
                 onClick={() => handleDateClick(dateObj.day, dateObj.month)}
               >
                 <span className="day-number">{dateObj.day}</span>
@@ -615,11 +635,6 @@ const Calendar = memo(({
                         style={{ backgroundColor: event.color }}
                       />
                     ))}
-                    {extraEventsCount > 0 && (
-                      <div className="event-dot more-events" title={`+${extraEventsCount} daha fazla randevu`}>
-                        +
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -692,7 +707,7 @@ const Calendar = memo(({
                 const getStatusColor = (status) => {
                   switch (status) {
                     case 'SCHEDULED': return '#3B82F6';
-                    case 'COMPLETED': return '#10B981';
+                    case 'COMPLETED': return '#3B82F6';
                     case 'CANCELLED': return '#EF4444';
                     case 'PENDING': return '#F59E0B';
                     default: return '#6B7280';

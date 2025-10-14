@@ -29,6 +29,15 @@ export const SocketProvider = ({ children }) => {
     if (user && accessToken) {
       console.log('🔐 SocketContext: Token mevcut, socket bağlantısı kuruluyor...', { userId: user.id, hasToken: !!accessToken });
       
+      // Eğer mevcut socket varsa ve token değiştiyse, önce eski bağlantıyı kapat
+      if (socket) {
+        console.log('🔄 SocketContext: Token yenilendi, socket yeniden bağlanıyor...');
+        socket.disconnect();
+        socket.close();
+        setSocket(null);
+        setIsConnected(false);
+      }
+      
       // Socket.IO bağlantısını oluştur
       const socketUrl = process.env.REACT_APP_API_URL?.replace('/api', '');
       const newSocket = io(socketUrl, {

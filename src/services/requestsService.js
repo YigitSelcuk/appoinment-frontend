@@ -67,6 +67,20 @@ export const deleteRequest = async (id) => {
   }
 };
 
+// Toplu talep silme
+export const deleteMultipleRequests = async (requestIds) => {
+  try {
+    const response = await axios.delete(`${API_URL}/requests/bulk`, {
+      data: { requestIds },
+      withCredentials: true
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Talepler silinirken hata:', error);
+    throw error.response?.data || error.message;
+  }
+};
+
 // Tek talep getir
 export const getRequestById = async (id) => {
   try {
@@ -162,6 +176,7 @@ const requestsService = {
   createRequest,
   updateRequest,
   deleteRequest,
+  deleteMultipleRequests,
   getRequestById,
   checkTCExists,
   getDepartmentRequests,

@@ -124,6 +124,22 @@ export const deleteCV = async (id) => {
   }
 };
 
+// Toplu CV silme
+export const deleteMultipleCVs = async (cvIds) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.delete(`${API_BASE_URL}/cvs/bulk`, {
+      data: { cvIds },
+      withCredentials: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Toplu CV silme hatası:', error);
+    throw error.response?.data || error.message;
+  }
+};
+
 // CV durumlarını getir
 export const getCVStatuses = async () => {
   try {
@@ -241,6 +257,7 @@ const cvsService = {
   createCV,
   updateCV,
   deleteCV,
+  deleteMultipleCVs,
   getCVStatuses,
   downloadCVFile,
   getProfileImageUrl,

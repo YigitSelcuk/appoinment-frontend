@@ -7,8 +7,10 @@ import {
   Badge,
   Row,
   Col,
+  Alert,
 } from "react-bootstrap";
 import activitiesService from "../../services/activitiesService";
+import { useAuth } from "../../contexts/AuthContext";
 import "./ActivitiesTable.css";
 
 // Debounce hook
@@ -29,8 +31,10 @@ const useDebounce = (value, delay) => {
 };
 
 const ActivitiesTable = () => {
+  const { accessToken, user } = useAuth();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [activitiesPerPage] = useState(20);
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,12 +46,22 @@ const ActivitiesTable = () => {
 
   // Component mount edildiğinde ve filtreler değiştiğinde verileri yükle
   useEffect(() => {
-    fetchActivities();
-  }, [currentPage, debouncedSearchTerm, actionTypeFilter, tableNameFilter]);
+    if (accessToken) {
+      fetchActivities();
+    }
+  }, [accessToken, currentPage, debouncedSearchTerm, actionTypeFilter, tableNameFilter]);
 
   const fetchActivities = async () => {
     try {
       setLoading(true);
+      setError(null);
+
+      if (!accessToken) {
+        console.error('Access token bulunamadı');
+        setActivities([]);
+        setError('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+        return;
+      }
 
       const params = {
         page: currentPage,
@@ -57,16 +71,18 @@ const ActivitiesTable = () => {
         ...(tableNameFilter && { tableName: tableNameFilter }),
       };
 
-      const response = await activitiesService.getActivities(params);
+      const response = await activitiesService.getActivities(accessToken, params);
 
       if (response.success) {
         setActivities(response.data);
         setTotalPages(response.pagination.totalPages);
         setTotalRecords(response.pagination.totalRecords);
+        setError(null);
       }
     } catch (error) {
       console.error("Aktiviteler yüklenirken hata:", error);
       setActivities([]);
+      setError(error.message || 'Aktiviteler yüklenirken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
@@ -126,6 +142,20 @@ const ActivitiesTable = () => {
 
     return tableNames[tableName] || tableName.toUpperCase();
   };
+
+  // Admin kontrolü
+  const isAdmin = user && (user.role === 'admin' || user.role === 'başkan' || user.department === 'BAŞKAN');
+
+  if (!isAdmin) {
+    return (
+      <div className="activities-table-container">
+        <Alert variant="warning" className="text-center">
+          <Alert.Heading>Yetkisiz Erişim</Alert.Heading>
+          <p>Bu sayfaya erişim için admin yetkisi gereklidir.</p>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="activities-table-container">
@@ -189,8 +219,6 @@ const ActivitiesTable = () => {
                 <option value="UPDATE">Güncelleme</option>
                 <option value="DELETE">Silme</option>
                 <option value="READ">Görüntüleme</option>
-                <option value="LOGIN">Giriş</option>
-                <option value="LOGOUT">Çıkış</option>
               </Form.Select>
             </Col>
             <Col md={3}>
@@ -200,11 +228,6 @@ const ActivitiesTable = () => {
                 className="filter-select"
               >
                 <option value="">Tüm Tablolar</option>
-                <option value="requests">Talepler</option>
-                <option value="contacts">Kişiler</option>
-                <option value="messages">Mesajlar</option>
-                <option value="categories">Kategoriler</option>
-                <option value="users">Kullanıcılar</option>
               </Form.Select>
             </Col>
           </Row>
@@ -248,6 +271,14 @@ const ActivitiesTable = () => {
           </Button>
         </div>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="danger" className="mb-3" dismissible onClose={() => setError(null)}>
+          <Alert.Heading>Hata!</Alert.Heading>
+          <p>{error}</p>
+        </Alert>
+      )}
 
       {/* Tablo */}
       <div className="table-wrapper">
@@ -423,4 +454,4 @@ const ActivitiesTable = () => {
   );
 };
 
-export default ActivitiesTable; 
+export default ActivitiesTable;

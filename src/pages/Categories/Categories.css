@@ -52,7 +52,7 @@
   padding: 0;
   position: relative;
   z-index: 1;
-  margin-right: 75px !important; /* FloatingChat için 5px gap */
+  margin-right: -10px !important; /* FloatingChat için boşluk azaltıldı */
 }
 
 .page-header {
@@ -86,20 +86,26 @@
 /* Tablet ve büyük ekranlar için düzenlemeler */
 @media (max-width: 1200px) {
   .categories-container {
-    padding: 16px;
-    gap: 16px;
+    padding: 10px;
+    gap: 6px;
   }
   
   .left-panel {
-    min-width: 280px;
+    min-width: 250px;
+    width: 250px;
   }
   
   .categories-content {
-    min-width: 400px;
+    flex: 1;
+    min-width: 400px; /* Daha esnek minimum genişlik */
+    margin-right: 5px !important; /* Minimal boşluk */
   }
   
   .right-panel {
-    min-width: 280px;
+    min-width: 70px; /* FloatingChat'in gerçek genişliği */
+    width: 70px; /* FloatingChat'in CSS'indeki width değeri */
+    flex-shrink: 0;
+    margin-right: -225px !important; /* Minimal boşluk */
   }
 }
 

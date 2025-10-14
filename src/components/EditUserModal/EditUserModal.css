@@ -67,32 +67,33 @@
 }
 
 /* Body Styles */
-.modal-body {
+.edit-user-modal .modal-body {
   padding: 1.5rem;
   background: white;
 }
 
-.form-content {
+.edit-user-modal .form-content {
   background: white;
   padding: 0;
 }
 
-.form-row {
+.edit-user-modal .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr !important;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.form-group {
+.edit-user-modal .form-group {
   margin-bottom: 1rem;
+  width: 100%;
 }
 
-.form-group:last-child {
+.edit-user-modal .form-group:last-child {
   margin-bottom: 0;
 }
 
-.form-group label {
+.edit-user-modal .form-group label {
   font-weight: 500;
   color: #333;
   margin-bottom: 0.25rem;
@@ -100,32 +101,33 @@
   font-size: 0.9rem;
 }
 
-.form-control {
+.edit-user-modal .form-control {
   border: 1px solid #dee2e6;
   border-radius: 4px;
   padding: 0.5rem 0.75rem;
   font-size: 0.9rem;
   transition: border-color 0.2s;
   background: white;
+  width: 100% !important;
 }
 
-.form-control:focus {
+.edit-user-modal .form-control:focus {
   border-color: #0066cc;
   box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
   background: white;
   outline: none;
 }
 
-.form-control.is-invalid {
+.edit-user-modal .form-control.is-invalid {
   border-color: #dc3545;
 }
 
-.form-control.is-invalid:focus {
+.edit-user-modal .form-control.is-invalid:focus {
   border-color: #dc3545;
   box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
 }
 
-.invalid-feedback {
+.edit-user-modal .invalid-feedback {
   display: block;
   width: 100%;
   margin-top: 0.25rem;
@@ -134,13 +136,13 @@
 }
 
 /* Color Input Styles */
-.color-input-container {
+.edit-user-modal .color-input-container {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.color-input {
+.edit-user-modal .color-input {
   width: 50px;
   height: 32px;
   padding: 0;
@@ -149,16 +151,16 @@
   cursor: pointer;
 }
 
-.color-input::-webkit-color-swatch-wrapper {
+.edit-user-modal .color-input::-webkit-color-swatch-wrapper {
   padding: 0;
 }
 
-.color-input::-webkit-color-swatch {
+.edit-user-modal .color-input::-webkit-color-swatch {
   border: none;
   border-radius: 3px;
 }
 
-.color-preview {
+.edit-user-modal .color-preview {
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -167,7 +169,7 @@
 }
 
 /* Textarea Styles */
-textarea.form-control {
+.edit-user-modal textarea.form-control {
   resize: vertical;
   min-height: 60px;
 }

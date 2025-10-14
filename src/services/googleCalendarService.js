@@ -457,12 +457,53 @@ class GoogleCalendarService {
         }
       }
 
+      // Gelen veriyi detaylı olarak logla
+      console.log('📋 Google Calendar: Gelen eventData:', {
+        title: eventData.title,
+        description: eventData.description,
+        date: eventData.date,
+        startTime: eventData.startTime,
+        endTime: eventData.endTime,
+        time: eventData.time,
+        location: eventData.location
+      });
+
+      // Veri validasyonu
+      if (!eventData.title) {
+        throw new Error('Event title is required');
+      }
+      if (!eventData.date) {
+        throw new Error('Event date is required');
+      }
+      if (!eventData.startTime && !eventData.time) {
+        throw new Error('Event start time is required');
+      }
+      if (!eventData.endTime) {
+        throw new Error('Event end time is required');
+      }
+
+      // Tarih formatını kontrol et
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(eventData.date)) {
+        throw new Error(`Invalid date format: ${eventData.date}. Expected YYYY-MM-DD`);
+      }
+
+      // Saat formatını kontrol et
+      const timeRegex = /^\d{2}:\d{2}$/;
+      const startTime = eventData.startTime || eventData.time;
+      if (!timeRegex.test(startTime)) {
+        throw new Error(`Invalid start time format: ${startTime}. Expected HH:MM`);
+      }
+      if (!timeRegex.test(eventData.endTime)) {
+        throw new Error(`Invalid end time format: ${eventData.endTime}. Expected HH:MM`);
+      }
+
       // Event objesini oluştur
       const event = {
         summary: eventData.title,
         description: eventData.description || '',
         start: {
-          dateTime: `${eventData.date}T${eventData.startTime || eventData.time}:00`,
+          dateTime: `${eventData.date}T${startTime}:00`,
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
         end: {
@@ -525,32 +566,58 @@ class GoogleCalendarService {
   // Google Calendar'da etkinlik güncelle
   async updateEvent(googleEventId, eventData) {
     try {
+      console.log('🔄 Google Calendar updateEvent başlatılıyor:', {
+        googleEventId: googleEventId,
+        title: eventData.title,
+        date: eventData.date,
+        startTime: eventData.startTime,
+        endTime: eventData.endTime
+      });
+
+      // Önce servisin başlatılıp başlatılmadığını kontrol et
       if (!this.isInitialized || !window.gapi?.client?.calendar) {
         console.log('🔄 Google Calendar: Servis başlatılmamış, yeniden başlatılıyor...');
         const initResult = await this.init();
         if (!initResult) {
+          console.error('❌ Google Calendar: Servis başlatılamadı');
           throw new Error('Google Calendar servisi başlatılamadı');
         }
+        console.log('✅ Google Calendar: Servis başarıyla başlatıldı');
       }
       
-      if (!this.isSignedIn()) {
+      // Giriş durumunu kontrol et
+      const signedIn = this.isSignedIn();
+      console.log('🔐 Google Calendar: Giriş durumu:', signedIn);
+      if (!signedIn) {
+        console.error('❌ Google Calendar: Kullanıcı giriş yapmamış');
         throw new Error('Google Calendar: Kullanıcı giriş yapmamış');
       }
       
-      // GAPI client'da token yoksa localStorage'dan yükle
+      // Token durumunu kontrol et
       const gapiToken = window.gapi?.client?.getToken();
+      console.log('🔑 Google Calendar: GAPI token durumu:', gapiToken ? 'Mevcut' : 'Yok');
+      
       if (!gapiToken) {
         const storedToken = localStorage.getItem('googleCalendarToken');
+        console.log('💾 Google Calendar: localStorage token durumu:', storedToken ? 'Mevcut' : 'Yok');
+        
         if (storedToken) {
           try {
             const tokenData = JSON.parse(storedToken);
             const now = Date.now();
-            if (tokenData.expires_at && now < tokenData.expires_at) {
+            const isValid = tokenData.expires_at && now < tokenData.expires_at;
+            console.log('⏰ Google Calendar: Token geçerlilik durumu:', isValid);
+            
+            if (isValid) {
+              console.log('🔄 GoogleCalendarService: localStorage token GAPI client\'a set ediliyor (updateEvent)');
               window.gapi.client.setToken({
                 access_token: tokenData.access_token,
                 token_type: tokenData.token_type || 'Bearer',
                 expires_in: Math.floor((tokenData.expires_at - now) / 1000)
               });
+              console.log('✅ Google Calendar: Token başarıyla set edildi');
+            } else {
+              console.warn('⚠️ Google Calendar: Token süresi dolmuş');
             }
           } catch (error) {
             console.error('❌ GoogleCalendarService: Token set hatası (updateEvent):', error);
@@ -558,11 +625,53 @@ class GoogleCalendarService {
         }
       }
 
+      // Gelen veriyi detaylı olarak logla
+      console.log('📋 Google Calendar: Güncelleme eventData:', {
+        title: eventData.title,
+        description: eventData.description,
+        date: eventData.date,
+        startTime: eventData.startTime,
+        endTime: eventData.endTime,
+        time: eventData.time,
+        location: eventData.location
+      });
+
+      // Veri validasyonu
+      if (!eventData.title) {
+        throw new Error('Event title is required');
+      }
+      if (!eventData.date) {
+        throw new Error('Event date is required');
+      }
+      if (!eventData.startTime && !eventData.time) {
+        throw new Error('Event start time is required');
+      }
+      if (!eventData.endTime) {
+        throw new Error('Event end time is required');
+      }
+
+      // Tarih formatını kontrol et
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(eventData.date)) {
+        throw new Error(`Invalid date format: ${eventData.date}. Expected YYYY-MM-DD`);
+      }
+
+      // Saat formatını kontrol et
+      const timeRegex = /^\d{2}:\d{2}$/;
+      const startTime = eventData.startTime || eventData.time;
+      if (!timeRegex.test(startTime)) {
+        throw new Error(`Invalid start time format: ${startTime}. Expected HH:MM`);
+      }
+      if (!timeRegex.test(eventData.endTime)) {
+        throw new Error(`Invalid end time format: ${eventData.endTime}. Expected HH:MM`);
+      }
+
+      // Event objesini oluştur
       const event = {
         summary: eventData.title,
         description: eventData.description || '',
         start: {
-          dateTime: `${eventData.date}T${eventData.startTime || eventData.time}:00`,
+          dateTime: `${eventData.date}T${startTime}:00`,
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
         end: {
@@ -572,17 +681,60 @@ class GoogleCalendarService {
         location: eventData.location || ''
       };
 
-      console.log('📅 Google Calendar: Etkinlik güncelleniyor:', googleEventId, event);
+      console.log('📅 Google Calendar: Etkinlik güncelleniyor:', {
+        googleEventId: googleEventId,
+        event: event,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      });
+      
+      // API çağrısını yap
       const response = await window.gapi.client.calendar.events.update({
         calendarId: 'primary',
         eventId: googleEventId,
         resource: event
       });
       
-      console.log('✅ Google Calendar: Etkinlik güncellendi:', response.result);
-      return response.result;
+      console.log('✅ Google Calendar: API yanıtı alındı:', {
+        status: response.status,
+        eventId: response.result?.id,
+        summary: response.result?.summary,
+        htmlLink: response.result?.htmlLink
+      });
+      
+      if (response.result && response.result.id) {
+        console.log('🎉 Google Calendar: Etkinlik başarıyla güncellendi:', {
+          id: response.result.id,
+          summary: response.result.summary,
+          start: response.result.start,
+          end: response.result.end
+        });
+        return response.result;
+      } else {
+        console.error('❌ Google Calendar: API yanıtında event ID bulunamadı:', response);
+        throw new Error('Google Calendar API yanıtında event ID bulunamadı');
+      }
+      
     } catch (error) {
-      console.error('Error updating Google Calendar event:', error);
+      console.error('❌ Google Calendar updateEvent HATA:', {
+        googleEventId: googleEventId,
+        message: error.message,
+        status: error.status,
+        details: error.details,
+        result: error.result,
+        stack: error.stack
+      });
+      
+      // Hata türüne göre daha spesifik mesajlar
+      if (error.status === 401) {
+        console.error('🔐 Google Calendar: Yetkilendirme hatası - Token geçersiz olabilir');
+      } else if (error.status === 403) {
+        console.error('🚫 Google Calendar: Erişim reddedildi - Calendar API izni eksik olabilir');
+      } else if (error.status === 400) {
+        console.error('📝 Google Calendar: Geçersiz istek - Event verisi hatalı olabilir');
+      } else if (error.status === 404) {
+        console.error('🔍 Google Calendar: Etkinlik bulunamadı - Event ID geçersiz olabilir');
+      }
+      
       throw error;
     }
   }

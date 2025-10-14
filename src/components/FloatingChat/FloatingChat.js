@@ -255,7 +255,7 @@ const FloatingChat = () => {
 
       {/* Chat Avatarları */}
       <div className="chat-avatars">
-        {chatRooms.map((room, index) => (
+        {chatRooms.slice(0, 7).map((room, index) => (
           <div 
             key={`chat-${room.id}-${index}`}
             className="chat-avatar"

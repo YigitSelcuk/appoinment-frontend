@@ -119,7 +119,7 @@ const AddCategoryModal = ({ show, onHide, onCategoryAdded }) => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="Örn: İSTANBUL, ANKARA, ADIYAMAN"
+                  placeholder="Ana kategori adını giriniz"
                   required
                   className="category-input"
                 />
@@ -136,7 +136,7 @@ const AddCategoryModal = ({ show, onHide, onCategoryAdded }) => {
                   name="alt_kategori"
                   value={formData.alt_kategori}
                   onChange={handleInputChange}
-                  placeholder="Örn: MUHTARLAR, BELEDİYE PERSONELİ"
+                  placeholder="Alt kategori adını giriniz"
                   required
                   className="category-input"
                 />

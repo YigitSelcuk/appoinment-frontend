@@ -9,6 +9,7 @@ import AddAppointmentModal from '../AddAppointmentModal/AddAppointmentModal';
 import DeleteAppointmentModal from '../DeleteAppointmentModal/DeleteAppointmentModal';
 import ViewAppointmentModal from '../ViewAppointmentModal/ViewAppointmentModal';
 import EditAppointmentModal from '../EditAppointmentModal/EditAppointmentModal';
+import PastDateConfirmModal from '../PastDateConfirmModal/PastDateConfirmModal';
 import { getAppointments, getAppointmentsByDateRange, createAppointment, updateAppointment, deleteAppointment } from '../../services/appointmentsService';
 import { useSimpleToast } from '../../contexts/SimpleToastContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -43,6 +44,9 @@ const WeeklyCalendar = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPastDateModalOpen, setIsPastDateModalOpen] = useState(false);
+  const [pastDateCallback, setPastDateCallback] = useState(null);
+  const [pastDateSelectedDate, setPastDateSelectedDate] = useState(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedDay, setSelectedDay] = useState(null);
@@ -228,42 +232,34 @@ const WeeklyCalendar = ({
     return convertedEvents;
   }, [appointments, googleEvents, convertAppointmentsToEvents]);
 
+  // Hafta başlangıç ve bitiş tarihlerini memoize et - performans optimizasyonu
+  const weekBounds = useMemo(() => {
+    const weekStartLocal = startOfWeek(selectedWeekStart, { weekStartsOn: 1 });
+    const weekEndLocal = new Date(weekStartLocal);
+    weekEndLocal.setDate(weekEndLocal.getDate() + 6);
+    return { weekStartLocal, weekEndLocal };
+  }, [selectedWeekStart]);
+
   // Tarihten gün indexini hesapla (0-6 arası) - Pazartesi=0, Pazar=6
-  // TEMİZ VE BASİT MANTIK - Pazar günü kartlarının kaybolma sorunu çözüldü
+  // OPTIMIZE EDİLDİ: Debug logları kaldırıldı, memoized week bounds kullanılıyor
   const calculateDayIndex = useCallback((dateString) => {
     try {
       if (!dateString) return -1;
       
-      console.log('🔍 calculateDayIndex DEBUG:');
-      console.log('- dateString:', dateString);
-      console.log('- selectedWeekStart:', selectedWeekStart);
-      
       // UTC tarihini yerel tarihe dönüştür
       const utcDate = new Date(dateString);
-      console.log('- utcDate:', utcDate);
       
       // Yerel saat diliminde tarihi al (sadece tarih kısmı)
       const localYear = utcDate.getFullYear();
       const localMonth = utcDate.getMonth();
       const localDay = utcDate.getDate();
       const appointmentDate = new Date(localYear, localMonth, localDay);
-      console.log('- appointmentDate (yerel):', appointmentDate);
       
-      // Hafta başlangıcını hesapla (Pazartesi) - date-fns ile tutarlılık için
-      const weekStartLocal = startOfWeek(selectedWeekStart, { weekStartsOn: 1 });
-      console.log('- weekStartLocal:', weekStartLocal);
-      
-      // Hafta sonunu hesapla (Pazar)
-      const weekEndLocal = new Date(weekStartLocal);
-      weekEndLocal.setDate(weekEndLocal.getDate() + 6);
-      console.log('- weekEndLocal:', weekEndLocal);
+      // Memoized hafta sınırlarını kullan - performans artışı
+      const { weekStartLocal, weekEndLocal } = weekBounds;
       
       // Randevunun bu haftaya ait olup olmadığını kontrol et
-      console.log('- appointmentDate < weekStartLocal:', appointmentDate < weekStartLocal);
-      console.log('- appointmentDate > weekEndLocal:', appointmentDate > weekEndLocal);
-      
       if (appointmentDate < weekStartLocal || appointmentDate > weekEndLocal) {
-        console.log('❌ Randevu bu haftaya ait değil');
         return -1; // Bu haftaya ait değil
       }
       
@@ -271,27 +267,16 @@ const WeeklyCalendar = ({
       // Bizim sistem: 0=Pazartesi, 1=Salı, 2=Çarşamba, 3=Perşembe, 4=Cuma, 5=Cumartesi, 6=Pazar
       const jsDay = appointmentDate.getDay();
       
-      // JavaScript gün numarasını bizim sisteme çevir
-      let dayIndex;
-      if (jsDay === 0) {
-        // Pazar günü = 6 (hafta sonu)
-        dayIndex = 6;
-      } else {
-        // Pazartesi(1) = 0, Salı(2) = 1, ..., Cumartesi(6) = 5
-        dayIndex = jsDay - 1;
-      }
+      // JavaScript gün numarasını bizim sisteme çevir - optimize edilmiş
+      const dayIndex = jsDay === 0 ? 6 : jsDay - 1;
       
       // Güvenlik kontrolü
-      if (dayIndex >= 0 && dayIndex <= 6) {
-        return dayIndex;
-      }
-      
-      return -1;
+      return (dayIndex >= 0 && dayIndex <= 6) ? dayIndex : -1;
     } catch (error) {
       console.error('calculateDayIndex hatası:', error, 'dateString:', dateString);
       return -1;
     }
-  }, [selectedWeekStart]);
+  }, [weekBounds]);
 
   // Randevu filtreleme mantığı - ayrı fonksiyon
   const filterAppointments = useCallback((appointments, user) => {
@@ -502,16 +487,11 @@ const WeeklyCalendar = ({
   // Temizlenmiş loadAppointments fonksiyonu
   const loadAppointments = useCallback(async () => {
     if (!accessToken || !user) {
-      console.log('⚠️ loadAppointments: accessToken veya user eksik');
       return;
     }
     
     try {
       setLoading(true);
-      console.log('📅 Randevular yükleniyor...', { 
-        selectedWeekStart: selectedWeekStart.toISOString(),
-        userId: user.id 
-      });
       
       // Hafta tarih aralığını hesapla (Pazartesi-Pazar = 7 gün)
       // date-fns ile tutarlılık için startOfWeek kullan
@@ -666,47 +646,31 @@ const WeeklyCalendar = ({
 
   // Socket event handler'ları - useCallback ile optimize edildi
   const handleAppointmentCreated = useCallback((data) => {
-    console.log('🔥 handleAppointmentCreated çağrıldı:', data);
-    
     if (data && data.appointment) {
       const newAppointment = data.appointment;
-      console.log('📅 Yeni randevu verisi:', newAppointment);
       
       // Randevunun mevcut haftaya ait olup olmadığını kontrol et
       const dayIndex = calculateDayIndex(newAppointment.date);
-      console.log('📊 calculateDayIndex sonucu:', dayIndex, 'randevu tarihi:', newAppointment.date);
       
       if (dayIndex >= 0) {
-        console.log('✅ Randevu mevcut haftaya ait, işleniyor...');
-        
         // Filtreleme ve formatlama işlemlerini yap
         const filteredAppointments = filterAppointments([newAppointment], user);
-        console.log('🔍 Filtreleme sonucu:', filteredAppointments.length, 'randevu');
         
         if (filteredAppointments.length > 0) {
           const formattedAppointments = formatAppointments(filteredAppointments);
-          console.log('🎨 Formatlanmış randevular:', formattedAppointments);
           
           // Mevcut haftaya ait - state'e ekle
           setAppointments(prevAppointments => {
             // Aynı ID'li randevu zaten var mı kontrol et (çift eklemeyi önle)
             const exists = prevAppointments.some(apt => apt.id === newAppointment.id);
             if (exists) {
-              console.log('⚠️ Randevu zaten mevcut, eklenmedi');
               return prevAppointments;
             }
             
-            console.log('🚀 Randevu state\'e ekleniyor...');
             return [...prevAppointments, ...formattedAppointments];
           });
-        } else {
-          console.log('❌ Filtreleme sonucu randevu görünür değil');
         }
-      } else {
-        console.log('❌ Randevu mevcut haftaya ait değil');
       }
-    } else {
-      console.log('❌ Geçersiz veri formatı:', data);
     }
   }, [calculateDayIndex, filterAppointments, formatAppointments, user]);
 
@@ -765,25 +729,19 @@ const WeeklyCalendar = ({
     }
   }, []);
 
-  // Socket.IO real-time güncellemeler
+  // Socket.IO real-time güncellemeler - optimize edildi
   useEffect(() => {
     if (!socket) {
-      console.log('❌ Socket mevcut değil');
       return;
     }
-
-    console.log('🔌 Socket event listener\'ları ekleniyor...');
     
     // Event listener'ları ekle
     socket.on('appointment-created', handleAppointmentCreated);
     socket.on('appointment-updated', handleAppointmentUpdated);
     socket.on('appointment-deleted', handleAppointmentDeleted);
 
-    console.log('✅ Socket event listener\'ları eklendi');
-
     // Cleanup function
     return () => {
-      console.log('🧹 Socket event listener\'ları temizleniyor...');
       socket.off('appointment-created', handleAppointmentCreated);
       socket.off('appointment-updated', handleAppointmentUpdated);
       socket.off('appointment-deleted', handleAppointmentDeleted);
@@ -938,22 +896,50 @@ const WeeklyCalendar = ({
     targetDate.setDate(targetDate.getDate() + dayIndex);
     const dateStr = targetDate.toISOString().split('T')[0];
     
-    setSelectedDate(dateStr);
-    setSelectedTime(selectedTimeStr);
-    setSelectedDay(dayIndex);
-    setIsModalOpen(true);
+    checkPastDateAndConfirm(dateStr, selectedTimeStr, () => {
+      setSelectedDate(dateStr);
+      setSelectedTime(selectedTimeStr);
+      setSelectedDay(dayIndex);
+      setIsModalOpen(true);
+    });
   };
 
   // Yeni randevu kaydet
   const handleSaveAppointment = async (appointmentData) => {
     if (!accessToken) {
-      console.error('Erişim token\'ı bulunamadı!');
+      console.error('❌ WeeklyCalendar: Erişim token\'ı bulunamadı!');
       return;
     }
     
     try {
+      // Backend'e randevuyu kaydet
       const response = await createAppointment(accessToken, appointmentData);
+      
       if (response.success) {
+        // Google Calendar senkronizasyonu
+        if (googleCalendarEnabled && isGoogleSignedIn) {
+          try {
+            const googleEventData = {
+              title: appointmentData.title,
+              description: appointmentData.description || '',
+              date: appointmentData.date,
+              startTime: appointmentData.startTime || appointmentData.start_time,
+              endTime: appointmentData.endTime || appointmentData.end_time,
+              location: appointmentData.location || ''
+            };
+            
+            const googleEvent = await googleCalendarService.createEvent(googleEventData);
+            
+            // Backend'e Google Event ID'yi güncelle (eğer API destekliyorsa)
+            // Bu kısım backend API'sine göre düzenlenebilir
+            
+          } catch (googleError) {
+            console.error('❌ WeeklyCalendar: Google Calendar senkronizasyon hatası:', googleError);
+            // Google Calendar hatası randevu kaydetme işlemini durdurmaz
+            showError('Randevu kaydedildi ancak Google Calendar\'a senkronize edilemedi: ' + googleError.message);
+          }
+        }
+        
         // Başarılı kayıt sonrası randevuları hemen yeniden yükle
         await loadAppointments();
         
@@ -962,12 +948,52 @@ const WeeklyCalendar = ({
         setSelectedDate('');
         setSelectedTime('');
         setSelectedDay(null);
-        
-        console.log('✅ Randevu başarıyla kaydedildi ve takvim güncellendi');
+      } else {
+        console.error('❌ WeeklyCalendar: Backend\'den başarısız response:', response);
+        showError('Randevu kaydedilemedi: ' + (response.message || 'Bilinmeyen hata'));
       }
     } catch (error) {
-      console.error('Randevu kaydetme hatası:', error);
+      console.error('❌ WeeklyCalendar: Randevu kaydetme hatası:', {
+        message: error.message,
+        stack: error.stack,
+        appointmentData: appointmentData
+      });
+      showError('Randevu kaydedilemedi: ' + error.message);
     }
+  };
+
+  // Geçmiş tarih kontrolü ve uyarı
+  const checkPastDateAndConfirm = (selectedDate, selectedTime, callback) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Bugünün başlangıcı
+    
+    const selectedDateTime = new Date(selectedDate);
+    selectedDateTime.setHours(0, 0, 0, 0);
+    
+    if (selectedDateTime < today) {
+      setPastDateSelectedDate(selectedDate);
+      setPastDateCallback(() => callback);
+      setIsPastDateModalOpen(true);
+    } else {
+      callback();
+    }
+  };
+
+  // Geçmiş tarih modal'ı onaylama
+  const handlePastDateConfirm = () => {
+    setIsPastDateModalOpen(false);
+    if (pastDateCallback) {
+      pastDateCallback();
+      setPastDateCallback(null);
+    }
+    setPastDateSelectedDate(null);
+  };
+
+  // Geçmiş tarih modal'ı kapatma
+  const handlePastDateClose = () => {
+    setIsPastDateModalOpen(false);
+    setPastDateCallback(null);
+    setPastDateSelectedDate(null);
   };
 
   // Modal kapat
@@ -993,26 +1019,56 @@ const WeeklyCalendar = ({
 
   const handleUpdateAppointment = async (appointmentData) => {
     if (!accessToken) {
-      console.error('Erişim token\'ı bulunamadı!');
+      console.error('❌ WeeklyCalendar: Erişim token\'ı bulunamadı!');
       return;
     }
 
     try {
-      console.log('🔄 Randevu güncelleniyor...', appointmentData);
-      console.log('🔄 selectedAppointment.id:', selectedAppointment?.id);
-      
       // Backend'e güncelleme isteği gönder
       const response = await updateAppointment(accessToken, selectedAppointment.id, appointmentData);
-      console.log('✅ Randevu güncelleme response:', response);
       
-      // Randevu güncellendikten sonra listeyi yenile
-      await loadAppointments();
-      setIsEditModalOpen(false);
-      setSelectedAppointment(null);
-      
-      return response;
+      if (response.success) {
+        // Google Calendar senkronizasyonu
+        if (googleCalendarEnabled && isGoogleSignedIn && selectedAppointment?.googleEventId) {
+          try {
+            const googleEventData = {
+              title: appointmentData.title,
+              description: appointmentData.description || '',
+              date: appointmentData.date,
+              startTime: appointmentData.startTime || appointmentData.start_time,
+              endTime: appointmentData.endTime || appointmentData.end_time,
+              location: appointmentData.location || ''
+            };
+            
+            const googleEvent = await googleCalendarService.updateEvent(selectedAppointment.googleEventId, googleEventData);
+            
+          } catch (googleError) {
+            console.error('❌ WeeklyCalendar: Google Calendar güncelleme hatası:', googleError);
+            // Google Calendar hatası randevu güncelleme işlemini durdurmaz
+            showError('Randevu güncellendi ancak Google Calendar\'da güncellenemedi: ' + googleError.message);
+          }
+        }
+        
+        // Randevu güncellendikten sonra listeyi yenile
+        console.log('🔄 WeeklyCalendar: Randevular yeniden yükleniyor...');
+        await loadAppointments();
+        setIsEditModalOpen(false);
+        setSelectedAppointment(null);
+        
+        console.log('✅ WeeklyCalendar: Randevu başarıyla güncellendi ve takvim yenilendi');
+        return response;
+      } else {
+        console.error('❌ WeeklyCalendar: Backend\'den başarısız güncelleme response:', response);
+        showError('Randevu güncellenemedi: ' + (response.message || 'Bilinmeyen hata'));
+        throw new Error(response.message || 'Randevu güncellenemedi');
+      }
     } catch (error) {
-      console.error('❌ Randevu güncelleme hatası:', error);
+      console.error('❌ WeeklyCalendar: Randevu güncelleme hatası:', {
+        message: error.message,
+        stack: error.stack,
+        appointmentData: appointmentData,
+        selectedAppointment: selectedAppointment
+      });
       showError('Randevu güncellenemedi: ' + error.message);
       throw error;
     }
@@ -1026,23 +1082,14 @@ const WeeklyCalendar = ({
     
     try {
       // Önce backend'den randevuyu sil ve Google Event ID'yi al
-      console.log('🔍 Backend\'den randevu siliniyor:', appointmentId);
       const deleteResponse = await deleteAppointment(accessToken, appointmentId);
-      console.log('✅ Backend\'den randevu silindi, response:', deleteResponse);
       
       // Backend'den dönen Google Event ID'yi kullanarak Google Calendar'dan sil
       const googleEventId = deleteResponse?.googleEventId || selectedAppointment?.googleEventId;
-      console.log('🔍 Google Calendar silme kontrolü:');
-      console.log('- isSignedIn:', googleCalendarService.isSignedIn());
-      console.log('- googleEventId (backend):', deleteResponse?.googleEventId);
-      console.log('- googleEventId (frontend):', selectedAppointment?.googleEventId);
-      console.log('- kullanılacak googleEventId:', googleEventId);
       
       if (googleCalendarService.isSignedIn() && googleEventId) {
         try {
-          console.log('📅 Google Calendar: Randevu siliniyor...', googleEventId);
           await googleCalendarService.deleteEvent(googleEventId);
-          console.log('✅ Google Calendar: Randevu başarıyla silindi');
         } catch (googleError) {
           console.error('❌ Google Calendar: Randevu silinirken hata:', googleError);
           // Google Calendar hatası randevu silme işlemini durdurmaz
@@ -1155,6 +1202,27 @@ const WeeklyCalendar = ({
       handleEditAppointment(event.resource);
     };
 
+    // Randevunun geçmiş olup olmadığını kontrol et - useMemo ile optimize edildi
+    const isExpired = useMemo(() => {
+      // Türkiye saati (UTC+3) için şu anki zamanı al
+      const now = new Date();
+      const turkeyTime = new Date(now.getTime() + (3 * 60 * 60 * 1000)); // UTC+3
+      
+      const appointmentDateTime = new Date(event.end); // event.end randevunun bitiş zamanı
+      const isPast = appointmentDateTime < turkeyTime;
+      
+      // Sadece geçmiş randevular için log
+      if (isPast) {
+        console.log('⏰ Geçmiş randevu tespit edildi:', {
+          eventTitle: event.title,
+          appointmentEnd: appointmentDateTime.toLocaleString('tr-TR'),
+          turkeyTime: turkeyTime.toLocaleString('tr-TR')
+        });
+      }
+      
+      return isPast;
+    }, [event.end, event.title]); // Sadece event.end veya event.title değiştiğinde yeniden hesapla
+
     return (
       <div 
         onContextMenu={handleContextMenu}
@@ -1164,11 +1232,36 @@ const WeeklyCalendar = ({
           cursor: 'pointer',
           padding: '2px 4px',
           fontSize: '12px',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          position: 'relative'
         }}
-        title={`Sol tık: Görüntüle | Sağ tık: Düzenle\n${event.title}`}
+        title={`Sol tık: Görüntüle | Sağ tık: Düzenle\n${event.title}${isExpired ? '\n⏰ Geçmiş randevu' : ''}`}
       >
         {event.title}
+        {isExpired && (
+          <span 
+            style={{
+              position: 'absolute',
+              top: '1px',
+              right: '1px',
+              fontSize: '12px',
+              color: '#dc3545',
+              fontWeight: 'bold',
+              zIndex: 10,
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              borderRadius: '50%',
+              width: '16px',
+              height: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #dc3545'
+            }}
+            title="Geçmiş randevu"
+          >
+            ⏰
+          </span>
+        )}
       </div>
     );
   };
@@ -1286,6 +1379,38 @@ const WeeklyCalendar = ({
     return 0;
   };
 
+  // Geçmiş günleri tespit etme fonksiyonu
+  const isPastDate = (date) => {
+    const today = new Date();
+    const compareDate = new Date(date);
+    
+    // Sadece tarihi karşılaştır (saat bilgisini göz ardı et)
+    today.setHours(0, 0, 0, 0);
+    compareDate.setHours(0, 0, 0, 0);
+    
+    return compareDate < today;
+  };
+
+  // Gün özelliklerini belirleme fonksiyonu (react-big-calendar için)
+  const dayPropGetter = (date) => {
+    if (isPastDate(date)) {
+      return {
+        className: 'past-date'
+      };
+    }
+    return {};
+  };
+
+  // Saat slotları için özellik belirleme fonksiyonu
+  const slotPropGetter = (date) => {
+    if (isPastDate(date)) {
+      return {
+        className: 'past-date'
+      };
+    }
+    return {};
+  };
+
   // Haftalık görünüm
   const renderWeekView = () => {
     return (
@@ -1300,6 +1425,7 @@ const WeeklyCalendar = ({
           views={['week']}
           culture="tr"
           date={selectedWeekStart}
+          scrollToTime={new Date(1970, 1, 1, 8, 0, 0)} // Saat 08:00'e scroll
           onNavigate={(date) => {
             setSelectedWeekStart(date);
             setCurrentDate(date);
@@ -1315,12 +1441,17 @@ const WeeklyCalendar = ({
           onSelectSlot={(slotInfo) => {
             const selectedDate = format(slotInfo.start, 'yyyy-MM-dd');
             const selectedTime = format(slotInfo.start, 'HH:mm');
-            setSelectedDate(selectedDate);
-            setSelectedTime(selectedTime);
-            setIsModalOpen(true);
+            
+            checkPastDateAndConfirm(selectedDate, selectedTime, () => {
+              setSelectedDate(selectedDate);
+              setSelectedTime(selectedTime);
+              setIsModalOpen(true);
+            });
           }}
           selectable
           popup
+          dayPropGetter={dayPropGetter}
+          slotPropGetter={slotPropGetter}
           components={{
             event: CustomEvent
           }}
@@ -1389,6 +1520,7 @@ const WeeklyCalendar = ({
         views={['day']}
         culture="tr"
         date={currentDate}
+        scrollToTime={new Date(1970, 1, 1, 8, 0, 0)} // Saat 08:00'e scroll
         onNavigate={(date) => {
           setCurrentDate(date);
           if (onDateChange) {
@@ -1403,11 +1535,16 @@ const WeeklyCalendar = ({
         onSelectSlot={(slotInfo) => {
           const selectedDate = format(slotInfo.start, 'yyyy-MM-dd');
           const selectedTime = format(slotInfo.start, 'HH:mm');
-          setSelectedDate(selectedDate);
-          setSelectedTime(selectedTime);
-          setIsModalOpen(true);
+          
+          checkPastDateAndConfirm(selectedDate, selectedTime, () => {
+            setSelectedDate(selectedDate);
+            setSelectedTime(selectedTime);
+            setIsModalOpen(true);
+          });
         }}
         selectable
+        dayPropGetter={dayPropGetter}
+        slotPropGetter={slotPropGetter}
         components={{
           event: CustomEvent
         }}
@@ -1554,12 +1691,17 @@ const WeeklyCalendar = ({
           }}
           onSelectSlot={(slotInfo) => {
             const selectedDate = format(slotInfo.start, 'yyyy-MM-dd');
-            setSelectedDate(selectedDate);
-            setSelectedTime('09:00');
-            setIsModalOpen(true);
+            
+            checkPastDateAndConfirm(selectedDate, '09:00', () => {
+              setSelectedDate(selectedDate);
+              setSelectedTime('09:00');
+              setIsModalOpen(true);
+            });
           }}
           selectable
           popup
+          dayPropGetter={dayPropGetter}
+          slotPropGetter={slotPropGetter}
           components={{
             event: CustomEvent
           }}
@@ -2040,6 +2182,14 @@ const WeeklyCalendar = ({
         onClose={handleCloseEditModal}
         onSave={handleUpdateAppointment}
         appointmentData={selectedAppointment}
+      />
+
+      {/* Geçmiş Tarih Onay Modalı */}
+      <PastDateConfirmModal 
+        isOpen={isPastDateModalOpen}
+        onClose={handlePastDateClose}
+        onConfirm={handlePastDateConfirm}
+        selectedDate={pastDateSelectedDate}
       />
     </div>
   );

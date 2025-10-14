@@ -3,9 +3,8 @@ import { Table, Button, Form, Row, Col, Pagination, Modal } from "react-bootstra
 import { createPortal } from 'react-dom';
 import { useNavigate } from "react-router-dom";
 import { useSimpleToast } from "../../contexts/SimpleToastContext";
-import { getUsers, createUser, updateUser, deleteUser } from "../../services/usersService";
+import { getUsers, createUser, updateUser, deleteUser, deleteMultipleUsers } from "../../services/usersService";
 import { fetchAllCategoriesForDropdown } from "../../services/categoriesService";
-import { smsService } from "../../services/smsService";
 
 import AddUserModal from "../AddUserModal/AddUserModal";
 import ViewUserModal from "../ViewUserModal/ViewUserModal";
@@ -52,18 +51,14 @@ const UsersTable = () => {
 
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const [scrollbarVisible, setScrollbarVisible] = useState(false);
-  const [scrollbarLeft, setScrollbarLeft] = useState(0);
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
 
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const [showBulkSMSModal, setShowBulkSMSModal] = useState(false);
   const [showExcelImportModal, setShowExcelImportModal] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
-  const [bulkSMSLoading, setBulkSMSLoading] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -127,209 +122,9 @@ const UsersTable = () => {
     fetchUsers();
   }, [currentPage, debouncedSearchTerm]);
 
-  // Özel scrollbar logic'i
-  useEffect(() => {
-    const updateScrollbar = () => {
-      if (!tableWrapperRef.current) return;
 
-      const wrapper = tableWrapperRef.current;
-      const table = wrapper.querySelector('.users-table');
-      
-      if (!table) return;
 
-      const wrapperWidth = wrapper.clientWidth;
-      const tableWidth = table.scrollWidth;
-      const scrollLeft = wrapper.scrollLeft;
-      const maxScroll = tableWidth - wrapperWidth;
 
-      console.log('Scrollbar Debug:', {
-        wrapperWidth,
-        tableWidth,
-        scrollLeft,
-        maxScroll,
-        shouldShow: tableWidth > wrapperWidth
-      });
-
-      // Scrollbar görünürlüğü
-      const shouldShow = tableWidth > wrapperWidth;
-      setScrollbarVisible(shouldShow);
-
-      if (shouldShow) {
-        // Scrollbar genişliği (wrapper genişliğinin oranı)
-        const thumbWidth = Math.max(30, (wrapperWidth / tableWidth) * wrapperWidth);
-        setScrollbarWidth(thumbWidth);
-
-        // Scrollbar pozisyonu - Bu kısım çok önemli!
-        const thumbLeft = maxScroll > 0 ? (scrollLeft / maxScroll) * (wrapperWidth - thumbWidth) : 0;
-        console.log('Updating thumb position:', {
-          scrollLeft,
-          maxScroll,
-          thumbLeft,
-          thumbWidth,
-          wrapperWidth
-        });
-        setScrollbarLeft(thumbLeft);
-      }
-    };
-
-    // Scroll event listener'ı ekle
-    const handleScroll = () => {
-      updateScrollbar();
-    };
-
-    const wrapper = tableWrapperRef.current;
-    if (wrapper) {
-      wrapper.addEventListener('scroll', handleScroll, { passive: true });
-      window.addEventListener('resize', updateScrollbar);
-      
-      // İlk yükleme - biraz gecikme ile
-      setTimeout(updateScrollbar, 100);
-      
-      // Tablo içeriği değiştiğinde de güncelle
-      const observer = new MutationObserver(() => {
-        setTimeout(updateScrollbar, 50);
-      });
-      observer.observe(wrapper, { childList: true, subtree: true });
-
-      return () => {
-        wrapper.removeEventListener('scroll', handleScroll);
-        window.removeEventListener('resize', updateScrollbar);
-        observer.disconnect();
-      };
-    }
-  }, [users]);
-
-  // Scrollbar thumb drag işlemleri
-  const handleScrollbarMouseDown = (e) => {
-    console.log('Scrollbar mousedown triggered');
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const startX = e.clientX;
-    const startLeft = scrollbarLeft;
-    const wrapper = tableWrapperRef.current;
-    
-    if (!wrapper) {
-      console.log('No wrapper found');
-      return;
-    }
-
-    const wrapperWidth = wrapper.clientWidth;
-    const table = wrapper.querySelector('.users-table');
-    
-    if (!table) {
-      console.log('No table found');
-      return;
-    }
-    
-    const maxScroll = table.scrollWidth - wrapperWidth;
-    const maxThumbLeft = wrapperWidth - scrollbarWidth;
-
-    console.log('Drag values:', {
-      startX,
-      startLeft,
-      wrapperWidth,
-      maxScroll,
-      maxThumbLeft,
-      scrollbarWidth
-    });
-
-    const handleMouseMove = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const deltaX = e.clientX - startX;
-      const newThumbLeft = Math.max(0, Math.min(maxThumbLeft, startLeft + deltaX));
-      
-      console.log('Mouse move:', {
-        deltaX,
-        newThumbLeft,
-        clientX: e.clientX
-      });
-      
-      if (maxThumbLeft > 0) {
-        const scrollRatio = newThumbLeft / maxThumbLeft;
-        const newScrollLeft = scrollRatio * maxScroll;
-        console.log('Setting scroll to:', newScrollLeft);
-        
-        // Scroll işlemini zorla yap
-        wrapper.scrollLeft = newScrollLeft;
-        
-        // Eğer scroll çalışmıyorsa, table'ı transform ile kaydır
-        const table = wrapper.querySelector('.users-table');
-        if (table && wrapper.scrollLeft !== newScrollLeft) {
-          console.log('Fallback: Using transform');
-          table.style.transform = `translateX(-${newScrollLeft}px)`;
-          
-          // Transform kullanıldığında scrollbar pozisyonunu manuel güncelle
-          const wrapperWidth = wrapper.clientWidth;
-          const maxThumbLeft = wrapperWidth - scrollbarWidth;
-          const newThumbLeft = maxThumbLeft > 0 ? (newScrollLeft / maxScroll) * maxThumbLeft : 0;
-          console.log('Manual thumb update:', newThumbLeft);
-          setScrollbarLeft(newThumbLeft);
-        } else if (table) {
-          // Normal scroll çalışıyorsa transform'u temizle
-          table.style.transform = '';
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      console.log('Mouse up');
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    };
-
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'grabbing';
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  // Scrollbar track click işlemi
-  const handleScrollbarTrackClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const wrapper = tableWrapperRef.current;
-    if (!wrapper) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const wrapperWidth = wrapper.clientWidth;
-    const table = wrapper.querySelector('.users-table');
-    
-    if (!table) return;
-    
-    const maxScroll = table.scrollWidth - wrapperWidth;
-    const maxThumbLeft = wrapperWidth - scrollbarWidth;
-    
-    if (maxThumbLeft > 0) {
-      const targetThumbLeft = Math.max(0, Math.min(maxThumbLeft, clickX - scrollbarWidth / 2));
-      const scrollRatio = targetThumbLeft / maxThumbLeft;
-      const newScrollLeft = scrollRatio * maxScroll;
-      
-      console.log('Track click - Setting scroll to:', newScrollLeft);
-      wrapper.scrollLeft = newScrollLeft;
-      
-      // Eğer scroll çalışmıyorsa, table'ı transform ile kaydır
-       if (wrapper.scrollLeft !== newScrollLeft) {
-         console.log('Track click - Fallback: Using transform');
-         table.style.transform = `translateX(-${newScrollLeft}px)`;
-         
-         // Transform kullanıldığında scrollbar pozisyonunu manuel güncelle
-         const maxThumbLeft = wrapperWidth - scrollbarWidth;
-         const newThumbLeft = maxThumbLeft > 0 ? (newScrollLeft / maxScroll) * maxThumbLeft : 0;
-         console.log('Track click - Manual thumb update:', newThumbLeft);
-         setScrollbarLeft(newThumbLeft);
-       } else {
-         // Normal scroll çalışıyorsa transform'u temizle
-         table.style.transform = '';
-       }
-    }
-  };
 
   // Arama terimi değiştiğinde sayfa numarasını sıfırla
   const handleSearchChange = (value) => {
@@ -476,6 +271,35 @@ const UsersTable = () => {
     }
   };
 
+  // Toplu kullanıcı silme
+  const handleBulkDelete = async () => {
+    if (selectedUsers.length === 0) {
+      showWarning('Lütfen silmek için en az bir kullanıcı seçin.');
+      return;
+    }
+
+    const confirmMessage = `${selectedUsers.length} kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await deleteMultipleUsers(selectedUsers, token);
+      
+      if (response.success) {
+        showSuccess(`${response.deletedCount} kullanıcı başarıyla silindi.`);
+        setSelectedUsers([]); // Seçimleri temizle
+        fetchUsers(); // Listeyi yenile
+      } else {
+        showError(response.message || 'Kullanıcılar silinirken bir hata oluştu.');
+      }
+    } catch (error) {
+      showError(error.message || 'Kullanıcılar silinirken bir hata oluştu.');
+    }
+  };
+
   // User action handlers
   const handleViewUser = (user) => {
     setSelectedContact(user);
@@ -497,7 +321,6 @@ const UsersTable = () => {
     setShowEditModal(false);
     setShowDeleteModal(false);
 
-    setShowBulkSMSModal(false);
     setShowExcelImportModal(false);
     setSelectedContact(null);
   };
@@ -511,58 +334,7 @@ const UsersTable = () => {
     fetchUsers(); // Yeni veriler eklendikten sonra listeyi yenile
   };
 
-  // Toplu SMS gönderim modalını aç
-  const handleShowBulkSMSModal = () => {
-    if (selectedUsers.length === 0) {
-      showWarning('Lütfen SMS göndermek için en az bir kişi seçin.');
-      return;
-    }
-    setShowBulkSMSModal(true);
-  };
-
-  // Toplu SMS gönder
-  const handleBulkSMSSend = async (smsData) => {
-    setBulkSMSLoading(true);
-    try {
-      // Seçili kişilerin telefon numaralarını topla
-      const phoneNumbers = [];
-      selectedUsers.forEach(userId => {
-        const user = users.find(c => c.id === userId);
-        if (user) {
-          if (user.phone1) phoneNumbers.push(user.phone1);
-          if (user.phone2) phoneNumbers.push(user.phone2);
-        }
-      });
-
-      if (phoneNumbers.length === 0) {
-        showWarning('Seçili kişilerde geçerli telefon numarası bulunamadı.');
-        return;
-      }
-
-      const bulkSmsData = {
-        phones: phoneNumbers,
-        message: smsData.message,
-        listName: smsData.listName || 'Toplu SMS',
-        sendingTitle: smsData.sendingTitle || 'Rehber SMS',
-        categoryName: 'Toplu Gönderim'
-      };
-
-      const result = await smsService.sendBulkSMS(bulkSmsData);
-
-      if (result.success) {
-        showSuccess(`Başarıyla ${result.data.sentCount} numaraya SMS gönderildi.`);
-        setSelectedUsers([]); // Seçimleri temizle
-        setSelectAll(false);
-        closeAllModals();
-      } else {
-        showError('SMS gönderilemedi: ' + (result.error || result.message));
-      }
-    } catch (error) {
-      showError('SMS gönderilirken bir hata oluştu: ' + error.message);
-    } finally {
-      setBulkSMSLoading(false);
-    }
-  };
+ 
 
   // Sayfa değiştirme
   const handlePageChange = (pageNumber) => {
@@ -648,34 +420,36 @@ const UsersTable = () => {
           </button>
 
           {selectedUsers.length > 0 && (
-            <button
-              className="header-btn bulk-sms-btn"
-              onClick={handleShowBulkSMSModal}
-              title={`${selectedUsers.length} kişiye SMS gönder`}
-              disabled={bulkSMSLoading}
-              style={{
-                backgroundColor: bulkSMSLoading ? '#ccc' : '#28a745',
-                color: 'white',
-                marginLeft: '10px'
-              }}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 18 18"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            <>
+              <button
+                className="header-btn bulk-delete-btn"
+                onClick={handleBulkDelete}
+                title={`${selectedUsers.length} kullanıcıyı sil`}
+                style={{
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  marginLeft: '10px'
+                }}
               >
-                <path
-                  d="M1.5 6L8.5 9.5L15.5 6M1.5 12L8.5 15.5L15.5 12M1.5 6L8.5 2.5L15.5 6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {bulkSMSLoading ? 'Gönderiliyor...' : `SMS (${selectedUsers.length})`}
-            </button>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 4.5H15M6 4.5V3C6 2.17157 6.67157 1.5 7.5 1.5H10.5C11.3284 1.5 12 2.17157 12 3V4.5M7.5 8.25V13.5M10.5 8.25V13.5M4.5 4.5L5.25 15C5.25 15.8284 5.92157 16.5 6.75 16.5H11.25C12.0784 16.5 12.75 15.8284 12.75 15L13.5 4.5"
+                    stroke="#ffffff"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Sil ({selectedUsers.length})
+              </button>
+              
+            </>
           )}
         </div>
       </div>
@@ -758,24 +532,7 @@ const UsersTable = () => {
         </Table>
       </div>
 
-      {/* Özel Yatay Scrollbar */}
-      {scrollbarVisible && (
-        <div className="custom-scrollbar-container">
-          <div 
-            className="custom-scrollbar-track" 
-            onClick={handleScrollbarTrackClick}
-          >
-            <div
-              className="custom-scrollbar-thumb"
-              style={{
-                width: `${scrollbarWidth}px`,
-                left: `${scrollbarLeft}px`
-              }}
-              onMouseDown={handleScrollbarMouseDown}
-            />
-          </div>
-        </div>
-      )}
+
 
       {/* Alt Bilgi ve Sayfalama */}
       <div className="table-footer">
@@ -906,17 +663,7 @@ const UsersTable = () => {
 
 
 
-      {/* Toplu SMS Modal */}
-      {showBulkSMSModal && (
-        <BulkSMSModal
-          show={showBulkSMSModal}
-          onHide={closeAllModals}
-          selectedCount={selectedUsers.length}
-          onSend={handleBulkSMSSend}
-          loading={bulkSMSLoading}
-          showError={showError}
-        />
-      )}
+  
 
       {/* Excel Import Modal */}
       <ExcelImportModal
@@ -925,153 +672,6 @@ const UsersTable = () => {
         onImportComplete={handleExcelImportComplete}
       />
     </div>
-  );
-};
-
-// Toplu SMS Modal Bileşeni
-const BulkSMSModal = ({ show, onHide, selectedCount, onSend, loading, showError }) => {
-  const [message, setMessage] = useState('');
-  const [listName, setListName] = useState('');
-  const [sendingTitle, setSendingTitle] = useState('');
-
-  const handleSend = () => {
-    if (!message.trim()) {
-      showError('Lütfen mesaj yazın.');
-      return;
-    }
-    if (!listName.trim()) {
-      showError('Lütfen liste adını girin.');
-      return;
-    }
-    if (!sendingTitle.trim()) {
-      showError('Lütfen gönderim başlığını girin.');
-      return;
-    }
-
-    onSend({
-      message: message.trim(),
-      listName: listName.trim(),
-      sendingTitle: sendingTitle.trim()
-    });
-  };
-
-  const handleClose = () => {
-    setMessage('');
-    setListName('');
-    setSendingTitle('');
-    onHide();
-  };
-
-  // Modal açıldığında body scroll'unu engelle
-  React.useEffect(() => {
-    if (show) {
-      document.body.classList.add('modal-open');
-      document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = '0px';
-    } else {
-      document.body.classList.remove('modal-open');
-      document.body.style.overflow = 'unset';
-      document.body.style.paddingRight = '0px';
-    }
-
-    // Cleanup function
-    return () => {
-      document.body.classList.remove('modal-open');
-      document.body.style.overflow = 'unset';
-      document.body.style.paddingRight = '0px';
-    };
-  }, [show]);
-
-  if (!show) return null;
-
-  return (
-    <Modal show={show} onHide={handleClose} size="lg" className="bulk-sms-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="me-2">
-            <path
-              d="M2 6L10 11L18 6M2 14L10 19L18 14M2 6L10 1L18 6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Toplu SMS Gönder ({selectedCount} kişi)
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="mb-3">
-          <label htmlFor="listName" className="form-label">Liste Adı</label>
-          <input
-            type="text"
-            className="form-control"
-            id="listName"
-            value={listName}
-            onChange={(e) => setListName(e.target.value)}
-            placeholder="Örn: Müşteri Listesi"
-            disabled={loading}
-          />
-        </div>
-
-        <div className="mb-3">
-          <label htmlFor="sendingTitle" className="form-label">Gönderim Başlığı</label>
-          <input
-            type="text"
-            className="form-control"
-            id="sendingTitle"
-            value={sendingTitle}
-            onChange={(e) => setSendingTitle(e.target.value)}
-            placeholder="Örn: Kampanya Duyurusu"
-            disabled={loading}
-          />
-        </div>
-
-        <div className="mb-3">
-          <label htmlFor="message" className="form-label">
-            Mesaj İçeriği
-            <span className="text-muted">({message.length}/160 karakter)</span>
-          </label>
-          <textarea
-            className="form-control"
-            id="message"
-            rows="4"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="SMS mesajınızı buraya yazın..."
-            maxLength="160"
-            disabled={loading}
-          />
-        </div>
-
-
-      </Modal.Body>
-      <Modal.Footer>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={handleClose}
-          disabled={loading}
-        >
-          İptal
-        </button>
-        <button
-          type="button"
-          className="btn btn-success"
-          onClick={handleSend}
-          disabled={loading || !message.trim() || !listName.trim() || !sendingTitle.trim()}
-        >
-          {loading ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-              Gönderiliyor...
-            </>
-          ) : (
-            `SMS Gönder (${selectedCount} kişi)`
-          )}
-        </button>
-      </Modal.Footer>
-    </Modal>
   );
 };
 

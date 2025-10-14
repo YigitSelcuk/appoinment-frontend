@@ -5,13 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 
 const Rehber = () => {
   const { accessToken } = useAuth();
-  const [data, setData] = useState([
-    { customers: 25, suppliers: 8, doctors: 5, total_contacts: 45, weekly_new: 8 },
-    { customers: 23, suppliers: 7, doctors: 4, total_contacts: 42, weekly_new: 6 },
-    { customers: 20, suppliers: 6, doctors: 4, total_contacts: 38, weekly_new: 5 },
-    { customers: 18, suppliers: 5, doctors: 3, total_contacts: 35, weekly_new: 4 },
-    { customers: 16, suppliers: 4, doctors: 3, total_contacts: 32, weekly_new: 3 }
-  ]);
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -37,11 +31,11 @@ const Rehber = () => {
     }
   };
 
-  // Toplam randevu sayısını hesapla
-  const totalAppointments = data.reduce((sum, item) => sum + (item.customers || 0), 0);
+  // Toplam kişi sayısını al (en son veri noktasından)
+  const totalContacts = data.length > 0 ? (data[data.length - 1].total_contacts || 0) : 0;
   
-  // Bar chart için maksimum değer
-  const maxValue = Math.max(...data.map(item => item.customers || 0));
+  // Bar chart için maksimum değer (günlük yeni eklenen kişi sayısı)
+  const maxValue = Math.max(...data.map(item => item.weekly_new || 0), 1); // En az 1 olsun ki bölme hatası olmasın
   
   // Günlerin kısaltmaları
   const dayLabels = ['PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT', 'PZR'];
@@ -67,11 +61,11 @@ const Rehber = () => {
             <div className="chart-bars">
               {data.slice(0, 7).map((item, index) => (
                 <div key={index} className="bar-container">
-                  <div className="bar-value-top">{item.customers || 0}</div>
+                  <div className="bar-value-top">{item.weekly_new || 0}</div>
                   <div className="bar-wrapper">
                     <div
                       className="bar bar-appointment"
-                      style={{ height: `${maxValue > 0 ? (item.customers / maxValue) * 100 : 0}%` }}
+                      style={{ height: `${maxValue > 0 ? ((item.weekly_new || 0) / maxValue) * 80 + 10 : 10}%` }}
                     ></div>
                   </div>
                   <div className="bar-label">{dayLabels[index] || `D${index + 1}`}</div>
@@ -84,7 +78,7 @@ const Rehber = () => {
                 <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="#FFA726"/>
                 <path d="M12 14C7.58172 14 4 17.5817 4 22H20C20 17.5817 16.4183 14 12 14Z" fill="#FFA726"/>
               </svg>
-              <span className="total-number">{totalAppointments}</span>
+              <span className="total-number">{totalContacts}</span>
             </div>
           </>
         )}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert } from 'react-bootstrap';
 import { FaUser, FaTimes, FaSave } from 'react-icons/fa';
 import PagePermissions from '../PagePermissions/PagePermissions';
+import { getDepartmentOptions } from '../../services/departmentsService';
 import './EditUserModal.css';
 
 const EditUserModal = ({ show, onHide, user, onSave }) => {
@@ -18,6 +19,28 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [departments, setDepartments] = useState([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(false);
+
+  // Departmanları yükle
+  useEffect(() => {
+    if (show) {
+      loadDepartments();
+    }
+  }, [show]);
+
+  const loadDepartments = async () => {
+    try {
+      setDepartmentsLoading(true);
+      const departmentOptions = await getDepartmentOptions();
+      setDepartments(departmentOptions);
+    } catch (error) {
+      console.error('Departmanlar yüklenirken hata:', error);
+      setDepartments([]);
+    } finally {
+      setDepartmentsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -217,15 +240,23 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
               </div>
 
               <div className="form-group">
-                <Form.Label>Departman</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleInputChange}
-                  placeholder="Departman giriniz"
-                />
-              </div>
+                 <Form.Label>Departman</Form.Label>
+                 <Form.Select
+                   name="department"
+                   value={formData.department}
+                   onChange={handleInputChange}
+                   disabled={departmentsLoading}
+                 >
+                   <option value="">
+                     {departmentsLoading ? 'Departmanlar yükleniyor...' : 'Departman seçiniz'}
+                   </option>
+                   {departments.map((dept) => (
+                     <option key={dept.value} value={dept.value}>
+                       {dept.label}
+                     </option>
+                   ))}
+                 </Form.Select>
+               </div>
             </div>
 
             <div className="form-row">

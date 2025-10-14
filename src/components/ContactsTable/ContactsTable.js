@@ -53,9 +53,7 @@ const ContactsTable = () => {
   const [allCategories, setAllCategories] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const [scrollbarVisible, setScrollbarVisible] = useState(false);
-  const [scrollbarLeft, setScrollbarLeft] = useState(0);
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
 
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -125,209 +123,9 @@ const ContactsTable = () => {
     fetchContacts();
   }, [currentPage, debouncedSearchTerm]);
 
-  // Özel scrollbar logic'i
-  useEffect(() => {
-    const updateScrollbar = () => {
-      if (!tableWrapperRef.current) return;
 
-      const wrapper = tableWrapperRef.current;
-      const table = wrapper.querySelector('.contacts-table');
-      
-      if (!table) return;
 
-      const wrapperWidth = wrapper.clientWidth;
-      const tableWidth = table.scrollWidth;
-      const scrollLeft = wrapper.scrollLeft;
-      const maxScroll = tableWidth - wrapperWidth;
 
-      console.log('Scrollbar Debug:', {
-        wrapperWidth,
-        tableWidth,
-        scrollLeft,
-        maxScroll,
-        shouldShow: tableWidth > wrapperWidth
-      });
-
-      // Scrollbar görünürlüğü
-      const shouldShow = tableWidth > wrapperWidth;
-      setScrollbarVisible(shouldShow);
-
-      if (shouldShow) {
-        // Scrollbar genişliği (wrapper genişliğinin oranı)
-        const thumbWidth = Math.max(30, (wrapperWidth / tableWidth) * wrapperWidth);
-        setScrollbarWidth(thumbWidth);
-
-        // Scrollbar pozisyonu - Bu kısım çok önemli!
-        const thumbLeft = maxScroll > 0 ? (scrollLeft / maxScroll) * (wrapperWidth - thumbWidth) : 0;
-        console.log('Updating thumb position:', {
-          scrollLeft,
-          maxScroll,
-          thumbLeft,
-          thumbWidth,
-          wrapperWidth
-        });
-        setScrollbarLeft(thumbLeft);
-      }
-    };
-
-    // Scroll event listener'ı ekle
-    const handleScroll = () => {
-      updateScrollbar();
-    };
-
-    const wrapper = tableWrapperRef.current;
-    if (wrapper) {
-      wrapper.addEventListener('scroll', handleScroll, { passive: true });
-      window.addEventListener('resize', updateScrollbar);
-      
-      // İlk yükleme - biraz gecikme ile
-      setTimeout(updateScrollbar, 100);
-      
-      // Tablo içeriği değiştiğinde de güncelle
-      const observer = new MutationObserver(() => {
-        setTimeout(updateScrollbar, 50);
-      });
-      observer.observe(wrapper, { childList: true, subtree: true });
-
-      return () => {
-        wrapper.removeEventListener('scroll', handleScroll);
-        window.removeEventListener('resize', updateScrollbar);
-        observer.disconnect();
-      };
-    }
-  }, [contacts]);
-
-  // Scrollbar thumb drag işlemleri
-  const handleScrollbarMouseDown = (e) => {
-    console.log('Scrollbar mousedown triggered');
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const startX = e.clientX;
-    const startLeft = scrollbarLeft;
-    const wrapper = tableWrapperRef.current;
-    
-    if (!wrapper) {
-      console.log('No wrapper found');
-      return;
-    }
-
-    const wrapperWidth = wrapper.clientWidth;
-    const table = wrapper.querySelector('.contacts-table');
-    
-    if (!table) {
-      console.log('No table found');
-      return;
-    }
-    
-    const maxScroll = table.scrollWidth - wrapperWidth;
-    const maxThumbLeft = wrapperWidth - scrollbarWidth;
-
-    console.log('Drag values:', {
-      startX,
-      startLeft,
-      wrapperWidth,
-      maxScroll,
-      maxThumbLeft,
-      scrollbarWidth
-    });
-
-    const handleMouseMove = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const deltaX = e.clientX - startX;
-      const newThumbLeft = Math.max(0, Math.min(maxThumbLeft, startLeft + deltaX));
-      
-      console.log('Mouse move:', {
-        deltaX,
-        newThumbLeft,
-        clientX: e.clientX
-      });
-      
-      if (maxThumbLeft > 0) {
-        const scrollRatio = newThumbLeft / maxThumbLeft;
-        const newScrollLeft = scrollRatio * maxScroll;
-        console.log('Setting scroll to:', newScrollLeft);
-        
-        // Scroll işlemini zorla yap
-        wrapper.scrollLeft = newScrollLeft;
-        
-        // Eğer scroll çalışmıyorsa, table'ı transform ile kaydır
-        const table = wrapper.querySelector('.contacts-table');
-        if (table && wrapper.scrollLeft !== newScrollLeft) {
-          console.log('Fallback: Using transform');
-          table.style.transform = `translateX(-${newScrollLeft}px)`;
-          
-          // Transform kullanıldığında scrollbar pozisyonunu manuel güncelle
-          const wrapperWidth = wrapper.clientWidth;
-          const maxThumbLeft = wrapperWidth - scrollbarWidth;
-          const newThumbLeft = maxThumbLeft > 0 ? (newScrollLeft / maxScroll) * maxThumbLeft : 0;
-          console.log('Manual thumb update:', newThumbLeft);
-          setScrollbarLeft(newThumbLeft);
-        } else if (table) {
-          // Normal scroll çalışıyorsa transform'u temizle
-          table.style.transform = '';
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      console.log('Mouse up');
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    };
-
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'grabbing';
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  // Scrollbar track click işlemi
-  const handleScrollbarTrackClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const wrapper = tableWrapperRef.current;
-    if (!wrapper) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const wrapperWidth = wrapper.clientWidth;
-    const table = wrapper.querySelector('.contacts-table');
-    
-    if (!table) return;
-    
-    const maxScroll = table.scrollWidth - wrapperWidth;
-    const maxThumbLeft = wrapperWidth - scrollbarWidth;
-    
-    if (maxThumbLeft > 0) {
-      const targetThumbLeft = Math.max(0, Math.min(maxThumbLeft, clickX - scrollbarWidth / 2));
-      const scrollRatio = targetThumbLeft / maxThumbLeft;
-      const newScrollLeft = scrollRatio * maxScroll;
-      
-      console.log('Track click - Setting scroll to:', newScrollLeft);
-      wrapper.scrollLeft = newScrollLeft;
-      
-      // Eğer scroll çalışmıyorsa, table'ı transform ile kaydır
-       if (wrapper.scrollLeft !== newScrollLeft) {
-         console.log('Track click - Fallback: Using transform');
-         table.style.transform = `translateX(-${newScrollLeft}px)`;
-         
-         // Transform kullanıldığında scrollbar pozisyonunu manuel güncelle
-         const maxThumbLeft = wrapperWidth - scrollbarWidth;
-         const newThumbLeft = maxThumbLeft > 0 ? (newScrollLeft / maxScroll) * maxThumbLeft : 0;
-         console.log('Track click - Manual thumb update:', newThumbLeft);
-         setScrollbarLeft(newThumbLeft);
-       } else {
-         // Normal scroll çalışıyorsa transform'u temizle
-         table.style.transform = '';
-       }
-    }
-  };
 
   // Arama terimi değiştiğinde sayfa numarasını sıfırla
   const handleSearchChange = (value) => {
@@ -365,6 +163,38 @@ const ContactsTable = () => {
   const handleDeleteContact = (contact) => {
     setSelectedContact(contact);
     setShowDeleteModal(true);
+  };
+
+  // Toplu silme fonksiyonu
+  const handleBulkDelete = async () => {
+    if (selectedContacts.length === 0) {
+      showWarning("Lütfen silmek istediğiniz kişileri seçin.");
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `Seçili ${selectedContacts.length} kişiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      setLoading(true);
+      await contactsService.deleteMultipleContacts(selectedContacts);
+      showSuccess(`${selectedContacts.length} kişi başarıyla silindi.`);
+      
+      // Seçimleri temizle
+      setSelectedContacts([]);
+      setSelectAll(false);
+      
+      // Listeyi yenile
+      fetchContacts();
+    } catch (error) {
+      console.error('Toplu silme hatası:', error);
+      showError(error.message || 'Kişiler silinirken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSendMessage = (contact) => {
@@ -648,34 +478,69 @@ const ContactsTable = () => {
           </button>
 
           {selectedContacts.length > 0 && (
-            <button
-              className="header-btn bulk-sms-btn"
-              onClick={handleShowBulkSMSModal}
-              title={`${selectedContacts.length} kişiye SMS gönder`}
-              disabled={bulkSMSLoading}
-              style={{
-                backgroundColor: bulkSMSLoading ? '#ccc' : '#28a745',
-                color: 'white',
-                marginLeft: '10px'
-              }}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 18 18"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            <>
+              <button
+                className="header-btn bulk-sms-btn"
+                onClick={handleShowBulkSMSModal}
+                title={`${selectedContacts.length} kişiye SMS gönder`}
+                disabled={bulkSMSLoading}
+                style={{
+                  backgroundColor: bulkSMSLoading ? '#ccc' : '#28a745',
+                  color: 'white',
+                  marginLeft: '10px'
+                }}
               >
-                <path
-                  d="M1.5 6L8.5 9.5L15.5 6M1.5 12L8.5 15.5L15.5 12M1.5 6L8.5 2.5L15.5 6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {bulkSMSLoading ? 'Gönderiliyor...' : `SMS (${selectedContacts.length})`}
-            </button>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M1.5 6L8.5 9.5L15.5 6M1.5 12L8.5 15.5L15.5 12M1.5 6L8.5 2.5L15.5 6"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                {bulkSMSLoading ? 'Gönderiliyor...' : `SMS (${selectedContacts.length})`}
+              </button>
+              <button
+                className="header-btn bulk-delete-btn"
+                onClick={handleBulkDelete}
+                title={`${selectedContacts.length} kişiyi sil`}
+                disabled={loading}
+                style={{
+                  backgroundColor: loading ? '#ccc' : '#dc3545',
+                  color: 'white',
+                  marginLeft: '10px'
+                }}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M6 2.25H12C12.4142 2.25 12.75 2.58579 12.75 3V3.75H5.25V3C5.25 2.58579 5.58579 2.25 6 2.25Z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M4.5 5.25V14.25C4.5 15.0784 5.17157 15.75 6 15.75H12C12.8284 15.75 13.5 15.0784 13.5 14.25V5.25H4.5ZM7.5 7.5C7.5 7.08579 7.83579 6.75 8.25 6.75C8.66421 6.75 9 7.08579 9 7.5V12C9 12.4142 8.66421 12.75 8.25 12.75C7.83579 12.75 7.5 12.4142 7.5 12V7.5ZM10.5 7.5C10.5 7.08579 10.8358 6.75 11.25 6.75C11.6642 6.75 12 7.08579 12 7.5V12C12 12.4142 11.6642 12.75 11.25 12.75C10.8358 12.75 10.5 12.4142 10.5 12V7.5Z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M3 4.5H15C15.4142 4.5 15.75 4.83579 15.75 5.25C15.75 5.66421 15.4142 6 15 6H3C2.58579 6 2.25 5.66421 2.25 5.25C2.25 4.83579 2.58579 4.5 3 4.5Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                {loading ? 'Siliniyor...' : `Sil (${selectedContacts.length})`}
+              </button>
+            </>
           )}
           <button className="header-btn" onClick={handleExportToExcel} title="Excel'e Aktar">
             <svg
@@ -844,24 +709,7 @@ const ContactsTable = () => {
         </Table>
       </div>
 
-      {/* Özel Yatay Scrollbar */}
-      {scrollbarVisible && (
-        <div className="custom-scrollbar-container">
-          <div 
-            className="custom-scrollbar-track" 
-            onClick={handleScrollbarTrackClick}
-          >
-            <div
-              className="custom-scrollbar-thumb"
-              style={{
-                width: `${scrollbarWidth}px`,
-                left: `${scrollbarLeft}px`
-              }}
-              onMouseDown={handleScrollbarMouseDown}
-            />
-          </div>
-        </div>
-      )}
+
 
       {/* Alt Bilgi ve Sayfalama */}
       <div className="table-footer">

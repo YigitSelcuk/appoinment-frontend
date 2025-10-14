@@ -1,4 +1,4 @@
-﻿/* Bootstrap table override */
+/* Bootstrap table override */
 .table-striped > tbody > tr:nth-of-type(odd) > td,
 .table-striped > tbody > tr:nth-of-type(odd) > th {
   background-color: transparent !important;
@@ -54,27 +54,33 @@
 /* BaÅŸlÄ±k BarÄ± */
 .tasks-table-container .header-bar {
   border-bottom: 1px solid #e0e0e0;
-  padding: 15px 20px;
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  padding: 15px 0;
+  display: flex;
   align-items: center;
-  gap: 20px;
+  justify-content: space-between;
+  gap: 15px;
   flex-shrink: 0;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .tasks-table-container .header-left {
   display: flex;
   align-items: center;
   gap: 12px;
-  justify-self: start;
+  flex: 0 0 auto;
+  order: 1;
+  padding-left: 20px;
 }
 
 .tasks-table-container .header-center {
   display: flex;
   justify-content: center;
   align-items: center;
-  justify-self: center;
-  width: 100%;
+  flex: 2 1 auto;
+  order: 2;
+  min-width: 300px;
 }
 
 .tasks-table-container .header-icon {
@@ -104,13 +110,18 @@
   font-weight: 600;
   color: #2c3e50;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .tasks-table-container .header-right {
   display: flex;
   align-items: center;
   gap: 8px;
-  justify-self: end;
+  flex: 0 1 auto;
+  order: 3;
+  padding-right: 460px;
+  min-width: 120px;
+  justify-content: flex-end;
 }
 
 .tasks-table-container .header-btn {
@@ -178,13 +189,20 @@
   display: none !important;
 }
 
+/* Header actions dropdown varsayılan olarak gizli */
+.header-actions-dropdown {
+  display: none;
+}
+
 .tasks-table-container .header-btn i {
   font-size: 15px;
 }
 
-.tasks-table-container .header-btn.bulk-sms-btn {
-  background-color: #28a745 !important;
-  border: 1px solid #28a745 !important;
+
+
+.tasks-table-container .header-btn.bulk-delete-btn {
+  background-color: #dc3545 !important;
+  border: 1px solid #dc3545 !important;
   color: white !important;
   border-radius: 10px !important;
   padding: 8px 16px !important;
@@ -197,27 +215,48 @@
   min-width: 100px !important;
   height: 45px !important;
   width: auto !important;
+  margin-right: 10px !important;
 }
 
-.header-btn.bulk-sms-btn:hover {
-  background-color: #218838 !important;
-  border-color: #1e7e34 !important;
+.header-btn.bulk-delete-btn:hover {
+  background-color: #c82333 !important;
+  border-color: #bd2130 !important;
   color: white !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.25) !important;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25) !important;
 }
 
-.header-btn.bulk-sms-btn:focus {
-  background-color: #218838 !important;
-  border-color: #1e7e34 !important;
+.header-btn.bulk-delete-btn:focus {
+  background-color: #c82333 !important;
+  border-color: #bd2130 !important;
   color: white !important;
-  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
 }
 
-.header-btn.bulk-sms-btn:active {
-  background-color: #1e7e34 !important;
-  border-color: #1c7430 !important;
+.header-btn.bulk-delete-btn:active {
+  background-color: #bd2130 !important;
+  border-color: #b21f2d !important;
   color: white !important;
+}
+
+.header-btn.bulk-delete-btn svg,
+.header-btn.bulk-delete-btn svg path {
+  stroke: #ffffff !important;
+}
+
+.header-btn.bulk-delete-btn:hover svg,
+.header-btn.bulk-delete-btn:hover svg path {
+  stroke: #ffffff !important;
+}
+
+.header-btn.bulk-delete-btn:focus svg,
+.header-btn.bulk-delete-btn:focus svg path {
+  stroke: #ffffff !important;
+}
+
+.header-btn.bulk-delete-btn:active svg,
+.header-btn.bulk-delete-btn:active svg path {
+  stroke: #ffffff !important;
 }
 
 /* Action Menu Button Stilleri */
@@ -472,114 +511,10 @@ td:last-child {
 
 
 
-/* Bulk SMS Modal Stilleri */
-.bulk-sms-modal {
-  padding: 0 !important;
-}
-
-.bulk-sms-modal .modal {
-  padding: 0 !important;
-}
-
-.bulk-sms-modal .modal-backdrop {
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  background-color: rgba(0, 0, 0, 0.6) !important;
-}
-
-.bulk-sms-modal .modal-dialog {
-  margin: 5vh auto;
-  padding: 0;
-  width: 100%;
-  max-width: 700px;
-}
-
-.bulk-sms-modal .modal-content {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100%;
-  max-width: 100%;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-
 /* Modal aÃ§Ä±kken body scroll engellemesi */
 body.modal-open {
   overflow: hidden !important;
   padding-right: 0px !important;
-}
-
-/* Responsive modal */
-@media (max-width: 768px) {
-  .bulk-sms-modal .modal-dialog {
-    margin: 10px auto;
-    max-width: calc(100vw - 20px);
-    width: calc(100vw - 20px);
-    padding: 0;
-  }
-
-  .bulk-sms-modal {
-    padding: 0 !important;
-  }
-}
-
-/* Ã–zel Yatay Scrollbar Stilleri */
-.custom-scrollbar-container {
-  position: relative;
-  width: 100%;
-  height: 12px;
-  margin-top: 8px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-  z-index: 10;
-}
-
-.custom-scrollbar-track {
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  position: relative;
-  border-radius: 6px;
-}
-
-.custom-scrollbar-thumb {
-  height: 100%;
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  border-radius: 6px;
-  cursor: grab;
-  transition: background-color 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
-  position: absolute;
-  top: 0;
-  left: 0;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.custom-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #0056b3, #004085);
-  box-shadow: 0 3px 6px rgba(0, 123, 255, 0.4);
-}
-
-.custom-scrollbar-thumb:active {
-  cursor: grabbing;
-  background: linear-gradient(135deg, #004085, #002752);
-}
-
-/* Responsive scrollbar */
-@media (max-width: 768px) {
-  .custom-scrollbar-container {
-    height: 8px;
-    margin-top: 6px;
-  }
-  
-  .custom-scrollbar-thumb {
-    border-radius: 4px;
-  }
 }
 
 /* Tablo Stilleri */
@@ -875,22 +810,6 @@ body.modal-open {
   color: white !important;
 }
 
-.header-btn.bulk-sms-btn:disabled {
-  background-color: #6c757d !important;
-  border-color: #6c757d !important;
-  color: white !important;
-  cursor: not-allowed !important;
-  opacity: 0.65 !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-.header-btn.bulk-sms-btn svg {
-  width: 16px !important;
-  height: 16px !important;
-  flex-shrink: 0 !important;
-}
-
 /* SMS Modal Stilleri */
 .modal-content {
   border-radius: 12px;
@@ -954,39 +873,93 @@ body.modal-open {
   padding: 20px 30px 20px 20px;
   border-top: 1px solid #e0e0e0;
   flex-shrink: 0;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
   flex-wrap: wrap;
   gap: 15px;
   /* Footer'Ä±n her zaman gÃ¶rÃ¼nmesini saÄŸla */
   position: relative;
   z-index: 10;
   min-height: 60px;
+  width: 100% !important;
+}
+
+/* Daha güçlü selector */
+.tasks-table-container > .table-footer {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
 }
 
 .tasks-table-container .total-records {
   font-size: 14px;
   font-weight: 600;
   color: #495057;
-  display: flex;
-  align-items: center;
-  text-align: left;
+  display: flex !important;
+  align-items: center !important;
+  text-align: left !important;
+  flex: 1 !important;
+  justify-content: flex-start !important;
+  order: 1 !important;
+}
+
+/* Daha güçlü selector */
+.tasks-table-container .table-footer .total-records {
+  display: flex !important;
+  align-items: center !important;
+  text-align: left !important;
+  flex: 1 !important;
+  justify-content: flex-start !important;
+  order: 1 !important;
 }
 
 .tasks-table-container .pagination-wrapper {
-  display: flex;
-  justify-content: center;
-  width: 100%;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  flex: 2 !important;
+  order: 2 !important;
+  width: 100% !important;
+  text-align: center !important;
+  margin: 0 auto !important;
+  padding-left: 50px !important;
+}
+
+/* Daha güçlü selector */
+.tasks-table-container .table-footer .pagination-wrapper {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  flex: 2 !important;
+  order: 2 !important;
+  width: 100% !important;
+  text-align: left !important;
+  margin: 0 auto !important;
+  padding-left: 100px !important;
+}
+
+/* En güçlü selector */
+.tasks-table-container .table-footer .pagination-wrapper .custom-pagination {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 auto !important;
 }
 
 /* Sayfalama Stilleri */
 .tasks-table-container .custom-pagination {
-  margin-bottom: 0;
+  margin-bottom: 0 !important;
   gap: 4px;
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  margin: 0 auto !important;
 }
 
 .tasks-table-container .custom-pagination .page-item {
@@ -1044,6 +1017,79 @@ body.modal-open {
 
 /* HORIZONTAL SCROLL SÄ°STEMÄ° - ULTRA BASÄ°T */
 
+/* Orta boyutlu ekranlar için responsive header */
+/* 1500px ve altı: title gizle, butonları menüye çevir, filtreleri küçült */
+@media (max-width: 1500px) {
+  .tasks-table-container .header-title {
+    display: none !important;
+  }
+
+  .tasks-table-container .header-right {
+    padding-right: 100 !important;
+    gap: 8px !important;
+  }
+
+  .tasks-table-container .header-right .add-task-btn,
+  .tasks-table-container .header-right .bulk-delete-btn {
+    display: none !important;
+  }
+
+  .header-actions-dropdown {
+    display: flex !important;
+    align-items: center !important;
+    z-index: 1000 !important;
+  }
+
+  .status-buttons {
+    gap: 8px !important;
+    max-width: 100% !important;
+    justify-content: center !important;
+  }
+  .status-btn {
+    min-width: 100px !important;
+    padding: 0.4rem 0.6rem !important;
+  }
+  .status-number {
+    font-size: 1.05rem !important;
+  }
+  .status-name {
+    font-size: 0.75rem !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .tasks-table-container .header-bar {
+    gap: 15px;
+    padding: 12px 15px;
+  }
+  
+  .tasks-table-container .header-title {
+    font-size: 16px;
+  }
+  
+  .tasks-table-container .header-center {
+    flex: 1 1 auto;
+    min-width: 200px;
+  }
+  
+  .tasks-table-container .header-right {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+  
+  .add-task-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-height: 36px;
+  }
+  
+  .bulk-delete-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-height: 36px;
+  }
+}
+
 /* BÃ¼yÃ¼k ekranlar iÃ§in optimizasyon */
 @media (max-width: 1200px) {
   .tasks-table {
@@ -1055,6 +1101,11 @@ body.modal-open {
     padding: 6px 4px;
   }
   
+  .tasks-table-container .header-right {
+    padding-right: 20 !important;
+    gap: 8px !important;
+    padding-right: 60px;
+  }
   .action-btn {
     width: 24px;
     height: 24px;
@@ -1074,18 +1125,30 @@ body.modal-open {
 
 /* Tablet boyutlarÄ± */
 @media (max-width: 768px) {
-  .header-bar {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
+  .tasks-table-container .header-bar {
+    flex-direction: column;
     gap: 15px;
     padding: 15px;
     text-align: center;
   }
   
-  .header-left,
-  .header-center,
-  .header-right {
-    justify-self: center;
+  .tasks-table-container .header-left {
+    order: 1;
+    justify-content: center;
+  }
+  
+  .tasks-table-container .header-center {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .tasks-table-container .header-right {
+    order: 3;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 10px;
   }
   
   .header-center .search-container {
@@ -1095,6 +1158,74 @@ body.modal-open {
   .header-center .search-input {
     font-size: 14px;
     padding: 8px 35px 8px 12px;
+  }
+  
+  .status-buttons {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .status-btn {
+    min-width: 80px;
+    padding: 0.3rem 0.5rem;
+  }
+  
+  .status-number {
+    font-size: 1rem;
+  }
+  
+  .status-name {
+    font-size: 0.7rem;
+  }
+}
+
+/* Küçük ekranlar için ek responsive */
+@media (max-width: 480px) {
+  .tasks-table-container .header-bar {
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .tasks-table-container .header-title {
+    font-size: 14px;
+  }
+  
+  .tasks-table-container .header-right {
+    gap: 5px;
+  }
+  
+  .tasks-table-container .header-right .header-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .add-task-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    min-height: 32px;
+    white-space: nowrap;
+  }
+  
+  .bulk-delete-btn {
+    padding: 5px 8px;
+    font-size: 10px;
+    min-height: 32px;
+    white-space: nowrap;
+  }
+  
+  .status-btn {
+    min-width: 60px;
+    padding: 0.2rem 0.3rem;
+  }
+  
+  .status-number {
+    font-size: 0.9rem;
+  }
+  
+  .status-name {
+    font-size: 0.6rem;
   }
   
   .tasks-table-container .table-footer {
@@ -1140,30 +1271,51 @@ body.modal-open {
 /* 1400px altÄ±nda scrollbar gÃ¶ster */
 @media (max-width: 1400px) {
   .table-wrapper {
-    overflow-x: auto !important;
+    overflow-x: scroll !important;
     overflow-y: visible !important;
     -webkit-overflow-scrolling: touch !important;
+    max-width: 100% !important;
+    position: relative !important;
   }
 
-  /* Tabloyu 1400px geniÅŸliÄŸe sabitle - yatay scroll oluÅŸsun */
+  /* Tabloyu geniş yap - yatay scroll ZORUNLU oluşsun */
   .tasks-table {
-    width: 1400px !important;
-    min-width: 1400px !important;
+    width: 1600px !important;
+    min-width: 1600px !important;
+    max-width: none !important;
     table-layout: fixed !important;
   }
 
-  /* Native scrollbar'Ä± gizle - Ã¶zel scrollbar kullanacaÄŸÄ±z */
+  /* Native scrollbar stilini düzenle - ZORUNLU GÖRÜNÜR */
   .table-wrapper::-webkit-scrollbar {
-    height: 0px !important;
-    background: transparent !important;
+    height: 16px !important;
+    background: #e9ecef !important;
+    display: block !important;
+    -webkit-appearance: auto !important;
   }
 
   .table-wrapper::-webkit-scrollbar-thumb {
-    background: transparent !important;
+    background: #007bff !important;
+    border-radius: 8px !important;
+    border: 2px solid #e9ecef !important;
+    min-height: 20px !important;
+    display: block !important;
+  }
+
+  .table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #0056b3 !important;
   }
 
   .table-wrapper::-webkit-scrollbar-track {
-    background: transparent !important;
+    background: #e9ecef !important;
+    border-radius: 8px !important;
+    display: block !important;
+  }
+
+  /* Firefox için scrollbar */
+  .table-wrapper {
+    scrollbar-width: auto !important;
+    scrollbar-color: #007bff #e9ecef !important;
   }
 
   /* HÃ¼creleri tek satÄ±ra al - kaydÄ±rma net olsun */
@@ -1172,101 +1324,6 @@ body.modal-open {
     white-space: nowrap !important;
   }
 }
-
-@media (max-width: 600px) {
-  /* Ana container */
-  .tasks-table-container {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Table wrapper - YATAY SCROLL */
-  .table-wrapper {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-    -webkit-overflow-scrolling: touch !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    position: relative !important;
-  }
-
-  /* Tablo geniÅŸliÄŸi - Ekrandan Ã§ok geniÅŸ yap */
-  .tasks-table {
-    width: 1400px !important;
-    min-width: 1400px !important;
-    table-layout: fixed !important;
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-    margin: 0 !important;
-  }
-
-  /* TÃ¼m hÃ¼creler iÃ§in nowrap */
-  .tasks-table th,
-  .tasks-table td {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    padding: 10px 8px !important;
-    font-size: 12px !important;
-  }
-
-  /* SÃ¼tun geniÅŸlikleri - Toplam 1400px */
-  .tasks-table th:nth-child(1), .tasks-table td:nth-child(1) { width: 70px !important; }   /* Checkbox */
-  .tasks-table th:nth-child(2), .tasks-table td:nth-child(2) { width: 70px !important; }   /* SÃ±ra */
-  .tasks-table th:nth-child(3), .tasks-table td:nth-child(3) { width: 200px !important; }  /* Başlangıç-Bitiş */
-  .tasks-table th:nth-child(4), .tasks-table td:nth-child(4) { width: 250px !important; }  /* Açıklama */
-  .tasks-table th:nth-child(5), .tasks-table td:nth-child(5) { width: 150px !important; }  /* Atanan Kişi */
-  .tasks-table th:nth-child(6), .tasks-table td:nth-child(6) { width: 120px !important; }  /* Durum */
-  .tasks-table th:nth-child(7), .tasks-table td:nth-child(7) { width: 80px !important; }   /* Onay */
-  .tasks-table th:nth-child(8), .tasks-table td:nth-child(8) { width: 120px !important; }  /* İşlem */
-
-
-  /* Avatar ve butonlar */
-  .task-avatar {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 50% !important;
-  }
-
-  .action-btn {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 10px !important;
-    padding: 4px !important;
-  }
-
-  .action-btn svg {
-    width: 12px !important;
-    height: 12px !important;
-  }
-
-  /* Scrollbar gÃ¶rÃ¼nÃ¼r ve bÃ¼yÃ¼k yap */
-  .table-wrapper::-webkit-scrollbar {
-    height: 15px !important;
-    background: #f8f9fa !important;
-    border-radius: 0 !important;
-  }
-
-  .table-wrapper::-webkit-scrollbar-thumb {
-    background: #007bff !important;
-    border-radius: 8px !important;
-    border: 2px solid #f8f9fa !important;
-  }
-
-  .table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: #0056b3 !important;
-  }
-
-  .table-wrapper::-webkit-scrollbar-track {
-    background: #f8f9fa !important;
-    border-radius: 0 !important;
-  }
 
   /* Header dÃ¼zeni */
   .tasks-table-container .header-bar {
@@ -1332,7 +1389,7 @@ body.modal-open {
   .tasks-table tbody tr:hover {
     background-color: #f8f9fa !important;
   }
-}
+
 
 /* Tablo sÃ¼tunlarÄ± iÃ§in temel geniÅŸlikler */
 .tasks-table th:nth-child(1),
@@ -1673,8 +1730,9 @@ body.modal-open {
   border-top: none;
   border-bottom: none;
   overflow: hidden;
-  max-width: 700px;
+  max-width: 600px;
   width: 100%;
+  justify-content: center;
 }
 
 .status-btn {

@@ -20,6 +20,17 @@ const makeRequest = async (url, options = {}, token) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    
+    // 403 hatası için özel mesaj
+    if (response.status === 403) {
+      throw new Error('Bu işlem için yönetici yetkisi gerekir. Lütfen yöneticinizle iletişime geçin.');
+    }
+    
+    // 401 hatası için özel mesaj
+    if (response.status === 401) {
+      throw new Error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
+    }
+    
     throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
   }
 

@@ -182,44 +182,6 @@
   font-size: 15px;
 }
 
-.categories-table-container .header-btn.bulk-sms-btn {
-  background-color: #28a745 !important;
-  border: 1px solid #28a745 !important;
-  color: white !important;
-  border-radius: 10px !important;
-  padding: 8px 16px !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  transition: all 0.2s ease !important;
-  min-width: 100px !important;
-  height: 45px !important;
-  width: auto !important;
-}
-
-.header-btn.bulk-sms-btn:hover {
-  background-color: #218838 !important;
-  border-color: #1e7e34 !important;
-  color: white !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.25) !important;
-}
-
-.header-btn.bulk-sms-btn:focus {
-  background-color: #218838 !important;
-  border-color: #1e7e34 !important;
-  color: white !important;
-  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
-}
-
-.header-btn.bulk-sms-btn:active {
-  background-color: #1e7e34 !important;
-  border-color: #1c7430 !important;
-  color: white !important;
-}
-
 /* Action Menu Button Stilleri */
 .action-menu-btn {
   border: 1px solid #dee2e6 !important;
@@ -472,115 +434,15 @@ td:last-child {
 
 
 
-/* Bulk SMS Modal Stilleri */
-.bulk-sms-modal {
-  padding: 0 !important;
-}
-
-.bulk-sms-modal .modal {
-  padding: 0 !important;
-}
-
-.bulk-sms-modal .modal-backdrop {
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  background-color: rgba(0, 0, 0, 0.6) !important;
-}
-
-.bulk-sms-modal .modal-dialog {
-  margin: 5vh auto;
-  padding: 0;
-  width: 100%;
-  max-width: 700px;
-}
-
-.bulk-sms-modal .modal-content {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100%;
-  max-width: 100%;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-
 /* Modal açıkken body scroll engellemesi */
 body.modal-open {
   overflow: hidden !important;
   padding-right: 0px !important;
 }
 
-/* Responsive modal */
-@media (max-width: 768px) {
-  .bulk-sms-modal .modal-dialog {
-    margin: 10px auto;
-    max-width: calc(100vw - 20px);
-    width: calc(100vw - 20px);
-    padding: 0;
-  }
 
-  .bulk-sms-modal {
-    padding: 0 !important;
-  }
-}
 
-/* Özel Yatay Scrollbar Stilleri */
-.custom-scrollbar-container {
-  position: relative;
-  width: 100%;
-  height: 12px;
-  margin-top: 8px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-  z-index: 10;
-}
 
-.custom-scrollbar-track {
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  position: relative;
-  border-radius: 6px;
-}
-
-.custom-scrollbar-thumb {
-  height: 100%;
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  border-radius: 6px;
-  cursor: grab;
-  transition: background-color 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
-  position: absolute;
-  top: 0;
-  left: 0;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-.custom-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #0056b3, #004085);
-  box-shadow: 0 3px 6px rgba(0, 123, 255, 0.4);
-}
-
-.custom-scrollbar-thumb:active {
-  cursor: grabbing;
-  background: linear-gradient(135deg, #004085, #002752);
-}
-
-/* Responsive scrollbar */
-@media (max-width: 768px) {
-  .custom-scrollbar-container {
-    height: 8px;
-    margin-top: 6px;
-  }
-  
-  .custom-scrollbar-thumb {
-    border-radius: 4px;
-  }
-}
 
 /* Tablo Stilleri */
 .table-wrapper {
@@ -598,6 +460,33 @@ body.modal-open {
   border-radius: 0;
   /* Max-height kaldırıldı ki pagination görünsün */
   height: auto;
+}
+
+/* Native Scrollbar Stilleri - Webkit (Chrome, Safari, Edge) */
+.table-wrapper::-webkit-scrollbar {
+  height: 12px;
+  background: #f8f9fa;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+}
+
+/* Native Scrollbar Stilleri - Firefox */
+.table-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: #007bff #f8f9fa;
 }
 
 .categories-table {
@@ -873,21 +762,6 @@ body.modal-open {
   color: white !important;
 }
 
-.header-btn.bulk-sms-btn:disabled {
-  background-color: #6c757d !important;
-  border-color: #6c757d !important;
-  color: white !important;
-  cursor: not-allowed !important;
-  opacity: 0.65 !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-.header-btn.bulk-sms-btn svg {
-  width: 16px !important;
-  height: 16px !important;
-  flex-shrink: 0 !important;
-}
 
 /* SMS Modal Stilleri */
 .modal-content {
@@ -952,31 +826,71 @@ body.modal-open {
   padding: 20px 30px 20px 20px;
   border-top: 1px solid #e0e0e0;
   flex-shrink: 0;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
   gap: 15px;
   /* Footer'ın her zaman görünmesini sağla */
   position: relative;
   z-index: 10;
   min-height: 60px;
+  width: 100% !important;
+}
+
+/* En güçlü table footer layout */
+.categories-table-container > .table-footer {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
 }
 
 .categories-table-container .total-records {
   font-size: 14px;
   font-weight: 600;
   color: #495057;
-  display: flex;
-  align-items: center;
-  text-align: left;
+  display: flex !important;
+  align-items: center !important;
+  text-align: left !important;
+  flex: 1 !important;
+  justify-content: flex-start !important;
+}
+
+/* En güçlü total records layout */
+.categories-table-container .table-footer .total-records {
+  display: flex !important;
+  align-items: center !important;
+  text-align: left !important;
+  flex: 1 !important;
+  justify-content: flex-start !important;
+  order: 1 !important;
 }
 
 .categories-table-container .pagination-wrapper {
-  display: flex;
-  justify-content: center;
-  width: 100%;
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  flex: 2 !important;
+  width: 100% !important;
+  padding-left: 50px !important;
+}
+
+/* Daha güçlü pagination ortalama */
+.categories-table-container .table-footer .pagination-wrapper {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  flex: 2 !important;
+  text-align: left !important;
+  order: 2 !important;
+  padding-left: 100px !important;
+}
+
+.categories-table-container .table-footer .pagination-wrapper .custom-pagination {
+  margin: 0 !important;
+  justify-content: flex-start !important;
 }
 
 /* Sayfalama Stilleri */

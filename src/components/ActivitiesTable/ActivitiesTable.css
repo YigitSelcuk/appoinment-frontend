@@ -2,14 +2,12 @@
 .activities-table-container {
   background: white;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   margin: 20px 0;
 }
 
 /* Header Bar */
 .header-bar {
-  background: linear-gradient(135deg, #4E0DCC 0%, #6B46C1 100%);
   padding: 20px 30px;
   display: flex;
   justify-content: space-between;
@@ -27,7 +25,6 @@
 .header-icon {
   width: 50px;
   height: 50px;
-  background: rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -35,7 +32,7 @@
 }
 
 .header-title {
-  color: white;
+  color: black;
   font-size: 24px;
   font-weight: 700;
   margin: 0;
@@ -85,7 +82,7 @@
 /* Filter Select */
 .filter-select {
   padding: 10px 15px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(0, 0, 0, 0.1);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.95);
   font-size: 14px;
@@ -93,8 +90,8 @@
 }
 
 .filter-select:focus {
-  border-color: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+  border-color: rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.05);
   background: white;
 }
 

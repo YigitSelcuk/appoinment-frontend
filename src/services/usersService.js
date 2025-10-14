@@ -113,3 +113,22 @@ export const deleteUser = async (userId, token) => {
     }
   }
 };
+
+// Toplu kullanıcı silme
+export const deleteMultipleUsers = async (userIds, token) => {
+  try {
+    const response = await axios.delete(`${API_URL}/users/bulk`, {
+      headers: getAuthHeaders(token),
+      data: { userIds },
+      withCredentials: true
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Toplu kullanıcı silme hatası:', error);
+    if (error.response?.data) {
+      throw error.response.data;
+    } else {
+      throw { message: error.message || 'Kullanıcılar silinirken hata oluştu' };
+    }
+  }
+};

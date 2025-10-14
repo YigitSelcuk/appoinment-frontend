@@ -220,6 +220,7 @@ const Navbar = ({ user, onLogout }) => {
       ),
       color: "#3C02AA",
     },
+
   ];
 
   // İzinlere göre menü filtreleme (admin tümünü görür)
@@ -437,15 +438,24 @@ const Navbar = ({ user, onLogout }) => {
                   </svg>
                   <span>Profil</span>
                 </NavDropdown.Item>
-                <NavDropdown.Item href="#" className="dropdown-item">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path
-                      d="M8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C12.42 16 16 12.42 16 8C16 3.58 12.42 0 8 0ZM8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C11.31 2 14 4.69 14 8C14 11.31 11.31 14 8 14ZM8.5 4H7V9L11.25 11.52L12 10.25L8.5 8.17V4Z"
-                      fill="#5C6576"
-                    />
-                  </svg>
-                  <span>Ayarlar</span>
-                </NavDropdown.Item>
+                
+                {/* Activities Link - Sadece Admin Kullanıcılar İçin */}
+                {(user?.role === 'admin' || user?.role === 'başkan' || user?.department === 'BAŞKAN') && (
+                  <NavDropdown.Item 
+                    onClick={() => navigate('/activities')} 
+                    className="dropdown-item"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="M8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C12.42 16 16 12.42 16 8C16 3.58 12.42 0 8 0ZM8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C11.31 2 14 4.69 14 8C14 11.31 11.31 14 8 14ZM8.5 4H7V9L11.25 11.52L12 10.25L8.5 8.17V4Z"
+                        fill="#5C6576"
+                      />
+                    </svg>
+                    <span>Aktiviteler</span>
+                  </NavDropdown.Item>
+                )}
+                
+             
                 <NavDropdown.Divider />
                 <NavDropdown.Item
                   onClick={handleLogout}

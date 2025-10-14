@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert } from 'react-bootstrap';
-import { FaUserPlus, FaTimes, FaSave } from 'react-icons/fa';
+import { FaUserPlus, FaTimes, FaSave, FaPlus } from 'react-icons/fa';
 import PagePermissions from '../PagePermissions/PagePermissions';
+import { getDepartmentOptions } from '../../services/departmentsService';
+import AddDepartmentModal from '../AddDepartmentModal/AddDepartmentModal';
 import './AddUserModal.css';
 
 const AddUserModal = ({ show, onHide, onSave }) => {
@@ -20,6 +22,29 @@ const AddUserModal = ({ show, onHide, onSave }) => {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [departments, setDepartments] = useState([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(false);
+  const [showAddDepartmentModal, setShowAddDepartmentModal] = useState(false);
+
+  // Departmanları yükle
+  useEffect(() => {
+    if (show) {
+      loadDepartments();
+    }
+  }, [show]);
+
+  const loadDepartments = async () => {
+    try {
+      setDepartmentsLoading(true);
+      const departmentOptions = await getDepartmentOptions();
+      setDepartments(departmentOptions);
+    } catch (error) {
+      console.error('Departmanlar yüklenirken hata:', error);
+      setDepartments([]);
+    } finally {
+      setDepartmentsLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -121,6 +146,18 @@ const AddUserModal = ({ show, onHide, onSave }) => {
     });
     setErrors({});
     onHide();
+  };
+
+  // Yeni departman eklendikten sonra dropdown'ı güncelle
+  const handleDepartmentAdded = (newDepartment) => {
+    // Departmanları yeniden yükle
+    loadDepartments();
+    
+    // Yeni eklenen departmanı seç
+    setFormData(prev => ({
+      ...prev,
+      department: newDepartment.id
+    }));
   };
 
   return (
@@ -227,30 +264,36 @@ const AddUserModal = ({ show, onHide, onSave }) => {
               </div>
 
               <div className="form-group">
-                <Form.Label>Departman</Form.Label>
-                <Form.Select
-                  name="department"
-                  value={formData.department}
-                  onChange={handleInputChange}
-                >
-                  <option value="">Departman seçiniz</option>
-                  <option value="FEN İŞLERİ MÜDÜRLÜĞÜ">FEN İŞLERİ MÜDÜRLÜĞÜ</option>
-                  <option value="İNSAN KAYNAKLARI MÜDÜRLÜĞÜ">İNSAN KAYNAKLARI MÜDÜRLÜĞÜ</option>
-                  <option value="BİLGİ İŞLEM MÜDÜRLÜĞÜ">BİLGİ İŞLEM MÜDÜRLÜĞÜ</option>
-                  <option value="MALİ HİZMETLER MÜDÜRLÜĞÜ">MALİ HİZMETLER MÜDÜRLÜĞÜ</option>
-                  <option value="HUKUK İŞLERİ MÜDÜRLÜĞÜ">HUKUK İŞLERİ MÜDÜRLÜĞÜ</option>
-                  <option value="KÜLTÜR VE TURİZM MÜDÜRLÜĞÜ">KÜLTÜR VE TURİZM MÜDÜRLÜĞÜ</option>
-                  <option value="ÇEVRE VE ŞEHİRCİLİK MÜDÜRLÜĞÜ">ÇEVRE VE ŞEHİRCİLİK MÜDÜRLÜĞÜ</option>
-                  <option value="SOSYAL HİZMETLER MÜDÜRLÜĞÜ">SOSYAL HİZMETLER MÜDÜRLÜĞÜ</option>
-                  <option value="EĞİTİM MÜDÜRLÜĞÜ">EĞİTİM MÜDÜRLÜĞÜ</option>
-                  <option value="SAĞLIK MÜDÜRLÜĞÜ">SAĞLIK MÜDÜRLÜĞÜ</option>
-                  <option value="İMAR VE ŞEHİRCİLİK MÜDÜRLÜĞÜ">İMAR VE ŞEHİRCİLİK MÜDÜRLÜĞÜ</option>
-                  <option value="ULAŞTIRMA MÜDÜRLÜĞÜ">ULAŞTIRMA MÜDÜRLÜĞÜ</option>
-                  <option value="GÜVENLİK MÜDÜRLÜĞÜ">GÜVENLİK MÜDÜRLÜĞÜ</option>
-                  <option value="TEMİZLİK İŞLERİ MÜDÜRLÜĞÜ">TEMİZLİK İŞLERİ MÜDÜRLÜĞÜ</option>
-                  <option value="PARK VE BAHÇE MÜDÜRLÜĞÜ">PARK VE BAHÇE MÜDÜRLÜĞÜ</option>
-                </Form.Select>
-              </div>
+                 <Form.Label>Departman</Form.Label>
+                 <div className="department-input-container">
+                   <div className="department-select-wrapper">
+                     <Form.Select
+                       name="department"
+                       value={formData.department}
+                       onChange={handleInputChange}
+                       disabled={departmentsLoading}
+                     >
+                       <option value="">
+                         {departmentsLoading ? 'Departmanlar yükleniyor...' : 'Departman seçiniz'}
+                       </option>
+                       {departments.map((dept) => (
+                         <option key={dept.value} value={dept.value}>
+                           {dept.label}
+                         </option>
+                       ))}
+                     </Form.Select>
+                   </div>
+                   <button
+                     type="button"
+                     className="add-department-btn"
+                     onClick={() => setShowAddDepartmentModal(true)}
+                     disabled={departmentsLoading}
+                     title="Yeni Departman Ekle"
+                   >
+                     <FaPlus />
+                   </button>
+                 </div>
+               </div>
             </div>
 
             <div className="form-row">
@@ -336,6 +379,12 @@ const AddUserModal = ({ show, onHide, onSave }) => {
           )}
         </Button>
       </div>
+
+      <AddDepartmentModal
+        show={showAddDepartmentModal}
+        onHide={() => setShowAddDepartmentModal(false)}
+        onSave={handleDepartmentAdded}
+      />
     </Modal>
   );
 };

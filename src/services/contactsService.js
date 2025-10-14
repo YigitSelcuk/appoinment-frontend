@@ -127,6 +127,14 @@ export const contactsService = {
     });
   },
 
+  // Toplu kişi silme
+  deleteMultipleContacts: async (contactIds) => {
+    return apiCall('/contacts/bulk', {
+      method: 'DELETE',
+      body: JSON.stringify({ contactIds }),
+    });
+  },
+
   // Kategorileri getir
   getCategories: async () => {
     return apiCall('/contacts/categories');

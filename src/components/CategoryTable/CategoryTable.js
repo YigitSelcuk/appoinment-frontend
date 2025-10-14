@@ -57,11 +57,12 @@ const CategoryTable = ({ onShowMessagingModal }) => {
       
       if (response.success) {
         console.log('Frontend - Gelen kategoriler:', response.data);
-        console.log('İlk kategori detayı:', JSON.stringify(response.data[0], null, 2));
-        console.log('Alt kategori değeri:', response.data[0]?.alt_kategori);
+        console.log('Frontend - Pagination bilgileri:', response.pagination);
+        console.log('Frontend - TotalRecords değeri:', response.pagination?.totalRecords);
+        console.log('Frontend - Kategori sayısı:', response.data?.length);
         setCategories(response.data);
         setTotalPages(response.pagination.totalPages);
-        setTotalRecords(response.data.reduce((total, cat) => total + cat.kisiSayisi, 0));
+        setTotalRecords(response.pagination.totalRecords || response.data?.length || 0);
       }
     } catch (error) {
       console.error('Kategoriler yüklenirken hata:', error);

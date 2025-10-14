@@ -118,9 +118,11 @@ export const bulkUpdateTasks = async (token, taskIds, updateData) => {
   return await Promise.all(promises);
 };
 
-export const bulkDeleteTasks = async (token, taskIds) => {
-  const promises = taskIds.map(id => deleteTask(token, id));
-  return await Promise.all(promises);
+export const deleteMultipleTasks = async (token, taskIds) => {
+  return await apiCall('/tasks/bulk', token, {
+    method: 'DELETE',
+    body: JSON.stringify({ taskIds }),
+  });
 };
 
 // Görev arama

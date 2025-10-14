@@ -844,74 +844,8 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
       console.log('formData.visibleToUsers:', formData.visibleToUsers);
       console.log('formData.visibleToAll:', formData.visibleToAll);
       
-      // Google Calendar'a da ekle (eğer kullanıcı giriş yapmışsa)
-      let googleEventId = null;
-      try {
-        console.log('🚀 AddAppointmentModal: Google Calendar entegrasyonu başlatılıyor...');
-        
-        // Önce Google Calendar servisinin başlatılıp başlatılmadığını kontrol et
-        if (!googleCalendarService.isInitialized) {
-          console.log('🔄 Google Calendar: Servis başlatılıyor...');
-          const initResult = await googleCalendarService.init();
-          console.log('🔄 Google Calendar: Init sonucu:', initResult);
-        }
-        
-        const isSignedIn = googleCalendarService.isSignedIn();
-        console.log('🔐 AddAppointmentModal: Google Calendar giriş durumu:', isSignedIn);
-        
-        if (isSignedIn) {
-          console.log('📅 Google Calendar: Randevu ekleniyor...');
-          const googleEventData = {
-            title: formData.title,
-            description: formData.description || '',
-            date: formData.date,
-            startTime: formData.startTime,
-            endTime: formData.endTime,
-            location: formData.location || ''
-          };
-          
-          console.log('📋 AddAppointmentModal: Google Calendar event verisi:', googleEventData);
-          
-          const googleEvent = await googleCalendarService.createEvent(googleEventData);
-          
-          if (googleEvent && googleEvent.id) {
-            googleEventId = googleEvent.id;
-            console.log('✅ AddAppointmentModal: Google Calendar randevu başarıyla eklendi:', {
-              id: googleEvent.id,
-              summary: googleEvent.summary,
-              htmlLink: googleEvent.htmlLink
-            });
-          } else {
-            console.error('❌ AddAppointmentModal: Google Calendar yanıtında ID bulunamadı:', googleEvent);
-          }
-        } else {
-          console.log('ℹ️ AddAppointmentModal: Google Calendar kullanıcı giriş yapmamış, randevu sadece yerel veritabanına kaydedilecek');
-        }
-      } catch (googleError) {
-        console.error('❌ AddAppointmentModal: Google Calendar randevu eklenirken HATA:', {
-          message: googleError.message,
-          status: googleError.status,
-          details: googleError.details,
-          stack: googleError.stack
-        });
-        
-        // Hata türüne göre kullanıcıya bilgi ver
-        if (googleError.status === 401) {
-          console.warn('⚠️ AddAppointmentModal: Google Calendar yetkilendirme hatası - Kullanıcının tekrar giriş yapması gerekebilir');
-        } else if (googleError.status === 403) {
-          console.warn('⚠️ AddAppointmentModal: Google Calendar erişim hatası - Calendar API izni eksik');
-        } else if (googleError.status === 400) {
-          console.warn('⚠️ AddAppointmentModal: Google Calendar veri hatası - Event verisi geçersiz');
-        }
-        
-        // Google Calendar hatası randevu oluşturmayı engellemez
-        console.log('ℹ️ AddAppointmentModal: Google Calendar hatası olmasına rağmen randevu yerel veritabanına kaydedilecek');
-      }
-      
-      // Google Event ID'yi appointment data'ya ekle
-      if (googleEventId) {
-        appointmentDataToSave.google_event_id = googleEventId;
-      }
+      // Google Calendar entegrasyonu WeeklyCalendar'da yapılacak - duplicate event önlemek için burada kaldırıldı
+      console.log('ℹ️ AddAppointmentModal: Google Calendar entegrasyonu WeeklyCalendar\'da yapılacak');
       
       // Randevuyu kaydet (bildirimler backend'de gönderilecek)
       const response = await onSave(appointmentDataToSave);

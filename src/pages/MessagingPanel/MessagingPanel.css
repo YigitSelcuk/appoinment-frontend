@@ -54,12 +54,12 @@
 
 /* Sol Panel - Calendar */
 .left-panel {
-  width: 320px; /* Normal boyut */
+  width: 320px;
   min-width: 320px;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 700px;
+  height: calc(100vh - 120px);
+  min-height: 600px;
   overflow: hidden;
 }
 
@@ -1283,6 +1283,113 @@
   }
 }
 
+/* 990px'de calendar gizle, sadece chat göster */
+@media (max-width: 990px) {
+  .messaging-container {
+    height: calc(100vh - 80px);
+    min-height: calc(100vh - 80px);
+    gap: 0;
+    padding: 8px 5px 8px 20px;
+  }
+  
+  /* Calendar'ı tamamen gizle */
+  .left-panel {
+    display: none !important;
+  }
+  
+  /* Chat'in tam genişlikte görünmesi */
+  .messaging-content {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: calc(100vh - 96px) !important;
+    flex: 1 !important;
+  }
+  
+  .messaging-panel {
+    height: 100% !important;
+    min-height: calc(100vh - 96px) !important;
+    width: 100% !important;
+  }
+  
+  .contacts-panel {
+    width: 300px;
+  }
+  
+  .contact-item {
+    padding: 12px 15px;
+  }
+  
+  .chat-header {
+    padding: 15px;
+  }
+  
+  .chat-messages {
+    padding: 15px;
+  }
+  
+  .chat-input-container {
+    padding: 15px;
+  }
+  
+  .modern-chat-input-container {
+    padding: 12px 15px;
+  }
+  
+  .modern-chat-input-wrapper {
+    padding: 6px;
+  }
+  
+  .modern-file-btn,
+  .modern-send-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Tablet Portrait */
+@media (max-width: 1024px) {
+  .messaging-container {
+    flex-direction: column;
+    padding: 12px;
+    gap: 12px;
+    height: auto;
+    min-height: calc(100vh - 80px);
+  }
+  
+  .messaging-panel-page .left-panel {
+    width: 100%;
+    min-width: unset;
+    height: 100% !important;
+    min-height: 900px !important;
+    order: 1;
+  }
+  
+  .messaging-panel-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .messaging-panel-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .messaging-panel-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .messaging-content {
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    min-height: 500px;
+    order: 2;
+  }
+}
+
 /* Tablet (768px - 991px) */
 @media (max-width: 991px) and (min-width: 768px) {
   .messaging-container {
@@ -1348,6 +1455,40 @@
   }
 }
 
+/* Tablet ve Mobile geçiş */
+@media (max-width: 768px) {
+  .messaging-container {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .messaging-panel-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .messaging-panel-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .messaging-panel-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .messaging-panel-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .messaging-content {
+    min-height: 450px;
+  }
+}
+
 /* Mobile Large (576px - 767px) */
 @media (max-width: 767px) and (min-width: 576px) {
   .messaging-container {
@@ -1407,5 +1548,109 @@
   .messaging-panel {
     height: min(450px, 40vh);
     min-height: 350px;
+  }
+}
+
+/* Mobile Landscape */
+@media (max-width: 640px) {
+  .messaging-container {
+    padding: 6px;
+    gap: 6px;
+  }
+  
+  .messaging-panel-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .messaging-panel-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .messaging-panel-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .messaging-panel-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .messaging-content {
+    min-height: 400px;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 480px) {
+  .messaging-container {
+    padding: 4px;
+    gap: 4px;
+  }
+  
+  .messaging-panel-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+    border-radius: 8px;
+  }
+  
+  .messaging-panel-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .messaging-panel-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .messaging-panel-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .messaging-content {
+    min-height: 350px;
+    border-radius: 8px;
+  }
+}
+
+/* Very Small Mobile */
+@media (max-width: 360px) {
+  .messaging-container {
+    padding: 2px;
+    gap: 2px;
+  }
+  
+  .messaging-panel-page .left-panel {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .messaging-panel-page .calendar-widget {
+    height: 100% !important;
+    min-height: 900px !important;
+  }
+  
+  .messaging-panel-page .calendar-grid {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .messaging-panel-page .today-section {
+    flex: 1;
+    min-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .messaging-content {
+    min-height: 320px;
   }
 }

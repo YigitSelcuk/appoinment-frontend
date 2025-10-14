@@ -25,17 +25,22 @@ class RehberService {
     } catch (error) {
       console.error('Rehber istatistikleri alınırken hata:', error);
       
-      // Hata durumunda örnek veri döndür
+      // Hata durumunda boş veri döndür
+      const emptyData = [];
+      for (let i = 0; i < 7; i++) {
+        emptyData.push({
+          customers: 0,
+          suppliers: 0,
+          doctors: 0,
+          total_contacts: 0,
+          weekly_new: 0
+        });
+      }
+      
       return {
-        success: true,
-        data: [
-          { value: 18, label: '18', type: 'customer' },
-          { value: 10, label: '10', type: 'supplier' },
-          { value: 35, label: '35', type: 'active' },
-          { value: 20, label: '20', type: 'inactive' },
-          { value: 15, label: '15', type: 'new' }
-        ],
-        message: 'Rehber istatistikleri alındı (örnek veri - bağlantı hatası)'
+        success: false,
+        data: emptyData,
+        message: 'Rehber istatistikleri alınırken hata oluştu'
       };
     }
   }

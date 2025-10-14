@@ -4,6 +4,7 @@
   padding: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   height: 300px;
+  overflow: hidden; /* grafik taşmasını engelle */
 }
 
 .chart-header {
@@ -18,8 +19,8 @@
 
 .chart-title {
   font-size: 12px;
-  font-weight: 600;
-  color: #666;
+  font-weight: 700;
+  color: #6C2CF1;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0;
@@ -45,6 +46,7 @@
   height: calc(100% - 60px);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .chart-bars {
@@ -52,7 +54,7 @@
   align-items: end;
   justify-content: space-between;
   height: 180px;
-  padding: 0 10px;
+  padding: 0 10px 0 92px; /* sol alandaki TOPLAM daha da küçük */
   margin-bottom: 15px;
 }
 
@@ -92,9 +94,9 @@
   top: -20px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 10px;
-  font-weight: 600;
-  color: #333;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6C2CF1;
   white-space: nowrap;
 }
 
@@ -148,4 +150,78 @@
   .chart-bar {
     width: 16px;
   }
+}
+
+/* Yeni tasarım ekleri */
+.chart-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-filter {
+  border: none;
+  background: #F4F4F6;
+  color: #6B7280;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 18px;
+  padding: 6px 12px;
+  text-transform: uppercase;
+}
+
+.chart-filter .caret { margin-left: 6px; }
+
+.chart-day-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6C2CF1;
+  text-transform: uppercase;
+}
+
+.chart-summary {
+  position: absolute;
+  left: -10px;
+  bottom: 1px;
+  
+}
+
+.summary-label {
+  font-size: 11px; /* etiketi küçült */
+  font-weight: 700;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: -34px;
+}
+
+.summary-content {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px; 
+  margin-left: 10px;
+  background: transparent !important;
+  border: none !important;/* ikon ve sayı arası daha dar */
+}
+
+.summary-number {
+  font-size: 20px; /* TOPLAM sayısını daha da küçült */
+  font-weight: 700;
+  color: #6C2CF1 !important;
+  line-height: 1;
+
+}
+
+/* İkonu küçült */
+.summary-content svg {
+  width: 22px;
+  height: 22px;
 }

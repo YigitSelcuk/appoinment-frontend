@@ -98,10 +98,17 @@ export const updateCategory = async (categoryId, categoryData) => {
 };
 
 // Kategori sil
-export const deleteCategory = async (categoryId) => {
+export const deleteCategory = async (categoryId, deleteData = null) => {
   try {
     const url = `${API_URL}/contacts/categories/${categoryId}`;
-    return await apiFetch(url, { method: 'DELETE' });
+    const options = { method: 'DELETE' };
+    
+    // Eğer hedef kategori bilgisi varsa body'ye ekle
+    if (deleteData && deleteData.targetCategoryId) {
+      options.body = JSON.stringify({ targetCategoryId: deleteData.targetCategoryId });
+    }
+    
+    return await apiFetch(url, options);
   } catch (error) {
     console.error('Kategori silinirken hata:', error);
     throw error;

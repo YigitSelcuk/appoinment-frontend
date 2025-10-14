@@ -121,7 +121,7 @@ const AppRoutes = () => {
       <Route 
         path="/activities" 
         element={
-          <ProtectedRoute requiredPermission="activities">
+          <ProtectedRoute requireAdmin={true}>
             <Activities />
           </ProtectedRoute>
         } 

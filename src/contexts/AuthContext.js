@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [accessToken, setAccessToken] = useState(null); // Sadece memory'de tutulacak
+  const [tokenRenewalTimer, setTokenRenewalTimer] = useState(null);
 
   // Uygulama başladığında oturum kontrolü yap
   useEffect(() => {
@@ -39,6 +40,27 @@ export const AuthProvider = ({ children }) => {
     };
   }, [accessToken, isAuthenticated]);
 
+  // Token renewal timer'ını kur
+  useEffect(() => {
+    if (accessToken && isAuthenticated) {
+      setupTokenRenewalTimer(accessToken);
+    } else {
+      // Token yoksa timer'ı temizle
+      if (tokenRenewalTimer) {
+        clearTimeout(tokenRenewalTimer);
+        setTokenRenewalTimer(null);
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      if (tokenRenewalTimer) {
+        clearTimeout(tokenRenewalTimer);
+        setTokenRenewalTimer(null);
+      }
+    };
+  }, [accessToken, isAuthenticated]);
+
   // Tarayıcı kapandığında veya sayfa yenilendiğinde logout yapma (devre dışı)
   useEffect(() => {
     // Önceden burada beforeunload/visibilitychange ile logout-beacon gönderiliyordu.
@@ -48,6 +70,57 @@ export const AuthProvider = ({ children }) => {
       // herhangi bir cleanup yok
     };
   }, [isAuthenticated, accessToken]);
+
+  // JWT token'ın expiry time'ını decode et
+  const getTokenExpiry = (token) => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp * 1000; // Convert to milliseconds
+    } catch (error) {
+      return null;
+    }
+  };
+
+  // Token'ın ne kadar süre sonra expire olacağını hesapla
+  const getTimeUntilExpiry = (token) => {
+    const expiry = getTokenExpiry(token);
+    if (!expiry) return null;
+    return expiry - Date.now();
+  };
+
+  // Proaktif token yenileme timer'ını kur
+  const setupTokenRenewalTimer = (token) => {
+    // Önceki timer'ı temizle
+    if (tokenRenewalTimer) {
+      clearTimeout(tokenRenewalTimer);
+      setTokenRenewalTimer(null);
+    }
+
+    const timeUntilExpiry = getTimeUntilExpiry(token);
+    if (!timeUntilExpiry || timeUntilExpiry <= 0) {
+      console.log('⚠️ Token zaten expire olmuş, hemen yenileniyor...');
+      refreshAccessToken();
+      return;
+    }
+
+    // Token expire olmadan 5 dakika önce yenile (300000 ms = 5 dakika)
+    const renewalTime = Math.max(timeUntilExpiry - 300000, 60000); // En az 1 dakika bekle
+    
+    console.log(`⏰ Token yenileme timer'ı kuruldu: ${Math.round(renewalTime / 1000)} saniye sonra yenilenecek`);
+    
+    const timer = setTimeout(async () => {
+      console.log('🔄 Proaktif token yenileme başlatılıyor...');
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        console.log('✅ Token başarıyla yenilendi');
+        setupTokenRenewalTimer(newToken); // Yeni token için timer kur
+      } else {
+        console.log('❌ Token yenileme başarısız');
+      }
+    }, renewalTime);
+
+    setTokenRenewalTimer(timer);
+  };
 
   // Token yenileme fonksiyonu
   const refreshAccessToken = async () => {
@@ -191,6 +264,12 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Token renewal timer'ını temizle
+      if (tokenRenewalTimer) {
+        clearTimeout(tokenRenewalTimer);
+        setTokenRenewalTimer(null);
+      }
+      
       // Memory'deki verileri temizle
       setAccessToken(null);
       setUser(null);

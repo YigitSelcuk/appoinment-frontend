@@ -280,31 +280,71 @@
 }
 
 .calendar-day.selected {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: #6a1ef7 !important;
   color: white;
-  border-radius: 12px;
+  border-radius: 10px;
   width: 36px;
   height: 36px;
   margin: 0 auto;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   /* transform scale kaldırıldı - performans için */
-  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .calendar-day.today {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  background:#10B981;
   color: white;
   font-weight: 700;
-  border-radius: 12px;
+  border-radius: 10px;
   width: 34px;
   height: 34px;
   margin: 0 auto;
-  box-shadow: 0 3px 12px rgba(16, 185, 129, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Geçmiş günler için gri çizgili stil */
+.calendar-day.past {
+  position: relative;
+  color: #000000 !important;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    rgba(156, 163, 175, 0.2) 2px,
+    rgba(156, 163, 175, 0.2) 4px
+  ) !important;
+}
+
+.calendar-day.past:hover {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(156, 163, 175, 0.1),
+    rgba(156, 163, 175, 0.1) 2px,
+    rgba(156, 163, 175, 0.3) 2px,
+    rgba(156, 163, 175, 0.3) 4px
+  ) !important;
+  color: #000000;
+}
+
+.calendar-day.past::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    rgba(107, 114, 128, 0.3) 1px,
+    rgba(107, 114, 128, 0.3) 3px
+  );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+
 .calendar-day.today.selected {
-  background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%) !important;
+  background:#3C02AA ;
   box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5);
   border: 2px solid rgba(255, 255, 255, 0.4);
   /* transform scale kaldırıldı - performans için */
@@ -321,6 +361,11 @@
   color: white;
 }
 
+/* Geçmiş günler seçildiğinde gün sayısı siyah kalmalı */
+.calendar-day.past.selected .day-number {
+  color: #000000 !important;
+}
+
 .calendar-day.today .day-number {
   color: white;
 }
@@ -333,7 +378,7 @@
 .event-dots {
   display: flex;
   gap: 3px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   position: absolute;
   bottom: 3px;
@@ -395,7 +440,7 @@
 /* .today-section: scroll alanını sınırlamak için üst sınır ekle */
 .today-section {
   border-top: 1px solid #E5E7EB;
-  padding: 16px 20px 20px 20px; /* Alt padding'i kaldır */
+  padding: 16px 20px 40px 20px; /* Alt padding'i 40px artırıldı (20px + 40px = 60px) */
   background: white;
   flex: 1;
   min-height: 400px; /* Minimum yüksekliği artır - sabit yükseklik için */
@@ -1081,10 +1126,10 @@
 /* 990px genişliğinde calendar tam yükseklik */
 @media (max-width: 990px) {
   .calendar-widget {
-    height: 100% !important;
-    min-height: 900px !important;
-    max-height: none !important;
-    overflow: hidden !important; /* Border-radius için hidden gerekli */
+    height: auto !important;
+    min-height: 600px !important; /* Minimum yüksekliği azalt */
+    max-height: 100vh !important; /* Viewport yüksekliğini aşmasın */
+    overflow: visible !important; /* Overflow'u visible yap */
     display: flex !important;
     flex-direction: column !important;
     border-radius: 12px !important;
@@ -1097,22 +1142,26 @@
   
   .calendar-grid {
     flex: 0 0 auto !important;
-    min-height: 300px !important;
+    min-height: 280px !important; /* Minimum yüksekliği azalt */
+    max-height: 350px !important; /* Maksimum yükseklik ekle */
   }
   
   .today-section {
-    flex: 1 !important;
-    min-height: 400px !important; /* Desktop ile aynı minimum yükseklik */
-    height: 400px !important; /* Sabit yükseklik ekle */
-    overflow: hidden !important; /* Scroll yerine hidden - border-radius için */
+    flex: 1 1 auto !important; /* Flex grow, shrink ve basis */
+    min-height: 250px !important; /* Minimum yüksekliği daha da azalt */
+    height: auto !important; /* Sabit yükseklik yerine auto */
+    max-height: none !important; /* Max-height kısıtlamasını kaldır */
+    overflow-y: auto !important; /* Scroll'u geri getir */
     border-radius: 0 0 12px 12px !important; /* Alt köşelerin border-radius'u */
     background: #FFFFFF !important; /* Beyaz arka plan */
+    display: flex !important;
+    flex-direction: column !important;
   }
   
   /* Calendar header'ın üst köşeleri */
   .calendar-header {
     border-radius: 12px 12px 0 0 !important;
-    background: #ffffff !important; /* Mor arka plan */
+    
   }
   
   /* Calendar günlerinin boyut uyumu */
@@ -1141,6 +1190,15 @@
   .day-number {
     font-size: 16px !important;
     font-weight: 700 !important;
+  }
+
+  /* Today events container için scroll düzeltmesi */
+  .today-events {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+    min-height: 150px !important; /* Minimum yükseklik ekle */
+    max-height: none !important; /* Max-height kısıtlamasını kaldır */
   }
 }
 .today-events::-webkit-scrollbar {
