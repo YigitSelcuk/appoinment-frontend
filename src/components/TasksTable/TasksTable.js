@@ -153,7 +153,6 @@ const TasksTable = () => {
   const handleTaskAdded = () => {
     fetchTasksData(); // Listeyi yenile
     setShowAddModal(false);
-    showSuccess('Görev başarıyla eklendi!');
   };
 
   const handleViewTask = (task) => {
