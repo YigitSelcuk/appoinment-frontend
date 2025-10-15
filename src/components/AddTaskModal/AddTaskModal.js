@@ -65,13 +65,11 @@ const AddTaskModal = ({ show, onHide, onTaskAdded }) => {
       });
       setUserSearchTerm('');
       setShowUserDropdown(false);
-      setError('');
     }
   }, [show]);
 
   const loadUsers = async () => {
     if (!accessToken) {
-      setError('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
       showError('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
       return;
     }
@@ -82,7 +80,6 @@ const AddTaskModal = ({ show, onHide, onTaskAdded }) => {
       setUsers(response.data);
       setFilteredUsers(response.data);
     } catch (error) {
-      setError('Kullanıcılar yüklenirken hata oluştu');
       showError('Kullanıcılar yüklenirken hata oluştu!');
       console.error('Kullanıcılar yüklenirken hata:', error);
     } finally {
@@ -148,27 +145,23 @@ const AddTaskModal = ({ show, onHide, onTaskAdded }) => {
     
     // Form validasyonu
     if (!formData.title.trim()) {
-      setError('Görev başlığı gereklidir');
       showError('Görev başlığı gereklidir!');
       return;
     }
 
     if (!formData.assignee_id) {
-      setError('Lütfen bir kişi seçin');
       showError('Lütfen bir kişi seçin!');
       return;
     }
 
     // Tarihleri kontrol et
     if (formData.end_date < formData.start_date) {
-      setError('Bitiş tarihi başlangıç tarihinden önce olamaz');
       showError('Bitiş tarihi başlangıç tarihinden önce olamaz!');
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
       
       // Boş string'leri null'a çevir ve tarihleri formatla
       const cleanedFormData = Object.fromEntries(
@@ -192,7 +185,6 @@ const AddTaskModal = ({ show, onHide, onTaskAdded }) => {
       }
     } catch (error) {
       console.error('Görev ekleme hatası:', error);
-      setError(error.message);
       showError(error.message || 'Görev eklenirken bir hata oluştu!');
     } finally {
       setLoading(false);

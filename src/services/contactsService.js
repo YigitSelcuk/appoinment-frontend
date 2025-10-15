@@ -179,6 +179,39 @@ export const contactsService = {
   checkTCExists: async (tcNo) => {
     return apiCall(`/contacts/check-tc/${tcNo}`);
   },
+
+  // Avatar güncelleme
+  updateContactAvatar: async (contactId, formData) => {
+    const doRequest = async (token) => fetch(`${API_BASE_URL}/contacts/${contactId}/avatar`, {
+      method: 'PUT',
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        // Content-Type header'ını ekleme, FormData otomatik ayarlar
+      },
+      body: formData,
+    });
+
+    let token = (typeof localStorage !== 'undefined') ? localStorage.getItem('token') : null;
+    let res = await doRequest(token);
+
+    if (res.status === 401 || res.status === 403) {
+      const newToken = await tryRefreshToken();
+      if (newToken) {
+        token = newToken;
+        res = await doRequest(token);
+      }
+    }
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      const msg = errorData.message || (res.status === 401 || res.status === 403
+        ? 'Geçersiz veya süresi dolmuş oturum. Lütfen tekrar giriş yapın.'
+        : 'API hatası');
+      throw new Error(msg);
+    }
+
+    return res.json();
+  },
 };
 
 export default contactsService;

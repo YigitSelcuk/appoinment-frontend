@@ -48,16 +48,13 @@
 }
 
 .view-task-modal .close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 6px;
+  width: 3rem;
+  height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 1.1rem;
   cursor: pointer;
 }
 
@@ -273,7 +270,7 @@
 }
 
 .view-task-modal .close-button {
-  background: var(--secondary-color) !important;
+  background: #3C02AA !important;
   border: none !important;
   color: white !important;
   padding: 0.75rem 1.5rem !important;

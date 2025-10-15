@@ -99,8 +99,6 @@
 }
 
 .view-contact-modal .close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
   width: 2.5rem;
   height: 2.5rem;
@@ -269,7 +267,7 @@
 }
 
 .view-contact-modal .close-button {
-  background: var(--secondary-color) !important;
+  background: #3C02AA !important;
   border: none !important;
   color: white !important;
   padding: 0.75rem 1.5rem !important;

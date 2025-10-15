@@ -26,6 +26,7 @@ const EditContactModal = ({ show, onHide, contact, onContactUpdated }) => {
   const [categorySearchTerm, setCategorySearchTerm] = useState("");
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [tcCheckStatus, setTcCheckStatus] = useState({ checking: false, exists: false, message: "" });
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
   // TC Kimlik No doğrulama algoritması
   const validateTCKimlik = (tcNo) => {
@@ -213,7 +214,7 @@ const EditContactModal = ({ show, onHide, contact, onContactUpdated }) => {
     }));
   };
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -226,28 +227,70 @@ const EditContactModal = ({ show, onHide, contact, onContactUpdated }) => {
         return;
       }
 
-      setFormData(prev => ({
-        ...prev,
-        avatar: file
-      }));
+      try {
+        setAvatarLoading(true);
+        setError("");
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAvatarPreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
+        // Önce önizleme göster
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setAvatarPreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+
+        // Backend'e yükle
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const response = await contactsService.updateContactAvatar(contact.id, formData);
+
+        if (response.success) {
+          setFormData(prev => ({
+            ...prev,
+            avatar: file
+          }));
+          onContactUpdated(); // Kişi listesini güncelle
+        }
+      } catch (error) {
+        setError(error.message || "Avatar yüklenirken hata oluştu");
+        // Hata durumunda önizlemeyi geri al
+        setAvatarPreview(contact?.avatar || null);
+        const fileInput = document.getElementById('edit-avatar-input');
+        if (fileInput) {
+          fileInput.value = '';
+        }
+      } finally {
+        setAvatarLoading(false);
+      }
     }
   };
 
-  const handleRemoveAvatar = () => {
-    setFormData(prev => ({
-      ...prev,
-      avatar: null
-    }));
-    setAvatarPreview(contact?.avatar || null);
-    const fileInput = document.getElementById('edit-avatar-input');
-    if (fileInput) {
-      fileInput.value = '';
+  const handleRemoveAvatar = async () => {
+    try {
+      setAvatarLoading(true);
+      setError("");
+
+      const formData = new FormData();
+      formData.append('removeAvatar', 'true');
+
+      const response = await contactsService.updateContactAvatar(contact.id, formData);
+
+      if (response.success) {
+        setAvatarPreview(null);
+        setFormData(prev => ({
+          ...prev,
+          avatar: null
+        }));
+        const fileInput = document.getElementById('edit-avatar-input');
+        if (fileInput) {
+          fileInput.value = '';
+        }
+        onContactUpdated(); // Kişi listesini güncelle
+      }
+    } catch (error) {
+      setError(error.message || "Avatar silinirken hata oluştu");
+    } finally {
+      setAvatarLoading(false);
     }
   };
 
@@ -377,11 +420,6 @@ const EditContactModal = ({ show, onHide, contact, onContactUpdated }) => {
     >
       <Modal.Header className="modal-header-custom">
         <div className="header-content">
-          <div className="header-icon">
-            <svg width="53" height="57" viewBox="0 0 53 57" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M52.1057 46.0192H46.7151V40.6285C46.7151 40.3321 46.4725 40.0895 46.1761 40.0895H42.9417C42.6452 40.0895 42.4026 40.3321 42.4026 40.6285V46.0192H37.012C36.7155 46.0192 36.4729 46.2617 36.4729 46.5582V49.7926C36.4729 50.0891 36.7155 50.3317 37.012 50.3317H42.4026V55.7223C42.4026 56.0188 42.6452 56.2614 42.9417 56.2614H46.1761C46.4725 56.2614 46.7151 56.0188 46.7151 55.7223V50.3317H52.1057C52.4022 50.3317 52.6448 50.0891 52.6448 49.7926V46.5582C52.6448 46.2617 52.4022 46.0192 52.1057 46.0192ZM17.1677 27.5832C17.1071 26.997 17.0734 26.404 17.0734 25.8043C17.0734 24.7329 17.1745 23.6885 17.3632 22.671C17.4103 22.4284 17.2823 22.1791 17.0599 22.078C16.1435 21.667 15.3012 21.101 14.5735 20.3867C13.716 19.5553 13.0412 18.5542 12.5922 17.4474C12.1432 16.3406 11.9299 15.1523 11.9658 13.9584C12.0264 11.7954 12.8957 9.74025 14.4118 8.19045C16.0761 6.48566 18.3133 5.55578 20.6919 5.58273C22.8414 5.60295 24.9168 6.43176 26.4868 7.9007C27.0191 8.39934 27.4773 8.95187 27.8614 9.54484C27.9962 9.75373 28.259 9.84133 28.4881 9.76047C29.674 9.34943 30.9273 9.05969 32.2143 8.92492C32.5917 8.88449 32.8073 8.48019 32.6388 8.14328C30.4489 3.81056 25.9747 0.818769 20.7997 0.737909C13.3337 0.623358 7.10749 6.74846 7.10749 14.2145C7.10749 18.4461 9.05486 22.2196 12.1073 24.6925C9.96452 25.683 7.99021 27.0509 6.27868 28.7624C2.58611 32.4483 0.497239 37.3133 0.362473 42.5085C0.360675 42.5804 0.373289 42.652 0.399574 42.719C0.425858 42.7859 0.465279 42.8469 0.515516 42.8984C0.565753 42.9499 0.625788 42.9908 0.692085 43.0188C0.758381 43.0467 0.829597 43.0611 0.901536 43.0611H4.68171C4.97146 43.0611 5.21404 42.832 5.22077 42.5422C5.3488 38.634 6.9323 34.9751 9.71521 32.1989C11.6963 30.2179 14.122 28.8433 16.7702 28.1762C17.0262 28.1021 17.2014 27.8528 17.1677 27.5832ZM47.5237 25.8043C47.5237 18.4326 41.6008 12.4423 34.256 12.3278C26.79 12.2132 20.5706 18.3383 20.5706 25.8043C20.5706 30.036 22.5247 33.8094 25.5704 36.2823C23.4054 37.2859 21.4346 38.6637 19.7485 40.3523C16.0559 44.0381 13.9671 48.9031 13.8323 54.0916C13.8305 54.1635 13.8431 54.2351 13.8694 54.3021C13.8957 54.369 13.9351 54.43 13.9853 54.4815C14.0356 54.533 14.0956 54.574 14.1619 54.6019C14.2282 54.6298 14.2994 54.6442 14.3714 54.6442H18.1448C18.4345 54.6442 18.6771 54.4151 18.6839 54.1253C18.8119 50.2171 20.3954 46.5582 23.1783 43.7821C26.0825 40.8779 29.9368 39.2809 34.0471 39.2809C41.4862 39.2809 47.5237 33.2501 47.5237 25.8043ZM40.1453 31.9025C38.5146 33.5331 36.3516 34.4293 34.0471 34.4293C31.7427 34.4293 29.5797 33.5331 27.949 31.9025C27.1353 31.093 26.4923 30.1284 26.0583 29.0658C25.6242 28.0033 25.4079 26.8644 25.4221 25.7167C25.4424 23.5066 26.3251 21.3705 27.8681 19.787C29.4853 18.1294 31.6483 17.2063 33.9595 17.1793C36.2438 17.1591 38.4607 18.0486 40.0914 19.6455C41.7625 21.2829 42.6789 23.4729 42.6789 25.8043C42.6721 28.1088 41.776 30.2718 40.1453 31.9025Z" fill="#6D26F6"/>
-            </svg>
-          </div>
           <Modal.Title>KİŞİ DÜZENLE</Modal.Title>
         </div>
         <Button variant="link" onClick={onHide} className="close-btn">
@@ -624,9 +662,19 @@ const EditContactModal = ({ show, onHide, contact, onContactUpdated }) => {
                         variant="outline-danger" 
                         size="sm" 
                         onClick={handleRemoveAvatar}
+                        disabled={avatarLoading}
                         className="remove-avatar-btn"
                       >
-                        <i className="fas fa-trash"></i> Kaldır
+                        {avatarLoading ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" />
+                            Siliniyor...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-trash"></i> Kaldır
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -637,14 +685,21 @@ const EditContactModal = ({ show, onHide, contact, onContactUpdated }) => {
                       id="edit-avatar-input"
                       accept="image/*"
                       onChange={handleAvatarChange}
+                      disabled={avatarLoading}
                       style={{ display: 'none' }}
                     />
-                    <label htmlFor="edit-avatar-input" className="avatar-upload-label">
+                    <label htmlFor="edit-avatar-input" className={`avatar-upload-label ${avatarLoading ? 'disabled' : ''}`}>
                       <div className="upload-icon">
-                        <i className="fas fa-camera fa-2x"></i>
+                        {avatarLoading ? (
+                          <div className="spinner-border text-primary" />
+                        ) : (
+                          <i className="fas fa-camera fa-2x"></i>
+                        )}
                       </div>
                       <div className="upload-text">
-                        <p className="mb-1">Profil resmi yükle</p>
+                        <p className="mb-1">
+                          {avatarLoading ? 'Yükleniyor...' : 'Profil resmi yükle'}
+                        </p>
                         <small className="text-muted">JPG, PNG veya GIF (Max 5MB)</small>
                       </div>
                     </label>

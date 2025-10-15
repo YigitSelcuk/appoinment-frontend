@@ -49,7 +49,7 @@ const ViewTaskModal = ({ show, onHide, task }) => {
   return (
     <Modal show={show} onHide={onHide} centered size="lg" className="view-task-modal">
       <div className="modal-header">
-        <h4 className="modal-title">{task.title}</h4>
+        <h4 className="modal-title">Görev Detayları</h4>
         <button className="close-btn" onClick={onHide}>
           <FaTimes />
         </button>
@@ -194,7 +194,7 @@ const ViewTaskModal = ({ show, onHide, task }) => {
         <div className="footer-info">
         </div>
         <Button className="close-button" onClick={onHide}>
-          <FaTimes /> Kapat
+          Kapat
         </Button>
       </div>
     </Modal>

@@ -5,8 +5,7 @@
 }
 
 .edit-user-modal .modal-content {
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  border-radius: 15px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
@@ -72,30 +71,30 @@
   background: white;
 }
 
-.edit-user-modal .form-content {
+.edit-user-modal .edit-user-form-content {
   background: white;
   padding: 0;
 }
 
-.edit-user-modal .form-row {
+.edit-user-modal .edit-user-form-row {
   display: grid;
-  grid-template-columns: 1fr !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.edit-user-modal .form-group {
+.edit-user-modal .edit-user-form-group {
   margin-bottom: 1rem;
   width: 100%;
 }
 
-.edit-user-modal .form-group:last-child {
+.edit-user-modal .edit-user-form-group:last-child {
   margin-bottom: 0;
 }
 
-.edit-user-modal .form-group label {
-  font-weight: 500;
-  color: #333;
+.edit-user-modal .edit-user-form-group label {
+  font-weight: 600;
+  color: #374151;
   margin-bottom: 0.25rem;
   display: block;
   font-size: 0.9rem;
@@ -166,6 +165,21 @@
   border-radius: 4px;
   border: 1px solid #dee2e6;
   display: inline-block;
+}
+/* Hover büyümesini engelle */
+.edit-user-modal .color-input,
+.edit-user-modal .color-preview {
+  box-sizing: border-box;
+}
+.edit-user-modal .color-input:hover {
+  transform: none !important;
+  width: 50px;
+  height: 32px;
+}
+.edit-user-modal .color-preview:hover {
+  transform: none !important;
+  width: 24px;
+  height: 24px;
 }
 
 /* Textarea Styles */
@@ -259,8 +273,8 @@
     padding: 1rem;
   }
 
-  .form-row {
-    grid-template-columns: 1fr;
+  .edit-user-modal .edit-user-form-row {
+    grid-template-columns: 1fr !important;
     gap: 0.75rem;
     margin-bottom: 0.75rem;
   }
@@ -284,7 +298,7 @@
     padding: 0.75rem;
   }
 
-  .form-group {
+  .edit-user-modal .edit-user-form-group {
     margin-bottom: 0.75rem;
   }
 }

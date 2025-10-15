@@ -172,9 +172,7 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
     <Modal show={show} onHide={handleClose} centered size="lg" className="edit-user-modal">
       <div className="modal-header-custom">
         <div className="header-content">
-          <div className="header-icon">
-            <FaUser />
-          </div>
+        
           <h4 className="modal-title">Kullanıcı Düzenle</h4>
         </div>
         <button className="close-btn" onClick={handleClose}>
@@ -190,9 +188,9 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
             </Alert>
           )}
 
-          <div className="form-content">
-            <div className="form-row">
-              <div className="form-group">
+          <div className="edit-user-form-content">
+            <div className="edit-user-form-row">
+              <div className="edit-user-form-group">
                 <Form.Label>Ad Soyad *</Form.Label>
                 <Form.Control
                   type="text"
@@ -207,7 +205,7 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
                 </Form.Control.Feedback>
               </div>
 
-              <div className="form-group">
+              <div className="edit-user-form-group">
                 <Form.Label>E-posta *</Form.Label>
                 <Form.Control
                   type="email"
@@ -223,8 +221,8 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
               </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
+            <div className="edit-user-form-row">
+              <div className="edit-user-form-group">
                 <Form.Label>Telefon</Form.Label>
                 <Form.Control
                   type="tel"
@@ -239,7 +237,7 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
                 </Form.Control.Feedback>
               </div>
 
-              <div className="form-group">
+              <div className="edit-user-form-group">
                  <Form.Label>Departman</Form.Label>
                  <Form.Select
                    name="department"
@@ -259,8 +257,8 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
                </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
+            <div className="edit-user-form-row">
+              <div className="edit-user-form-group">
                 <Form.Label>Rol</Form.Label>
                 <Form.Select
                   name="role"
@@ -273,7 +271,7 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
                 </Form.Select>
               </div>
 
-              <div className="form-group">
+              <div className="edit-user-form-group">
                 <Form.Label>Renk</Form.Label>
                 <div className="color-input-container">
                   <Form.Control
@@ -288,7 +286,7 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="edit-user-form-group">
               <Form.Label>Adres</Form.Label>
               <Form.Control
                 as="textarea"
@@ -300,7 +298,7 @@ const EditUserModal = ({ show, onHide, user, onSave }) => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="edit-user-form-group">
               <Form.Label>Biyografi</Form.Label>
               <Form.Control
                 as="textarea"

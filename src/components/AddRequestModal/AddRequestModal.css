@@ -82,6 +82,11 @@
   position: relative;
 }
 
+/* Header ile içerik çakışmasını önlemek için üst boşluk ekle */
+.add-request-modal .modal-body {
+  padding-top: 33px !important;
+}
+
 /* Durum Ekle Butonu - Form içinde */
 .status-btn-container {
   display: flex;
@@ -193,6 +198,16 @@
   letter-spacing: 0.5px;
   margin-bottom: 8px;
   display: block;
+}
+
+/* TC Kimlik No label'ın her durumda görünür olması için güçlü override */
+.tc-input-container .form-label {
+  display: block !important;
+  margin-bottom: 8px !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+  position: relative !important;
+  z-index: 2 !important;
 }
 
 .form-content .phone-icon {

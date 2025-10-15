@@ -25,10 +25,8 @@ const ViewCategoryModal = ({ show, onHide, category }) => {
           <div className="header-left">
             <div className="header-text">
               <h4 className="modal-title">
-                <FaTag className="me-2" />
                 Kategori Detayları
               </h4>
-              <p className="category-name">{category.name}</p>
             </div>
           </div>
           <Button variant="link" onClick={onHide} className="close-btn">
@@ -105,7 +103,7 @@ const ViewCategoryModal = ({ show, onHide, category }) => {
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>
+        <Button  variant="secondary" onClick={onHide}>
           Kapat
         </Button>
       </Modal.Footer>

@@ -120,7 +120,6 @@ const EditTaskModal = ({ show, onHide, task, onTaskUpdated }) => {
       const response = await updateTask(accessToken, task.id, submissionData);
       
       if (response.success) {
-        showSuccess('Görev başarıyla güncellendi!');
         onTaskUpdated();
         onHide();
       } else {
@@ -262,27 +261,12 @@ const EditTaskModal = ({ show, onHide, task, onTaskUpdated }) => {
               </Form.Group>
             </Col>
           </Row>
-
-          <Row className="mb-3">
-            <Col md={12}>
-              <Form.Group>
-                <Form.Label>Notlar</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={2}
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-          </Row>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={onHide} disabled={loading}>
             İptal
           </Button>
-          <Button variant="primary" type="submit" disabled={loading}>
+          <Button style={{backgroundColor: '#3C02AA'}} variant="primary" type="submit" disabled={loading}>
             {loading ? 'Kaydediliyor...' : 'Kaydet'}
           </Button>
         </Modal.Footer>

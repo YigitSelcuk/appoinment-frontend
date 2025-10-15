@@ -1,6 +1,7 @@
 /* Bootstrap Modal Overrides */
 .add-cv-modal {
   z-index: 1055;
+  
 }
 
 .add-cv-modal .modal-dialog {

@@ -1,7 +1,7 @@
 /* Appointments Page Styles - Tam Ekran Layout */
 
 .appointments-page {
-  min-height: 100vh;
+  min-height: 90vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background-color: #E6E6E6;
   overflow: hidden;
@@ -904,4 +904,78 @@
     min-height: 320px;
   }
 
+}
+
+/* Yükseklik bazlı optimizasyon: 695px ve altı */
+@media (max-height: 695.20px) {
+  /* Konteyner ve paneller eşit yüksekliği paylaşsın */
+  .appointments-container {
+    height: calc(100vh - 10px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .left-panel {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+  }
+
+  .weekly-calendar-section {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+  }
+
+  /* WeeklyCalendar toplam yüksekliği küçültülmüş slotlarla dengelensin */
+  .weekly-calendar {
+    height: 100% !important;
+    overflow: auto !important;
+  }
+
+  .time-header,
+  .day-header {
+    height: 60px !important;
+  }
+
+  .time-slot {
+    height: 36px !important;
+    font-size: 11px !important;
+  }
+
+  .time-cell {
+    height: 36px !important;
+  }
+
+  .day-slots {
+    height: calc(16 * 36px) !important; /* 576px */
+    min-height: 0 !important;
+  }
+
+  /* Sol Calendar bileşeni: iç bölümler dengeli dağılsın */
+  .appointments-page .calendar-widget {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+  }
+
+  .appointments-page .calendar-grid {
+    flex: 0 0 auto !important;
+    min-height: 260px !important;
+    overflow-y: auto !important;
+  }
+
+  .appointments-page .today-section {
+    flex: 1 1 auto !important;
+    min-height: 260px !important;
+    overflow-y: auto !important;
+  }
+
+  /* Başlık alanı fazla yer kaplamasın */
+  .main-header {
+    min-height: unset !important;
+    padding: 8px 12px !important;
+  }
 }

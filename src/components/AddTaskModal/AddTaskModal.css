@@ -31,10 +31,9 @@
 }
 
 .add-task-modal .btn-close {
-  background: none;
   border: none;
-  color: white;
-  font-size: 24px;
+  color: white !important;
+  font-size: 14px;
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -43,12 +42,10 @@
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  transition: background-color 0.2s;
-  filter: brightness(0) invert(1);
 }
 
 .add-task-modal .btn-close:hover {
-  background: rgba(255, 255, 255, 0.1);
+  color: white !important;
 }
 
 .add-task-modal .modal-body {

@@ -187,10 +187,9 @@ const ViewContactModal = ({ show, onHide, contact }) => {
 
         <div className="modal-footer">
           <div className="footer-info">
-            Sistem Bilgisi: {new Date().toLocaleDateString('tr-TR')}
           </div>
           <Button className="close-button" onClick={onHide}>
-            <FaTimes /> Kapat
+             Kapat
           </Button>
         </div>
       </Modal>

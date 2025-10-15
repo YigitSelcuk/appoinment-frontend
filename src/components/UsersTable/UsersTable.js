@@ -373,7 +373,45 @@ const UsersTable = () => {
     }
   }, [selectedUsers, currentUsers]);
 
+  // Kayıt tarihini okunur formata çevir (DD.MM.YYYY HH:mm)
+  const formatRegistrationDate = (value) => {
+    if (!value) return "-";
+    try {
+      let date;
+      // Eğer değer DD.MM.YYYY veya DD.MM.YYYY HH:mm:ss formatında ise parse et
+      if (typeof value === 'string' && value.match(/^\d{2}\.\d{2}\.\d{4}/)) {
+        const [datePart, timePart] = value.split(' ');
+        const [day, month, year] = datePart.split('.').map(Number);
+        if (timePart) {
+          const [hour = '00', minute = '00'] = timePart.split(':');
+          date = new Date(year, month - 1, day, Number(hour), Number(minute));
+        } else {
+          date = new Date(year, month - 1, day);
+        }
+      } else {
+        // ISO veya MySQL DATETIME dahil diğer formatlar
+        date = new Date(value);
+      }
 
+      if (isNaN(date.getTime())) return '-';
+
+      const d = date.toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      const t = date.toLocaleTimeString('tr-TR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      return `${d} ${t}`;
+    } catch {
+      return '-';
+    }
+  };
+
+  
 
   return (
     <div className="users-table-container">
@@ -512,7 +550,7 @@ const UsersTable = () => {
                     />
                   </td>
                   <td>{(currentPage - 1) * usersPerPage + index + 1}</td>
-                  <td>{user.created_at || "-"}</td>
+                  <td>{formatRegistrationDate(user.created_at)}</td>
                   <td>{user.name || "-"}</td>
                   <td>{user.role || "-"}</td>
                   <td>{user.phone || "-"}</td>

@@ -164,9 +164,7 @@ const AddUserModal = ({ show, onHide, onSave }) => {
     <Modal show={show} onHide={handleClose} centered size="lg" className="add-user-modal">
       <div className="modal-header-custom">
         <div className="header-content">
-          <div className="header-icon">
-            <FaUserPlus />
-          </div>
+          
           <h4 className="modal-title">Yeni Kullanıcı Ekle</h4>
         </div>
         <button className="close-btn" onClick={handleClose}>
@@ -182,9 +180,9 @@ const AddUserModal = ({ show, onHide, onSave }) => {
             </Alert>
           )}
 
-          <div className="form-content">
-            <div className="form-row">
-              <div className="form-group">
+          <div className="user-form-content">
+            <div className="user-form-row">
+              <div className="user-form-group">
                 <Form.Label>Ad Soyad *</Form.Label>
                 <Form.Control
                   type="text"
@@ -199,7 +197,7 @@ const AddUserModal = ({ show, onHide, onSave }) => {
                 </Form.Control.Feedback>
               </div>
 
-              <div className="form-group">
+              <div className="user-form-group">
                 <Form.Label>E-posta *</Form.Label>
                 <Form.Control
                   type="email"
@@ -215,8 +213,8 @@ const AddUserModal = ({ show, onHide, onSave }) => {
               </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
+            <div className="user-form-row">
+              <div className="user-form-group">
                 <Form.Label>Şifre *</Form.Label>
                 <Form.Control
                   type="password"
@@ -231,7 +229,7 @@ const AddUserModal = ({ show, onHide, onSave }) => {
                 </Form.Control.Feedback>
               </div>
 
-              <div className="form-group">
+              <div className="user-form-group">
                 <Form.Label>Şifre Tekrarı *</Form.Label>
                 <Form.Control
                   type="password"
@@ -247,8 +245,8 @@ const AddUserModal = ({ show, onHide, onSave }) => {
               </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
+            <div className="user-form-row">
+              <div className="user-form-group">
                 <Form.Label>Telefon</Form.Label>
                 <Form.Control
                   type="tel"
@@ -263,7 +261,7 @@ const AddUserModal = ({ show, onHide, onSave }) => {
                 </Form.Control.Feedback>
               </div>
 
-              <div className="form-group">
+              <div className="user-form-group">
                  <Form.Label>Departman</Form.Label>
                  <div className="department-input-container">
                    <div className="department-select-wrapper">
@@ -296,8 +294,8 @@ const AddUserModal = ({ show, onHide, onSave }) => {
                </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
+            <div className="user-form-row">
+              <div className="user-form-group">
                 <Form.Label>Rol</Form.Label>
                 <Form.Select
                   name="role"
@@ -309,7 +307,7 @@ const AddUserModal = ({ show, onHide, onSave }) => {
                 </Form.Select>
               </div>
 
-              <div className="form-group">
+              <div className="user-form-group">
                 <Form.Label>Renk</Form.Label>
                 <div className="color-input-container">
                   <Form.Control
@@ -324,7 +322,7 @@ const AddUserModal = ({ show, onHide, onSave }) => {
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="user-form-group">
               <Form.Label>Adres</Form.Label>
               <Form.Control
                 as="textarea"
@@ -336,7 +334,7 @@ const AddUserModal = ({ show, onHide, onSave }) => {
               />
             </div>
 
-            <div className="form-group">
+            <div className="user-form-group">
               <Form.Label>Biyografi</Form.Label>
               <Form.Control
                 as="textarea"
