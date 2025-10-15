@@ -152,15 +152,30 @@ const ViewRequestModal = ({ show, onHide, request, onRequestUpdated }) => {
 
   const getTimelineTitle = (status) => {
     switch (status) {
+      // Öncelik seviyeleri
+      case "DÜŞÜK": return "DÜŞÜK ÖNCELİK ATANDI";
+      case "NORMAL": return "NORMAL ÖNCELİK ATANDI";
+      case "ACİL": return "ACİL ÖNCELİK ATANDI";
+      case "ÇOK ACİL": return "ÇOK ACİL ÖNCELİK ATANDI";
+      case "KRİTİK": return "KRİTİK ÖNCELİK ATANDI";
+      
+      // Süreç durumları
+      case "İNCELENİYOR": return "TALEP İNCELENİYOR";
+      case "ÇÖZÜM AŞAMASINDA": return "ÇÖZÜM AŞAMASINDA";
+      case "TEST AŞAMASINDA": return "TEST AŞAMASINDA";
+      case "ATANDI": return "TALEP ATANDI";
+      
+      // Mevcut durumlar (eski kodlarla uyumluluk için)
       case "OLUŞTURULDU":
       case "OLUSTURULDU": return "TALEP OLUŞTURULDU";
       case "İŞLEM YAPILIYOR":
-      case "ISLEM_YAPILIYOR": return "İŞLEM BAŞLATILDI";
+      case "ISLEM YAPILIYOR": return "İŞLEM BAŞLATILDI";
       case "TAMAMLANDI": return "İŞLEM TAMAMLANDI";
       case "İPTAL EDİLDİ":
-      case "IPTAL_EDILDI": return "TALEP İPTAL EDİLDİ";
+      case "IPTAL EDILDI": return "TALEP İPTAL EDİLDİ";
       case "BEKLEMEDE": return "TALEP BEKLEMEDE";
       case "REDDEDİLDİ": return "TALEP REDDEDİLDİ";
+      
       default: return "DURUM GÜNCELLENDİ";
     }
   };
