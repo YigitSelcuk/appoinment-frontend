@@ -137,15 +137,30 @@ const ViewRequestModal = ({ show, onHide, request, onRequestUpdated }) => {
 
   const getTimelineDotColor = (status) => {
     switch (status) {
+      // Öncelik seviyeleri
+      case "DÜŞÜK": return "green";
+      case "NORMAL": return "blue";
+      case "ACİL": return "orange";
+      case "ÇOK ACİL": return "red";
+      case "KRİTİK": return "red";
+      
+      // Süreç durumları
+      case "İNCELENİYOR": return "purple";
+      case "ÇÖZÜM AŞAMASINDA": return "orange";
+      case "TEST AŞAMASINDA": return "blue";
+      case "ATANDI": return "blue";
+      case "TAMAMLANDI": return "green";
+      case "İPTAL EDİLDİ": return "gray";
+      case "BEKLEMEDE": return "blue";
+      case "REDDEDİLDİ": return "red";
+      
+      // Eski kodlarla uyumluluk için
       case "OLUŞTURULDU":
       case "OLUSTURULDU": return "purple";
       case "İŞLEM YAPILIYOR":
       case "ISLEM_YAPILIYOR": return "orange";
-      case "TAMAMLANDI": return "green";
-      case "İPTAL EDİLDİ":
       case "IPTAL_EDILDI": return "gray";
-      case "BEKLEMEDE": return "blue";
-      case "REDDEDİLDİ": return "red";
+      
       default: return "gray";
     }
   };
@@ -337,11 +352,19 @@ const ViewRequestModal = ({ show, onHide, request, onRequestUpdated }) => {
                 className="form-control-new"
               >
                 <option value="">Durum seçiniz...</option>
-                <option value="OLUSTURULDU">OLUŞTURULDU</option>
-                <option value="ISLEM_YAPILIYOR">İŞLEM YAPILIYOR</option>
+                <option value="DÜŞÜK">DÜŞÜK</option>
+                <option value="NORMAL">NORMAL</option>
+                <option value="ACİL">ACİL</option>
+                <option value="ÇOK ACİL">ÇOK ACİL</option>
+                <option value="KRİTİK">KRİTİK</option>
+                <option value="İNCELENİYOR">İNCELENİYOR</option>
+                <option value="ÇÖZÜM AŞAMASINDA">ÇÖZÜM AŞAMASINDA</option>
+                <option value="TEST AŞAMASINDA">TEST AŞAMASINDA</option>
                 <option value="TAMAMLANDI">TAMAMLANDI</option>
-                <option value="IPTAL_EDILDI">İPTAL EDİLDİ</option>
+                <option value="İPTAL EDİLDİ">İPTAL EDİLDİ</option>
+                <option value="REDDEDİLDİ">REDDEDİLDİ</option>
                 <option value="BEKLEMEDE">BEKLEMEDE</option>
+                <option value="ATANDI">ATANDI</option>
               </Form.Select>
             </div>
           </div>

@@ -724,7 +724,7 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
         // Tarih ve saat formatını kontrol et
         if (currentData.date.match(/^\d{4}-\d{2}-\d{2}$/) && currentData.startTime.match(/^\d{2}:\d{2}$/)) {
           // Hatırlatma zamanını hesapla
-          const appointmentDateTime = new Date(`${currentData.date}T${currentData.startTime}:00+03:00`);
+          const appointmentDateTime = new Date(`${currentData.date}T${currentData.startTime}:00`);
           
           // Tarih geçerliliğini kontrol et
           if (!isNaN(appointmentDateTime.getTime())) {
@@ -958,8 +958,8 @@ const EditAppointmentModal = ({ isOpen, onClose, onSave, appointmentData }) => {
           return;
         }
         
-        // Türkiye saati için doğru timezone hesaplaması
-        const appointmentDateTime = new Date(`${formData.date}T${formData.startTime}:00+03:00`);
+        // Yerel saat hesaplaması
+        const appointmentDateTime = new Date(`${formData.date}T${formData.startTime}:00`);
         
         // Tarih geçerliliğini kontrol et
         if (isNaN(appointmentDateTime.getTime())) {

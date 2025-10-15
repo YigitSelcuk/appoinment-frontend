@@ -602,7 +602,7 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
       
       if (currentData.reminderBefore && currentData.date && currentData.startTime) {
         // Hatırlatma zamanını hesapla
-        const appointmentDateTime = new Date(`${currentData.date}T${currentData.startTime}:00+03:00`);
+        const appointmentDateTime = new Date(`${currentData.date}T${currentData.startTime}:00`);
         const reminderValue = parseInt(currentData.reminderValue);
         let reminderDateTime = null;
         
@@ -809,8 +809,8 @@ const AddAppointmentModal = ({ isOpen, onClose, onSave, selectedDate, selectedTi
       // Hatırlatma zamanını hesapla
       let reminderDateTime = null;
       if (formData.reminderBefore && formData.date && formData.startTime) {
-        // Türkiye saati için doğru timezone hesaplaması
-        const appointmentDateTime = new Date(`${formData.date}T${formData.startTime}:00+03:00`);
+        // Yerel saat hesaplaması
+        const appointmentDateTime = new Date(`${formData.date}T${formData.startTime}:00`);
         const reminderValue = parseInt(formData.reminderValue);
         
         if (formData.reminderUnit === 'minutes') {

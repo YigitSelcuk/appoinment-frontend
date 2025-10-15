@@ -1204,19 +1204,18 @@ const WeeklyCalendar = ({
 
     // Randevunun geçmiş olup olmadığını kontrol et - useMemo ile optimize edildi
     const isExpired = useMemo(() => {
-      // Doğru Türkiye saati hesaplaması
+      // Yerel saat hesaplaması
       const now = new Date();
-      const turkeyTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Istanbul' }));
       
       const appointmentDateTime = new Date(event.end); // event.end randevunun bitiş zamanı
-      const isPast = appointmentDateTime < turkeyTime;
+      const isPast = appointmentDateTime < now;
       
       // Sadece geçmiş randevular için log
       if (isPast) {
         console.log('⏰ Geçmiş randevu tespit edildi:', {
           eventTitle: event.title,
-          appointmentEnd: appointmentDateTime.toLocaleString('tr-TR'),
-          turkeyTime: turkeyTime.toLocaleString('tr-TR')
+          appointmentEnd: appointmentDateTime.toLocaleString(),
+          currentTime: now.toLocaleString()
         });
       }
       
