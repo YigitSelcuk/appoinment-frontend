@@ -12,7 +12,7 @@
   height: calc(100vh - 20px); /* Navbar yüksekliği çıkarıldı */
   min-height: 800px;
   gap: 12px; /* Boşluğu artırdım */
-  padding: 8px 0px 8px 20px; /* Sağ padding kaldırıldı */
+  padding: 0px 0px 8px 20px !important; /* Üst padding 8px'den 2px'e düşürüldü */
   position: relative;
 }
 
@@ -22,7 +22,7 @@
   min-width: 320px;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 96px); /* Navbar ve padding için ayarlama */
+  height: calc(100vh - 30px)!important; /* Navbar ve padding için ayarlama - 96px'den 90px'e düşürüldü */
   min-height: 800px;
   overflow: hidden;
 }

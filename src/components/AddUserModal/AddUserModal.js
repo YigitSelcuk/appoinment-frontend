@@ -3,10 +3,16 @@ import { Modal, Button, Form, Alert } from 'react-bootstrap';
 import { FaUserPlus, FaTimes, FaSave, FaPlus } from 'react-icons/fa';
 import PagePermissions from '../PagePermissions/PagePermissions';
 import { getDepartmentOptions } from '../../services/departmentsService';
+import { checkEmailExists } from '../../services/usersService';
 import AddDepartmentModal from '../AddDepartmentModal/AddDepartmentModal';
+import { useSimpleToast } from '../../contexts/SimpleToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 import './AddUserModal.css';
 
 const AddUserModal = ({ show, onHide, onSave }) => {
+  const { showSuccess, showError, showWarning, showInfo } = useSimpleToast();
+  const { accessToken } = useAuth();
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -102,6 +108,16 @@ const AddUserModal = ({ show, onHide, onSave }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const validateEmailExists = async (email) => {
+    try {
+      const result = await checkEmailExists(email, accessToken);
+      return result.exists;
+    } catch (error) {
+      console.error('E-posta kontrolü sırasında hata:', error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -111,6 +127,14 @@ const AddUserModal = ({ show, onHide, onSave }) => {
 
     setLoading(true);
     try {
+      // E-posta kontrolü yap
+      const emailExists = await validateEmailExists(formData.email);
+      if (emailExists) {
+        showError('Bu e-posta adresi zaten sistemde kayıtlı!');
+        setLoading(false);
+        return;
+      }
+
       const newUser = {
         ...formData,
         permissions: [],
@@ -124,7 +148,17 @@ const AddUserModal = ({ show, onHide, onSave }) => {
       handleClose();
     } catch (error) {
       console.error('Error creating user:', error);
-      setErrors({ submit: 'Kullanıcı oluşturulurken bir hata oluştu' });
+      
+      // E-posta zaten var hatası kontrolü
+      if (error.response?.status === 409 || 
+          error.response?.data?.message?.includes('email') || 
+          error.response?.data?.message?.includes('kayıtlı') ||
+          error.message?.includes('email') || 
+          error.message?.includes('duplicate')) {
+        showError('Bu e-posta adresi zaten sistemde kayıtlı!');
+      } else {
+        showError(error.response?.data?.message || 'Kullanıcı oluşturulurken bir hata oluştu');
+      }
     } finally {
       setLoading(false);
     }

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getRequestStats } from '../../../services/requestsService';
 import { useAuth } from '../../../contexts/AuthContext';
 import './Atalepler.css';
 
 const Atalepler = () => {
+  const navigate = useNavigate();
   const { accessToken } = useAuth();
   const [data, setData] = useState({
     devam_eden: 0,
@@ -56,11 +58,14 @@ const Atalepler = () => {
   return (
     <div className="atalepler-container">
       <div className="atalepler-header">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 1C11.866 1 15 4.134 15 8C15 11.866 11.866 15 8 15C4.134 15 1 11.866 1 8C1 4.134 4.134 1 8 1Z" stroke="#8B5CF6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M8 4.5V8L10.5 10.5" stroke="#8B5CF6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <h6 className="atalepler-title">TALEPLER</h6>
+        <div className="header-left">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 1C11.866 1 15 4.134 15 8C15 11.866 11.866 15 8 15C4.134 15 1 11.866 1 8C1 4.134 4.134 1 8 1Z" stroke="#8B5CF6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M8 4.5V8L10.5 10.5" stroke="#8B5CF6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <h6 className="atalepler-title">TALEPLER</h6>
+        </div>
+        <button type="button" className="header-action" onClick={() => navigate('/requests')}>TÜMÜ</button>
       </div>
       <div className="atalepler-content">
         {loading ? (
@@ -72,16 +77,25 @@ const Atalepler = () => {
           <>
             <div className="data-rows">
               <div className="data-row">
-                <span className="data-label">DEVAM EDEN</span>
+                <div className="label-group">
+                  <span className="row-indicator indicator-acik" />
+                  <span className="data-label">AÇIK</span>
+                </div>
+                <span className="data-value">{data.acik}</span>
+              </div>
+              <div className="data-row">
+                <div className="label-group">
+                  <span className="row-indicator indicator-devam" />
+                  <span className="data-label">DEVAM</span>
+                </div>
                 <span className="data-value">{data.devam_eden}</span>
               </div>
               <div className="data-row">
-                <span className="data-label">TAMAMLANAN</span>
+                <div className="label-group">
+                  <span className="row-indicator indicator-tamam" />
+                  <span className="data-label">TAMAM</span>
+                </div>
                 <span className="data-value">{data.tamamlanan}</span>
-              </div>
-              <div className="data-row">
-                <span className="data-label">AÇIK</span>
-                <span className="data-value">{data.acik}</span>
               </div>
             </div>
             <div className="total-section">

@@ -90,13 +90,8 @@ const ViewUserModal = ({ show, onHide, user }) => {
             {/* Kişisel Bilgiler */}
             <div className="info-section">
               <div className="section-header">
-                <div className="title-group">
-                  <FaUser className="section-icon" />
-                  <div className="section-texts">
-                    <h5 className="section-title">Kişisel Bilgiler</h5>
-                    <span className="section-subtitle">Profil ve iletişim bilgileri</span>
-                  </div>
-                </div>
+                <div className="section-icon"><FaUser /></div>
+                <h5 className="section-title">Kişisel Bilgiler</h5>
               </div>
               <div className="info-grid-row">
                 <div className="info-item">
@@ -133,13 +128,8 @@ const ViewUserModal = ({ show, onHide, user }) => {
             {/* Hesap Bilgileri */}
             <div className="info-section">
               <div className="section-header">
-                <div className="title-group">
-                  <FaUser className="section-icon" />
-                  <div className="section-texts">
-                    <h5 className="section-title">Hesap Bilgileri</h5>
-                    <span className="section-subtitle">Rol, departman ve zamanlar</span>
-                  </div>
-                </div>
+                <div className="section-icon"><FaUser /></div>
+                <h5 className="section-title">Hesap Bilgileri</h5>
               </div>
               <div className="info-grid-row">
                 <div className="info-item">
@@ -179,13 +169,8 @@ const ViewUserModal = ({ show, onHide, user }) => {
             {user.permissions && (
               <div className="info-section">
                 <div className="section-header">
-                  <div className="title-group">
-                    <FaUser className="section-icon" />
-                    <div className="section-texts">
-                      <h5 className="section-title">Yetkiler</h5>
-                      <span className="section-subtitle">Tanımlı izinler</span>
-                    </div>
-                  </div>
+                  <div className="section-icon"><FaUser /></div>
+                  <h5 className="section-title">Yetkiler</h5>
                 </div>
                 <div className="info-grid-row">
                   <div className="info-item full-width">
@@ -230,13 +215,8 @@ const ViewUserModal = ({ show, onHide, user }) => {
             {user.bio && (
               <div className="info-section">
                 <div className="section-header">
-                  <div className="title-group">
-                    <FaUser className="section-icon" />
-                    <div className="section-texts">
-                      <h5 className="section-title">Biyografi</h5>
-                      <span className="section-subtitle">Serbest metin</span>
-                    </div>
-                  </div>
+                  <div className="section-icon"><FaUser /></div>
+                  <h5 className="section-title">Biyografi</h5>
                 </div>
                 <div className="info-grid-row">
                   <div className="info-item full-width">

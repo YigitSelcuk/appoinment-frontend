@@ -7,6 +7,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  max-height: 570px;
 }
 
 /* Header */
@@ -46,6 +47,27 @@
 }
 .tw-menu-btn span { width: 3px; height: 3px; background: #475569; border-radius: 50%; margin: 1px; display: inline-block; }
 
+/* Body and inner panel */
+.tw-body {
+  padding:6px 16px; /* widget içinde boşluk: sağ/sol/üst/alt */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* iç scroll için gerekli */
+}
+
+.tw-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px; /* içteki pencere radiusu */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  overflow: hidden; /* table header köşeleri yuvarlak görünsün */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* Table */
 .tw-table-wrapper { 
   padding: 0; 
@@ -63,6 +85,7 @@
   text-align: left;
   font-weight: 700;
   border: none;
+  /* üst köşeleri panel ile birlikte yuvarlak görünür */
 }
 
 .tw-table thead th:nth-child(1) { width: 60px; text-align: center; }

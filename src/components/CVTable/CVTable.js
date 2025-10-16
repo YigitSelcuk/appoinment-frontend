@@ -53,6 +53,7 @@ const CVTable = () => {
   const [categories, setCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [resetTrigger, setResetTrigger] = useState(0);
 
 
 
@@ -159,6 +160,8 @@ const CVTable = () => {
         if (response.success) {
           showSuccess('CV başarıyla eklendi!');
           setShowAddModal(false);
+          // Form'u sıfırlamak için resetTrigger'ı artır
+          setResetTrigger(prev => prev + 1);
           fetchCvs(); // Yeni CV eklendikten sonra listeyi yenile
         } else {
           showError(response.message || 'CV eklenirken bir hata oluştu');
@@ -742,6 +745,7 @@ const CVTable = () => {
         show={showAddModal}
         onHide={handleCloseAddModal}
         onSubmit={handleCVAdded}
+        onReset={resetTrigger}
       />
 
       {/* CV Görüntüleme Modal */}

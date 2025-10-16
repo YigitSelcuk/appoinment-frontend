@@ -16,7 +16,7 @@
   /* Overflow'u hidden yaparak iÃ§eriÄŸin taÅŸmasÄ±nÄ± engelle */
   overflow: hidden;
   box-shadow: 0px 60px 120px rgba(38, 51, 77, 0.05);
-  min-height: 800px;
+  min-height: 883px;
   /* Max-height kaldÄ±rÄ±ldÄ± ki pagination gÃ¶rÃ¼nsÃ¼n */
   position: relative;
   z-index: 1;
@@ -1094,7 +1094,13 @@ body.modal-open {
 @media (max-width: 1200px) {
   .tasks-table {
     font-size: 11px;
+
   }
+  .tasks-table-container {
+
+  min-height: 770px !important;
+
+}
   
   .tasks-table thead th,
   .tasks-table tbody td {
@@ -1867,3 +1873,10 @@ body.modal-open {
   fill: #0EA91C;
 }
 
+@media (max-height: 695.20px) {
+.tasks-table-container {
+
+  min-height: 790px;
+
+}
+}

@@ -60,57 +60,57 @@ const ActivitiesWidget = () => {
           </div>
           <h6 className="aw-title">SİSTEM AKTİVİTELERİ</h6>
         </div>
-        <button className="aw-menu-btn" aria-label="Menü">
-          <span />
-          <span />
-          <span />
-        </button>
       </div>
 
-      {/* Table */}
-      <div className="aw-table-wrapper">
-        <table className="aw-table">
-          <thead>
-            <tr>
-              <th>SIRA</th>
-              <th>AKTİVİTE</th>
-              <th>KULLANICI</th>
-              <th>TÜR</th>
-              <th>DURUM</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="5" className="aw-loading">Yükleniyor...</td>
-              </tr>
-            ) : items.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="aw-empty">Kayıt bulunamadı</td>
-              </tr>
-            ) : (
-              items.map((item, idx) => {
-                const user = item.user_name || item.username || item.user || '-';
-                const type = item.actionType || item.type || '-';
-                const status = item.status || item.result || '-';
-                const text = item.description || item.details || `${type} - ${item.tableName || ''}`;
-                return (
-                  <tr key={item.id || idx}>
-                    <td>
-                      <div className="aw-row-number">{idx + 1}</div>
-                    </td>
-                    <td>
-                      <div className="aw-task-text">{text}</div>
-                    </td>
-                    <td className="aw-assignee">{user}</td>
-                    <td className={`aw-status ${String(type).toLowerCase()}`}>{type}</td>
-                    <td>{renderApprovalIcon(status)}</td>
+      {/* Body + Inner Panel (rounded) */}
+      <div className="aw-body">
+        <div className="aw-panel">
+          <div className="aw-table-wrapper">
+            <table className="aw-table">
+              <thead>
+                <tr>
+                  <th>SIRA</th>
+                  <th>AKTİVİTE</th>
+                  <th>KULLANICI</th>
+                  <th>İŞLEM</th>
+                  <th>TABLO</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="aw-loading">Yükleniyor...</td>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                ) : items.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="aw-empty">Kayıt bulunamadı</td>
+                  </tr>
+                ) : (
+                  items.map((item, idx) => {
+                    const user = item.user_name || item.username || item.user || '-';
+                    const operation = item.action_type || item.actionType || item.type || '-';
+                    const table = item.table_name || item.tableName || item.table || '-';
+                    const activity = item.description || item.details || `${operation} işlemi`;
+                    console.log('Activity item:', item); // Debug için
+                    return (
+                      <tr key={item.id || idx}>
+                        <td>
+                          <div className="aw-row-number">{idx + 1}</div>
+                        </td>
+                        <td>
+                          <div className="aw-task-text">{activity}</div>
+                        </td>
+                        <td className="aw-assignee">{user}</td>
+                        <td className={`aw-status ${String(operation).toLowerCase()}`}>{operation}</td>
+                        <td className="aw-table">{table}</td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {/* Show All */}

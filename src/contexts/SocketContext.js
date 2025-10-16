@@ -109,13 +109,44 @@ export const SocketProvider = ({ children }) => {
 
       setSocket(newSocket);
 
-      // Sayfa kapandığında offline yap
-      const handleBeforeUnload = async () => {
+      // Sayfa kapandığında offline yap - Senkron olarak
+      const handleBeforeUnload = (event) => {
+        try {
+          // Senkron olarak offline durumunu gönder
+          newSocket.emit('update-status', { isOnline: false });
+          console.log('Kullanıcı offline durumuna geçirildi (beforeunload)');
+          
+          // Navigator.sendBeacon ile de gönder (daha güvenilir)
+          if (navigator.sendBeacon && user) {
+            const data = JSON.stringify({ 
+              userId: user.id, 
+              isOnline: false,
+              timestamp: new Date().toISOString()
+            });
+            navigator.sendBeacon('/api/users/update-status', data);
+          }
+        } catch (error) {
+          console.error('Offline durum güncelleme hatası (beforeunload):', error);
+        }
+      };
+
+      // Sayfa tamamen kapandığında - pagehide eventi
+      const handlePageHide = (event) => {
         try {
           newSocket.emit('update-status', { isOnline: false });
-          console.log('Kullanıcı offline durumuna geçirildi (socket event)');
+          console.log('Kullanıcı offline durumuna geçirildi (pagehide)');
+          
+          // Navigator.sendBeacon ile de gönder
+          if (navigator.sendBeacon && user) {
+            const data = JSON.stringify({ 
+              userId: user.id, 
+              isOnline: false,
+              timestamp: new Date().toISOString()
+            });
+            navigator.sendBeacon('/api/users/update-status', data);
+          }
         } catch (error) {
-          console.error('Offline durum güncelleme hatası:', error);
+          console.error('Offline durum güncelleme hatası (pagehide):', error);
         }
       };
 
@@ -124,31 +155,39 @@ export const SocketProvider = ({ children }) => {
         if (document.hidden) {
           try {
             newSocket.emit('update-status', { isOnline: false });
-            console.log('Sayfa gizlendi - offline yapıldı (socket event)');
+            console.log('Sayfa gizlendi - offline yapıldı (visibilitychange)');
           } catch (error) {
-            console.error('Offline durum güncelleme hatası:', error);
+            console.error('Offline durum güncelleme hatası (visibilitychange):', error);
           }
         } else {
           try {
             newSocket.emit('update-status', { isOnline: true });
-            console.log('Sayfa görünür - online yapıldı (socket event)');
+            console.log('Sayfa görünür - online yapıldı (visibilitychange)');
           } catch (error) {
-            console.error('Online durum güncelleme hatası:', error);
+            console.error('Online durum güncelleme hatası (visibilitychange):', error);
           }
         }
       };
 
+      // Event listener'ları ekle - sadece sayfa kapanma ve sekme değişikliği
       window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener('pagehide', handlePageHide);
       document.addEventListener('visibilitychange', handleVisibilityChange);
 
       // Cleanup function
       return () => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('pagehide', handlePageHide);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
+        
         // Offline yap
         try {
           newSocket.emit('update-status', { isOnline: false });
-        } catch (e) {}
+          console.log('Socket cleanup - offline yapıldı');
+        } catch (e) {
+          console.error('Socket cleanup offline hatası:', e);
+        }
+        
         newSocket.disconnect();
         newSocket.close();
       };

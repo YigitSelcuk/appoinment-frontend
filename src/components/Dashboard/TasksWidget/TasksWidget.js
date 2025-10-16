@@ -16,11 +16,11 @@ const TasksWidget = () => {
       if (!accessToken) return;
       try {
         setLoading(true);
-        const res = await getTasks(accessToken, { page: 1, limit: 9 });
+        const res = await getTasks(accessToken, { page: 1, limit: 7 });
         if (res && res.success && Array.isArray(res.data)) {
           setTasks(res.data);
         } else if (Array.isArray(res)) {
-          setTasks(res.slice(0, 9));
+          setTasks(res.slice(0, 7));
         } else {
           setTasks([]);
         }
@@ -60,49 +60,53 @@ const TasksWidget = () => {
       
       </div>
 
-      {/* Table */}
-      <div className="tw-table-wrapper">
-        <table className="tw-table">
-          <thead>
-            <tr>
-              <th>SIRA</th>
-              <th>YAPILACAK GÖREV</th>
-              <th>SORUMLU</th>
-              <th>DURUM</th>
-              <th>ONAY</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="5" className="tw-loading">Yükleniyor...</td>
-              </tr>
-            ) : tasks.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="tw-empty">Görev bulunamadı</td>
-              </tr>
-            ) : (
-              tasks.map((task, idx) => {
-                const assignee = task.assignee_full_name || task.assignee_name || '-';
-                return (
-                  <tr key={task.id || idx}>
-                    <td>
-                      <div className="tw-row-number">{idx + 1}</div>
-                    </td>
-                    <td>
-                      <div className="tw-task-text">
-                        {task.title || task.description || 'Görev'}
-                      </div>
-                    </td>
-                    <td className="tw-assignee">{assignee}</td>
-                    <td className={`tw-status ${String(task.status || '').toLowerCase()}`}>{task.status || '-'}</td>
-                    <td>{renderApprovalIcon(task.approval)}</td>
+      {/* Body + Inner Panel (rounded) */}
+      <div className="tw-body">
+        <div className="tw-panel">
+          <div className="tw-table-wrapper">
+            <table className="tw-table">
+              <thead>
+                <tr>
+                  <th>SIRA</th>
+                  <th>YAPILACAK GÖREV</th>
+                  <th>SORUMLU</th>
+                  <th>DURUM</th>
+                  <th>ONAY</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="tw-loading">Yükleniyor...</td>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                ) : tasks.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="tw-empty">Görev bulunamadı</td>
+                  </tr>
+                ) : (
+                  tasks.map((task, idx) => {
+                    const assignee = task.assignee_full_name || task.assignee_name || '-';
+                    return (
+                      <tr key={task.id || idx}>
+                        <td>
+                          <div className="tw-row-number">{idx + 1}</div>
+                        </td>
+                        <td>
+                          <div className="tw-task-text">
+                            {task.title || task.description || 'Görev'}
+                          </div>
+                        </td>
+                        <td className="tw-assignee">{assignee}</td>
+                        <td className={`tw-status ${String(task.status || '').toLowerCase()}`}>{task.status || '-'}</td>
+                        <td>{renderApprovalIcon(task.approval)}</td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {/* Show All */}

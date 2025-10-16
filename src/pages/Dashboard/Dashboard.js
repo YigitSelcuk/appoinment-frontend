@@ -137,7 +137,7 @@ const Dashboard = () => {
               </Row>
 
               {/* Main Content */}
-              <Row className="mx-0">
+              <Row className="mx-0" style={{marginBottom: '-20px'}}>
                 {/* Calendar Widget */}
                 <Col lg={8} className="mb-4">
                   <CalendarWidget />
@@ -150,7 +150,7 @@ const Dashboard = () => {
               </Row>
 
               {/* Alt bölüm: 3 yeni widget (aynı tasarım) */}
-              <Row className="mx-0">
+              <Row className="mx-0" style={{marginBottom: '-5px'}}>
                 <Col lg={4} className="mb-4 px-2">
                   <RequestsWidget />
                 </Col>

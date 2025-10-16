@@ -114,6 +114,23 @@ export const deleteUser = async (userId, token) => {
   }
 };
 
+// E-posta kontrolü
+export const checkEmailExists = async (email, token) => {
+  try {
+    const response = await axios.get(`${API_URL}/users/check-email/${email}`, {
+      headers: getAuthHeaders(token),
+      withCredentials: true
+    });
+    return response.data;
+  } catch (error) {
+    // 404 hatası e-posta bulunamadı anlamına gelir (kullanılabilir)
+    if (error.response?.status === 404) {
+      return { exists: false };
+    }
+    throw error.response?.data || error.message;
+  }
+};
+
 // Toplu kullanıcı silme
 export const deleteMultipleUsers = async (userIds, token) => {
   try {

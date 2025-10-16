@@ -491,6 +491,7 @@ const Profile = () => {
                           type="button"
                           className="btn btn-outline-primary btn-sm"
                           onClick={() => setShowPasswordFields(!showPasswordFields)}
+                          style={{ marginRight: 'auto',border:'2px solid #3c76d4'}}
                         >
                           {showPasswordFields ? 'İptal' : 'Şifre Değiştir'}
                         </button>
@@ -556,6 +557,7 @@ const Profile = () => {
                           type="submit"
                           className="btn btn-primary"
                           disabled={saving}
+                          style={{ backgroundColor:'#4E0DCC'}}
                         >
                           {saving ? (
                             <>

@@ -233,6 +233,12 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
   const checkTCExists = async (tcNo) => {
     const cleanTcNo = tcNo.replace(/\s/g, '');
     
+    // TC boşsa kontrol yapma
+    if (cleanTcNo.length === 0) {
+      setTcCheckStatus({ checking: false, exists: false, message: "" });
+      return;
+    }
+    
     if (cleanTcNo.length !== 11 || !validateTCKimlik(cleanTcNo)) {
       setTcCheckStatus({ checking: false, exists: false, message: "" });
       return;
@@ -304,12 +310,8 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
     // Form doğrulaması
     const cleanTcNo = formData.tcNo.replace(/\s/g, '');
     
-    if (!cleanTcNo) {
-      setError("TC Kimlik No gereklidir");
-      return;
-    }
-    
-    if (!validateTCKimlik(cleanTcNo)) {
+    // TC Kimlik No opsiyonel - sadece girilmişse doğrula
+    if (cleanTcNo && !validateTCKimlik(cleanTcNo)) {
       setError("Geçerli bir TC Kimlik No giriniz");
       return;
     }
@@ -329,8 +331,8 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
       return;
     }
 
-    // TC zaten kullanılıyorsa uyar
-    if (tcCheckStatus.exists) {
+    // TC girilmişse ve zaten kullanılıyorsa uyar
+    if (cleanTcNo && tcCheckStatus.exists) {
       const confirmAdd = window.confirm(`${tcCheckStatus.message}\n\nYine de eklemek istiyor musunuz?`);
       if (!confirmAdd) {
         return;
@@ -445,7 +447,7 @@ const AddRequestModal = ({ show, onHide, onRequestAdded }) => {
          
           {/* TC Kimlik No */}
           <div className="tc-input-container">
-            <Form.Label className="form-label">TC KİMLİK NO</Form.Label>
+            <Form.Label className="form-label">TC KİMLİK NO (OPSİYONEL)</Form.Label>
             <Form.Control
               type="text"
               value={formData.tcNo}

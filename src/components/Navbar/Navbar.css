@@ -348,6 +348,13 @@
   position: relative;
 }
 
+/* Mobil menü başlığında avatar + kullanıcı adı hizalaması */
+.mobile-header-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .user-avatar-simple::before {
   content: '';
   position: absolute;
@@ -808,6 +815,41 @@
   .navbar-user {
     min-width: 180px;
     margin-right: 40px;
+  }
+}
+
+/* 1290px ve altı için çakışmayı önle: kullanıcı adı gizle, boşluğu daralt */
+@media (max-width: 1290px) {
+  .navbar-user {
+    margin-right: 20px;
+    min-width: auto;
+  }
+
+  /* Kullanıcı adını gizleyerek sağ bölümü daralt */
+  .navbar .user-info {
+    display: none !important;
+  }
+
+  /* Menü öğeleri arasındaki boşluğu biraz azalt */
+  .navbar-menu {
+    gap: 22px;
+    padding: 0 18px;
+  }
+
+  /* Metinleri biraz küçült */
+  .menu-text {
+    font-size: 10.5px;
+    letter-spacing: -0.1px;
+    white-space: nowrap;
+  }
+
+  .menu-item.btn {
+    padding: 8px 10px;
+    min-height: 34px;
+  }
+
+  .menu-item.btn.active {
+    padding: 9px 12px !important;
   }
 }
 

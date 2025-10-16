@@ -1,376 +1,286 @@
-import React, { useState, useEffect } from 'react';
-import { Card } from 'react-bootstrap';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAppointments } from '../../../services/appointmentsService';
 import { useAuth } from '../../../contexts/AuthContext';
+import { getAppointmentsByDateRange, getAppointments } from '../../../services/appointmentsService';
 import './CalendarWidget.css';
+
+// Yardımcı: Türkçe ay ve gün isimleri
+const MONTHS_TR = ['OCAK','ŞUBAT','MART','NİSAN','MAYIS','HAZİRAN','TEMMUZ','AĞUSTOS','EYLÜL','EKİM','KASIM','ARALIK'];
+const WEEKDAYS_TR = ['PAZ','PZT','SAL','ÇAR','PER','CUM','CMT'];
+const MONTHS_ABBR_TR = ['OCA','ŞUB','MAR','NİS','MAY','HAZ','TEM','AĞU','EYL','EKİ','KAS','ARA'];
+
+// Zaman formatlayıcı
+const formatTime = (t) => {
+  if (!t) return '';
+  // 'HH:MM:SS' -> 'HH:MM'
+  return t.length >= 5 ? t.slice(0,5) : t;
+};
+
+// Etiket: "OCA, SAL"
+const formatDayLabel = (dateObj) => {
+  const monthAbbr = MONTHS_ABBR_TR[dateObj.getMonth()];
+  const weekdayAbbr = WEEKDAYS_TR[dateObj.getDay()];
+  return `${monthAbbr}, ${weekdayAbbr}`;
+};
+
+// Aylık takvim için hücreleri üret
+function makeMonthCells(date) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startDow = firstDay.getDay(); // 0: Pazar
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const prevMonthDays = new Date(year, month, 0).getDate();
+
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const dayNumber = i - startDow + 1;
+    let value, currentMonth;
+    if (dayNumber <= 0) {
+      value = prevMonthDays + dayNumber;
+      currentMonth = false;
+    } else if (dayNumber > daysInMonth) {
+      value = dayNumber - daysInMonth;
+      currentMonth = false;
+    } else {
+      value = dayNumber;
+      currentMonth = true;
+    }
+    cells.push({ value, currentMonth });
+  }
+  return cells;
+}
 
 const CalendarWidget = () => {
   const navigate = useNavigate();
-  const { user, accessToken } = useAuth();
+  const { accessToken } = useAuth();
+  const [currentDate, setCurrentDate] = useState(new Date()); // Bugünün ayı
+  const [selectedDay, setSelectedDay] = useState(new Date().getDate());
+  const [activeTab, setActiveTab] = useState('randevular');
   const [appointments, setAppointments] = useState([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // Randevuları yükle
-  useEffect(() => {
-    const loadAppointments = async () => {
-      try {
-        setLoading(true);
-        const data = await getAppointments(accessToken);
-        console.log('API\'den gelen randevu verisi:', data);
-        console.log('Veri tipi:', typeof data);
-        console.log('Array mi?', Array.isArray(data));
-        
-        // Eğer data bir object ise ve appointments property'si varsa onu kullan
-        let appointmentsArray = data;
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-          if (data.appointments && Array.isArray(data.appointments)) {
-            appointmentsArray = data.appointments;
-          } else if (data.data && Array.isArray(data.data)) {
-            appointmentsArray = data.data;
-          } else {
-            appointmentsArray = [];
-          }
-        }
-        
-        setAppointments(appointmentsArray || []);
-      } catch (error) {
-        console.error('Randevular yüklenirken hata:', error);
+  const monthCells = useMemo(() => makeMonthCells(currentDate), [currentDate]);
+  const monthName = MONTHS_TR[currentDate.getMonth()];
+  const yearNum = currentDate.getFullYear();
+
+  const goPrevMonth = () => {
+    const d = new Date(currentDate);
+    d.setMonth(d.getMonth() - 1);
+    setCurrentDate(d);
+  };
+  const goNextMonth = () => {
+    const d = new Date(currentDate);
+    d.setMonth(d.getMonth() + 1);
+    setCurrentDate(d);
+  };
+
+  // Ay aralığını YYYY-MM-DD formatında hazırla
+  const formatDate = useCallback((date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }, []);
+
+  const loadAppointments = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      setLoading(true);
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const startStr = formatDate(startOfMonth);
+      const endStr = formatDate(endOfMonth);
+
+      const response = await getAppointmentsByDateRange(accessToken, startStr, endStr);
+      if (response && response.success) {
+        setAppointments(Array.isArray(response.data) ? response.data : []);
+      } else {
         setAppointments([]);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    if (user && accessToken) {
-      loadAppointments();
-    }
-  }, [user, accessToken]);
-
-  // Takvim yardımcı fonksiyonları
-  const getDaysInMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (date) => {
-    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    return firstDay === 0 ? 6 : firstDay - 1; // Pazartesi = 0
-  };
-
-  const getAppointmentsForDate = (date) => {
-    if (!date || !Array.isArray(appointments) || !appointments.length) return [];
-    
-    const dateStr = date.toISOString().split('T')[0];
-    return appointments.filter(appointment => {
-      const appointmentDate = new Date(appointment.date).toISOString().split('T')[0];
-      return appointmentDate === dateStr;
-    });
-  };
-
-  const formatAppointmentForDisplay = (appointment) => {
-    const date = new Date(appointment.date);
-    const time = date.toLocaleTimeString('tr-TR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-    
-    return {
-      time,
-      title: appointment.title || 'Randevu',
-      subtitle: appointment.description || appointment.location
-    };
-  };
-
-  // Takvim navigasyonu
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  };
-
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-  };
-
-  const goToToday = () => {
-    const today = new Date();
-    setCurrentDate(today);
-    setSelectedDate(today);
-  };
-
-  // Takvim günlerini oluştur
-  const renderCalendarDays = () => {
-    const daysInMonth = getDaysInMonth(currentDate);
-    const firstDay = getFirstDayOfMonth(currentDate);
-    const days = [];
-
-    // Önceki ayın son günleri
-    for (let i = 0; i < firstDay; i++) {
-      days.push(
-        <div key={`prev-${i}`} className="calendar-widget-day empty">
-          <span></span>
-        </div>
-      );
-    }
-
-    // Bu ayın günleri
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-      const isToday = new Date().toDateString() === date.toDateString();
-      const isSelected = selectedDate && selectedDate.toDateString() === date.toDateString();
-      const dayAppointments = getAppointmentsForDate(date);
-      const hasAppointments = dayAppointments.length > 0;
-
-      days.push(
-        <div 
-          key={day} 
-          className={`calendar-widget-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasAppointments ? 'has-appointments' : ''}`}
-          onClick={() => setSelectedDate(date)}
-        >
-          <span className="calendar-widget-day-number">{day}</span>
-          {hasAppointments && (
-            <div className="calendar-widget-appointment-dots">
-              {dayAppointments.slice(0, 3).map((appointment, index) => (
-                <div 
-                  key={index}
-                  className="calendar-widget-appointment-dot"
-                  style={{ backgroundColor: appointment.color || '#3b82f6' }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return days;
-  };
-
-  // Randevu listesini render et
-  const renderAppointmentsList = () => {
-    if (loading) {
-      return (
-        <div className="calendar-widget-appointments-loading">
-          <p>Randevular yükleniyor...</p>
-        </div>
-      );
-    }
-
-    if (selectedDate) {
-      // Seçili tarih için randevuları göster
-      const dayAppointments = getAppointmentsForDate(selectedDate);
-      
-      return (
-        <div className="calendar-widget-selected-date-appointments">
-          <div className="calendar-widget-selected-date-header">
-            <div className="calendar-widget-date-circle">
-              <span className="date-number">{selectedDate.getDate()}</span>
-            </div>
-            <div className="calendar-widget-date-info">
-              <div className="calendar-widget-date-text">
-                {selectedDate.toLocaleDateString('tr-TR', { 
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long'
-                })}
-              </div>
-            </div>
-          </div>
-          
-          <div className="calendar-widget-appointments-list">
-            {dayAppointments.length > 0 ? (
-              dayAppointments.map((appointment) => {
-                const formatted = formatAppointmentForDisplay(appointment);
-                return (
-                  <div key={appointment.id} className="calendar-widget-appointment-item">
-                    <div className="calendar-widget-appointment-time">
-                      <div 
-                        className="calendar-widget-time-dot"
-                        style={{ backgroundColor: appointment.color || '#3b82f6' }}
-                      />
-                      <span className="calendar-widget-time-text">{formatted.time}</span>
-                    </div>
-                    <div className="calendar-widget-appointment-content">
-                      <div className="calendar-widget-appointment-title">{formatted.title}</div>
-                      {formatted.subtitle && (
-                        <div className="calendar-widget-appointment-subtitle">{formatted.subtitle}</div>
-                      )}
-                    </div>
-                    {appointment.status === 'COMPLETED' && (
-                      <div className="calendar-widget-completed-check">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                          <path d="M9 12l2 2 4-4" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="calendar-widget-no-appointments">
-                <p>Bu tarihte randevu bulunmuyor</p>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    } else {
-      // Tüm randevuları gruplu göster
-      if (!Array.isArray(appointments) || appointments.length === 0) {
-        return (
-          <div className="calendar-widget-no-appointments">
-            <p>Henüz randevu bulunmuyor</p>
-          </div>
-        );
-      }
-
-      // Randevuları tarihe göre grupla
-      const groupedAppointments = appointments.reduce((groups, appointment) => {
-        const date = new Date(appointment.date);
-        const dateKey = date.toISOString().split('T')[0];
-        if (!groups[dateKey]) {
-          groups[dateKey] = [];
+    } catch (error) {
+      console.error('Randevular getirilemedi, tüm randevular yükleniyor (fallback):', error);
+      try {
+        const response = await getAppointments(accessToken);
+        if (response && response.success) {
+          // Yalnızca mevcut ayın randevularını filtrele
+          const monthIdx = currentDate.getMonth();
+          const year = currentDate.getFullYear();
+          const filtered = (response.data || []).filter((apt) => {
+            const d = new Date(apt.date);
+            return d.getMonth() === monthIdx && d.getFullYear() === year;
+          });
+          setAppointments(filtered);
+        } else {
+          setAppointments([]);
         }
-        groups[dateKey].push(appointment);
-        return groups;
-      }, {});
+      } catch (fallbackError) {
+        console.error('Fallback randevu yükleme hatası:', fallbackError);
+        setAppointments([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, currentDate, formatDate]);
 
-      const sortedGroups = Object.entries(groupedAppointments)
-        .sort(([a], [b]) => new Date(a) - new Date(b)); // Tüm randevuları göster
+  useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
 
-      return (
-        <div className="calendar-widget-all-appointments">
-          <div className="calendar-widget-appointments-list">
-            {sortedGroups.map(([dateKey, dayAppointments]) => {
-              const date = new Date(dateKey);
-              const dayNumber = date.getDate();
-              const dayName = date.toLocaleDateString('tr-TR', { 
-                weekday: 'short',
-                month: 'short'
-              });
+  // Takvim günlerine küçük renkli noktaları hazırla (randevu renkleri)
+  const dotsByDay = useMemo(() => {
+    const dots = {};
+    const monthIdx = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+    appointments.forEach((apt) => {
+      const d = new Date(apt.date);
+      if (d.getMonth() !== monthIdx || d.getFullYear() !== year) return;
+      const day = d.getDate();
+      const color = apt.color || '#60A5FA';
+      if (!dots[day]) dots[day] = [];
+      // Aynı gün için en fazla 3 farklı renk
+      if (!dots[day].includes(color)) {
+        dots[day].push(color);
+        if (dots[day].length > 3) dots[day] = dots[day].slice(0, 3);
+      }
+    });
+    return dots;
+  }, [appointments, currentDate]);
 
+  // Sağ liste: randevuları güne göre grupla
+  const dayList = useMemo(() => {
+    const groups = new Map();
+    const monthIdx = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+
+    appointments.forEach((apt) => {
+      const d = new Date(apt.date);
+      if (d.getMonth() !== monthIdx || d.getFullYear() !== year) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          dayNum: d.getDate(),
+          label: formatDayLabel(d),
+          events: []
+        });
+      }
+      groups.get(key).events.push({
+        type: 'time',
+        time: formatTime(apt.start_time || apt.startTime),
+        color: apt.color || '#60A5FA',
+        title: apt.title || apt.subject || 'Randevu'
+      });
+    });
+
+    // Günleri tarihe göre sırala
+    const sorted = Array.from(groups.entries())
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+      .map(([, value]) => {
+        // Event'leri saate göre sırala
+        value.events.sort((e1, e2) => (e1.time || '').localeCompare(e2.time || ''));
+        return value;
+      });
+    return sorted;
+  }, [appointments, currentDate]);
+
+  return (
+    <div className="cw-container">
+      {/* Üst sekmeler ve dönem seçici */}
+      <div className="cw-top">
+        <div className="cw-tabs">
+          <button className={`cw-tab ${activeTab==='randevular'?'active':''}`} onClick={()=>setActiveTab('randevular')}>
+            <span className="cw-tab-icon">📅</span>
+            RANDEVULARIMIZ
+          </button>
+          <button className={`cw-tab ${activeTab==='ertelenen'?'active':''}`} onClick={()=>setActiveTab('ertelenen')}>
+            ERTELENEN RANDEVULAR
+          </button>
+        </div>
+      </div>
+
+      {/* İçerik: sol takvim, sağ liste */}
+      <div className="cw-content">
+        {/* Sol: aylık takvim */}
+        <div className="cw-calendar">
+          <div className="cw-month-nav">
+            <button className="cw-nav-btn" onClick={goPrevMonth} aria-label="Önceki">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+            <div className="cw-month-title">
+              <span className="cw-month-name">{monthName}</span>
+              <span className="cw-year">{yearNum}</span>
+            </div>
+            <button className="cw-nav-btn" onClick={goNextMonth} aria-label="Sonraki">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+          </div>
+
+          <div className="cw-weekdays">
+            {WEEKDAYS_TR.map((w) => (
+              <div key={w} className="cw-weekday">{w}</div>
+            ))}
+          </div>
+          <div className="cw-days">
+            {monthCells.map((c, i) => {
+              const day = c.value;
+              const dots = dotsByDay[day] || [];
+              const isSelected = c.currentMonth && day === selectedDay;
               return (
-                <div key={dateKey} className="calendar-widget-day-group">
-                  <div className="calendar-widget-day-header">
-                    <div className="calendar-widget-day-circle">
-                      <span className="calendar-widget-day-number">{dayNumber}</span>
+                <button
+                  key={i}
+                  className={`cw-day ${c.currentMonth? 'current':''} ${isSelected? 'selected':''}`}
+                  onClick={() => c.currentMonth && setSelectedDay(day)}
+                >
+                  <span className="cw-day-num">{day}</span>
+                  {dots.length > 0 && (
+                    <div className="cw-day-dots">
+                      {dots.map((color, idx) => (
+                        <span key={idx} className="cw-dot" style={{ background: color }} />
+                      ))}
                     </div>
-                    <div className="calendar-widget-day-info">
-                      <span className="calendar-widget-day-name">{dayName.toUpperCase()}</span>
-                    </div>
-                  </div>
-                  <div className="calendar-widget-day-appointments">
-                    {dayAppointments.map((appointment) => {
-                      const formatted = formatAppointmentForDisplay(appointment);
-                      return (
-                        <div key={appointment.id} className="calendar-widget-appointment-row">
-                          <div className="calendar-widget-appointment-time">
-                            <div 
-                              className="calendar-widget-time-dot"
-                              style={{ backgroundColor: appointment.color || '#3b82f6' }}
-                            />
-                            <span className="calendar-widget-time-text">{formatted.time}</span>
-                          </div>
-                          <div className="calendar-widget-appointment-details">
-                            <div className="calendar-widget-appointment-title">{formatted.title}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                  )}
+                </button>
               );
             })}
           </div>
-          
-          <div className="calendar-widget-show-all-container">
-            <button 
-              className="calendar-widget-show-all-button"
-              onClick={() => navigate('/appointments')}
-            >
-              TÜMÜNÜ GÖSTER
-            </button>
-          </div>
-        </div>
-      );
-    }
-  };
-
-  return (
-    <Card className="calendar-widget">
-      <Card.Body className="calendar-widget-body">
-        {/* Header */}
-        <div className="calendar-widget-header">
-          <div className="calendar-widget-header-left">
-            <h5 className="calendar-widget-title">Randevularımız</h5>
-            <p className="calendar-widget-subtitle">
-              {currentDate.toLocaleDateString('tr-TR', { 
-                month: 'long', 
-                year: 'numeric' 
-              })}
-            </p>
-          </div>
-          <div className="calendar-widget-header-right">
-            <button className="calendar-widget-today-button" onClick={goToToday}>
-              Bugün
-            </button>
-          </div>
         </div>
 
-        {/* Main Content */}
-        <div className="calendar-widget-content">
-          {/* Sol Taraf - Takvim */}
-          <div className="calendar-widget-calendar-section">
-            <div className="calendar-widget-navigation">
-              <button className="calendar-widget-nav-button" onClick={goToPreviousMonth}>
-                ‹
-              </button>
-              <h6 className="calendar-widget-current-month">
-                {currentDate.toLocaleDateString('tr-TR', { 
-                  month: 'long', 
-                  year: 'numeric' 
-                })}
-              </h6>
-              <button className="calendar-widget-nav-button" onClick={goToNextMonth}>
-                ›
-              </button>
-            </div>
-
-            <div className="calendar-widget-grid">
-              <div className="calendar-widget-weekdays">
-                {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map(day => (
-                  <div key={day} className="calendar-widget-weekday">{day}</div>
-                ))}
-              </div>
-              <div className="calendar-widget-days">
-                {renderCalendarDays()}
-              </div>
-            </div>
+        {/* Sağ: gün listesi */}
+        <div className="cw-daylist">
+          <div className="cw-daylist-scroll">
+            {loading ? (
+              <div style={{ padding: '12px', color: '#6B7280', fontSize: 12 }}>Randevular yükleniyor...</div>
+            ) : dayList.length === 0 ? (
+              <div style={{ padding: '12px', color: '#6B7280', fontSize: 12 }}>Bu ay için randevu bulunmuyor.</div>
+            ) : (
+              dayList.map((d, idx) => (
+                <div key={idx} className="cw-dayblock">
+                  <div className="cw-dayblock-left">
+                    <span className="cw-badge">{d.dayNum}</span>
+                    <span className="cw-daylabel">{d.label}</span>
+                  </div>
+                  <div className="cw-dayblock-right">
+                    <div className="cw-events">
+                      {d.events.map((ev, i2) => (
+                        <div key={i2} className="cw-event-row">
+                          <span className="cw-event-dot" style={{ background: ev.color }} />
+                          <span className="cw-event-time">{ev.time}</span>
+                          <span className="cw-event-title">{ev.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
-          {/* Sağ Taraf - Randevu Listesi */}
-          <div className="calendar-widget-appointments-section">
-            <div className="calendar-widget-appointments-header">
-              <h6 className="calendar-widget-appointments-title">
-                {selectedDate ? 'Seçili Tarih' : 'Randevular'}
-              </h6>
-              {selectedDate && (
-                <button 
-                  className="calendar-widget-clear-selection"
-                  onClick={() => setSelectedDate(null)}
-                >
-                  Temizle
-                </button>
-              )}
-            </div>
-            
-            <div className="calendar-widget-appointments-content">
-              {renderAppointmentsList()}
-            </div>
+          <div className="cw-footer">
+            <button className="cw-show-all" onClick={() => navigate('/appointments')}>TÜMÜNÜ GÖSTER</button>
           </div>
         </div>
-      </Card.Body>
-    </Card>
+      </div>
+    </div>
   );
 };
 

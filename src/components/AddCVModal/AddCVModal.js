@@ -6,7 +6,7 @@ import { useSimpleToast } from '../../contexts/SimpleToastContext';
 import { ilceler, getMahalleler } from '../../data/istanbulData';
 import "./AddCVModal.css";
 
-const AddCVModal = ({ show, onHide, onSubmit }) => {
+const AddCVModal = ({ show, onHide, onSubmit, onReset }) => {
   const { showError, showSuccess } = useSimpleToast();
   const [isDragOver, setIsDragOver] = useState(false);
   const [formData, setFormData] = useState({
@@ -336,6 +336,13 @@ const AddCVModal = ({ show, onHide, onSubmit }) => {
     });
     setProfileImagePreview(null);
   };
+
+  // onReset prop'u değiştiğinde resetForm'u çağır
+  useEffect(() => {
+    if (onReset && onReset > 0) {
+      resetForm();
+    }
+  }, [onReset]);
 
   const handleClose = () => {
     resetForm();
@@ -731,7 +738,7 @@ const AddCVModal = ({ show, onHide, onSubmit }) => {
                     value={formData.notlar}
                     onChange={handleInputChange}
                     className="editor-textarea"
-                    placeholder="50-70 yaşında doğan internet çıkışı otomobil endüstride talebi."
+                    placeholder="Notları buraya yazın..."
                     rows="4"
                   />
                 </div>

@@ -46,6 +46,27 @@
 }
 .aw-menu-btn span { width: 3px; height: 3px; background: #475569; border-radius: 50%; margin: 1px; display: inline-block; }
 
+/* Body and inner panel */
+.aw-body {
+  padding: 16px; /* widget içinde boşluk: sağ/sol/üst/alt */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* iç scroll için gerekli */
+}
+
+.aw-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px; /* içteki pencere radiusu */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  overflow: hidden; /* table header köşeleri yuvarlak görünsün */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* Table */
 .aw-table-wrapper { 
   padding: 0; 
@@ -66,14 +87,14 @@
 }
 
 .aw-table thead th:nth-child(1) { width: 60px; text-align: center; }
-.aw-table thead th:nth-child(2) { width: 48%; }
-.aw-table thead th:nth-child(3) { width: 18%; }
-.aw-table thead th:nth-child(4) { width: 18%; }
-.aw-table thead th:nth-child(5) { width: 6%; text-align: center; }
+.aw-table thead th:nth-child(2) { width: 40%; }
+.aw-table thead th:nth-child(3) { width: 20%; }
+.aw-table thead th:nth-child(4) { width: 20%; }
+.aw-table thead th:nth-child(5) { width: 20%; }
 
 .aw-table tbody tr { border-bottom: 1px dotted #e5e7eb; }
 .aw-table tbody td { padding: 12px; vertical-align: middle; }
-.aw-table tbody td:nth-child(1), .aw-table tbody td:nth-child(5) { text-align: center; }
+.aw-table tbody td:nth-child(1) { text-align: center; }
 
 .aw-row-number {
   width: 28px; height: 28px; border-radius: 50%;
@@ -88,6 +109,8 @@
 .aw-status { color: #111827; font-weight: 600; }
 .aw-status.error { color: #ef4444; }
 .aw-status.success { color: #16a34a; }
+
+.aw-table { color: #374151; font-weight: 500; }
 
 .aw-approval {
   width: 24px; height: 24px; border-radius: 50%; display: inline-flex;

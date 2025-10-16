@@ -1,595 +1,252 @@
-/* Calendar Widget - Ana Container */
-.calendar-widget {
-  border: none;
+/* Kapsayıcı */
+.cw-container {
+  background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  background: white;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
   overflow: hidden;
-  height: 100%;
-}
-
-.calendar-widget-body {
-  padding: 0;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  padding: 0; /* iç boşluk yok */
+  margin-bottom: 20px; /* widget altına biraz boşluk */
+  min-height: 560px; /* widget yüksekliğini artır */
 }
 
-/* Header Bölümü */
-.calendar-widget-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 1.5rem 1rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  background: #fff !important;
+/* Üst sekmeler ve dönem */
+.cw-top {
+  position: relative; /* sağdaki dönem seçici üstte sabitlenir */
+  display: block; /* sekmeler tüm genişliği kaplar */
+  padding: 0; /* üstte boşluk yok */
+  border-bottom: 1px solid #eee;
+  background: #fff;
 }
 
-.calendar-widget-header-left {
-  flex: 1;
-}
-
-.calendar-widget-title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.calendar-widget-subtitle {
-  margin: 0.25rem 0 0 0;
-  font-size: 0.875rem;
-  color: #64748b;
-}
-
-.calendar-widget-header-right {
-  display: flex;
-  align-items: center;
-}
-
-.calendar-widget-today-button {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.calendar-widget-today-button:hover {
-  background: #2563eb;
-}
-
-/* Ana İçerik Alanı */
-.calendar-widget-content {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
-
-/* Sol Taraf - Takvim Bölümü */
-.calendar-widget-calendar-section {
-  flex: 1;
-  padding: 1.5rem;
-  border-right: 1px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
-}
-
-.calendar-widget-navigation {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.calendar-widget-nav-button {
-  background: #f1f5f9;
-  border: none;
-  border-radius: 6px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 1.125rem;
-  color: #475569;
-  transition: all 0.2s;
-}
-
-.calendar-widget-nav-button:hover {
-  background: #e2e8f0;
-  color: #1e293b;
-}
-
-.calendar-widget-current-month {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.calendar-widget-grid {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.calendar-widget-weekdays {
+.cw-tabs {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  margin-bottom: 0.5rem;
-}
-
-.calendar-widget-weekday {
-  padding: 0.5rem;
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.calendar-widget-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  flex: 1;
-}
-
-.calendar-widget-day {
-  position: relative;
-  padding: 0;
-  height: 36px;
-  width: 36px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border-radius: 50%;
-  transition: all 0.2s;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  margin: 0 auto;
-}
-
-.calendar-widget-day:hover {
-  background: #f1f5f9;
-  transform: scale(1.05);
-}
-
-.calendar-widget-day.empty {
-  cursor: default;
-  background: transparent;
-}
-
-.calendar-widget-day.empty:hover {
-  background: transparent;
-  transform: none;
-}
-
-.calendar-widget-day.today {
-  background: #3b82f6;
-  color: white;
-  font-weight: 600;
-  border: none;
-}
-
-.calendar-widget-day.selected {
-  background: #10b981;
-  color: white;
-  font-weight: 600;
-  border: none;
-}
-
-.calendar-widget-day.has-appointments {
-  background: #f59e0b;
-  color: white;
-  font-weight: 500;
-  border: none;
-}
-
-.calendar-widget-day.has-appointments.selected {
-  background: #10b981;
-  color: white;
-  border: none;
-}
-
-.calendar-widget-day-number {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #1e293b !important;
-}
-
-.calendar-widget-appointment-dots {
-  display: flex;
-  gap: 1px;
-  margin-top: 3px;
-  flex-wrap: wrap;
-  justify-content: center;
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.calendar-widget-appointment-dot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
-}
-
-.calendar-widget-more-appointments {
-  font-size: 0.5rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin-left: 1px;
-  font-weight: 600;
-}
-
-/* Sağ Taraf - Randevu Listesi Bölümü */
-.calendar-widget-appointments-section {
-  flex: 1;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  background: white;
-  overflow: hidden;
-  min-height: 0;
-}
-
-.calendar-widget-appointments-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.calendar-widget-appointments-title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.calendar-widget-clear-selection {
-  background: none;
-  border: none;
-  color: #3b82f6;
-  font-size: 0.875rem;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.calendar-widget-clear-selection:hover {
-  background: #f1f5f9;
-}
-
-.calendar-widget-appointments-content {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.calendar-widget-appointments-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: #64748b;
-}
-
-/* Seçili Tarih Randevuları */
-.calendar-widget-selected-date-appointments {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.calendar-widget-selected-date-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 8px;
-}
-
-.calendar-widget-date-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #3b82f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 1.125rem;
-}
-
-.calendar-widget-date-info {
-  flex: 1;
-}
-
-.calendar-widget-date-text {
-  font-size: 0.875rem;
-  color: #475569;
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-/* Randevu Listesi */
-.calendar-widget-appointments-list {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  overflow-y: auto;
-  max-height: 250px;
-  padding-right: 0.5rem;
-}
-
-/* Scroll bar stilleri */
-.calendar-widget-appointments-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.calendar-widget-appointments-list::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
-}
-
-.calendar-widget-appointments-list::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-.calendar-widget-appointments-list::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.calendar-widget-appointment-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  transition: all 0.2s;
-}
-
-.calendar-widget-appointment-item:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-.calendar-widget-appointment-time {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 80px;
-}
-
-.calendar-widget-time-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #3b82f6;
-}
-
-.calendar-widget-time-text {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #475569;
-}
-
-.calendar-widget-appointment-content {
-  flex: 1;
-}
-
-.calendar-widget-appointment-details {
-  flex: 1;
-}
-
-.calendar-widget-appointment-title {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #1e293b;
-  margin-bottom: 0.25rem;
-}
-
-.calendar-widget-appointment-subtitle {
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.calendar-widget-completed-check {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #dcfce7;
-}
-
-/* Tüm Randevular Görünümü */
-.calendar-widget-all-appointments {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-.calendar-widget-all-appointments .calendar-widget-appointments-list {
-  max-height: 280px;
-}
-
-.calendar-widget-day-group {
-  margin-bottom: 1.5rem;
-}
-
-.calendar-widget-day-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.calendar-widget-day-circle {
-  background: #3b82f6;
-  color: white;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.calendar-widget-day-number {
-  color: white;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.calendar-widget-day-info {
-  flex: 1;
-}
-
-.calendar-widget-day-name {
-  font-size: 0.875rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.calendar-widget-day-appointments {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.calendar-widget-appointment-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-  transition: background-color 0.2s;
-}
-
-.calendar-widget-appointment-row:hover {
-  background: #f8fafc;
-  border-radius: 4px;
-  padding: 0.5rem;
-  margin: 0 -0.5rem;
-}
-
-.calendar-widget-show-all-container {
-  margin-top: rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
-}
-
-.calendar-widget-show-all-button {
+  grid-template-columns: repeat(2, 1fr);
+  align-items: stretch;
   width: 100%;
-  background: #f59e0b;
+}
+
+.cw-tab {
+  background: transparent;
+  color: #6D28D9; /* mor metin */
   border: none;
-  color: white;
-  padding: 0.75rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.calendar-widget-show-all-button:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #1e293b;
-}
-
-/* Randevu Yok Mesajı */
-.calendar-widget-no-appointments {
+  border-right: 1px solid #eee;
+  padding: 20px 12px;
+  font-size: 12px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 200px;
-  color: #64748b;
-  font-size: 0.875rem;
+  gap: 8px;
+}
+.cw-tab:last-child { border-right: none; }
+
+.cw-tab.active {
+  color: #4E0DCC; /* aktif daha koyu */
+}
+
+.cw-tab-icon { font-size: 14px; }
+
+.cw-period {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 6px 10px;
+  position: absolute; /* başlıkların hizasını bozmaz */
+  right: 16px;
+  top: 10px;
+}
+
+/* İçerik yerleşimi */
+.cw-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* eşit genişlik */
+  gap: 0; /* takvim ve liste bitişik */
+  padding: 0; /* sağ/sol/üst/alt boşluk yok */
+  flex: 1 1 auto; /* kalan alanı doldursun */
+  min-height: 0; /* içteki kaydırma alanları taşma yapmasın */
+}
+
+/* Sol takvim */
+.cw-calendar {
+  background: #fff;
+  border-radius: 0; /* tam bitişik görünüm için */
+  border: none; /* çerçeve yok */
+  border-right: 1px solid #eee; /* takvim ile liste arasında ayırma çizgisi */
+  overflow: hidden;
+}
+
+.cw-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.cw-nav-btn {
+  background: #f1f5f9;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.cw-month-title { display: flex; align-items: center; gap: 8px; }
+.cw-month-name { font-weight: 700; color: #111827; }
+.cw-year { color: #6B7280; font-weight: 600; }
+
+.cw-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #fafafa;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+.cw-weekday {
   text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  padding: 10px 0;
 }
 
-.calendar-widget-no-appointments p {
-  margin: 0;
+.cw-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px; /* hücre araları minimal */
+  padding: 0; /* kenarlarda boşluk yok */
 }
 
-/* Responsive Tasarım */
-@media (max-width: 1024px) {
-  .calendar-widget-content {
-    flex-direction: column;
-  }
-  
-  .calendar-widget-calendar-section {
-    border-right: none;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  
-  .calendar-widget-appointments-section {
-    flex: none;
-    height: 300px;
-  }
+.cw-day {
+  background: #fff;
+  border: none;
+  min-height: 48px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #6B7280;
+}
+.cw-day.current { color: #111827; }
+
+.cw-day-num {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.cw-day.selected .cw-day-num {
+  background: #6D28D9; /* mor */
+  color: #fff;
 }
 
-@media (max-width: 768px) {
-  .calendar-widget-header {
-    padding: 1rem;
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-  
-  .calendar-widget-header-right {
-    align-self: flex-end;
-  }
-  
-  .calendar-widget-calendar-section,
-  .calendar-widget-appointments-section {
-    padding: 1rem;
-  }
-  
-  .calendar-widget-day {
-    min-height: 32px;
-    padding: 0.25rem;
-  }
-  
-  .calendar-widget-day-number {
-    font-size: 0.75rem;
-  }
-  
-  .calendar-widget-appointment-dots {
-    margin-top: 1px;
-  }
-  
-  .calendar-widget-appointment-dot {
-    width: 3px;
-    height: 3px;
-  }
+.cw-day-dots { display: flex; gap: 4px; }
+.cw-dot { width: 4px; height: 4px; border-radius: 50%; }
+
+/* Sağ liste */
+.cw-daylist {
+  background: #fff;
+  border: none; /* çerçeve yok */
+  border-radius: 0; /* tam bitişik */
+  padding: 0; /* üst/alt boşluk yok */
+  position: relative; /* sabit alt buton için zemin */
+  display: flex;
+  flex-direction: column;
+}
+
+.cw-dayblock {
+  display: grid;
+  grid-template-columns: 150px 1fr; /* solda rozet + gün etiketi, sağda randevular */
+  column-gap: 12px;
+  padding: 19px 12px; /* iç boşluk minimal */
+}
+.cw-dayblock-left {
+  display: flex;
+  align-items: center; /* rozet ve etiket aynı satırda */
+  justify-content: flex-start;
+  gap: 8px;
+}
+.cw-dayblock-right {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cw-dayblock + .cw-dayblock { border-top: 1px solid #eee; }
+
+.cw-dayblock-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.cw-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #60A5FA; /* mavi */
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cw-daylabel { font-size: 12px; color: #6B7280; font-weight: 600; }
+
+.cw-event-row {
+  display: grid;
+  grid-template-columns: 10px 50px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.cw-event-dot { width: 6px; height: 6px; border-radius: 50%; }
+.cw-event-time { font-size: 12px; color: #6B7280; font-weight: 600; }
+.cw-event-title { font-size: 12px; color: #374151; }
+
+.cw-footer {
+  position: absolute; /* sabit */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 16px; /* rahat tıklama alanı */
+  background: #fff;
+  border-top: 1px solid #eee; /* üstünde ayırma çizgisi */
+  display: flex;
+  justify-content: center; /* buton ortada */
+}
+.cw-show-all {
+  background: #F59E0B;
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .cw-content { grid-template-columns: 1fr; }
+}
+.cw-daylist-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto; /* liste kaydırılabilir */
+  padding: 8px 0 72px 0; /* alttaki sabit buton için boşluk */
 }

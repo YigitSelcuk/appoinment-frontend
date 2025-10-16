@@ -572,3 +572,11 @@
 .request-modal-body .row.mb-4 {
   margin-bottom: 2rem !important;
 }
+
+@media (max-height: 695.20px) {
+.request-table-container {
+
+  min-height: 790px;
+
+}
+}

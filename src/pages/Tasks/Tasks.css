@@ -2,7 +2,9 @@
   min-height: 100vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background-color: #E6E6E6;
-  overflow: hidden;
+  /* Dikey scroll'u koru, yatay taşmaları gizle */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Sağ Panel - FloatingChat */
@@ -23,19 +25,20 @@
   height: calc(100vh - 80px); /* Navbar yüksekliği çıkarıldı */
   min-height: 800px;
   gap: 12px;
-  padding: 8px 5px 8px 20px;
+  padding: 0px 5px 8px 20px;
   position: relative;
   overflow: visible;
   z-index: 1;
+  
 }
 
 /* Sol Panel - Calendar */
-.left-panel {
+.left-panel-task {
   width: 320px; /* Normal boyut */
   min-width: 320px;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 96px); /* Navbar ve padding için ayarlama */
+  height: calc(100vh - 30px) !important; /* Navbar ve padding için ayarlama */
   min-height: 800px;
   overflow: hidden;
 }

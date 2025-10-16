@@ -429,16 +429,26 @@ const Navbar = ({ user, onLogout }) => {
 
     if (showMobileMenu) {
       document.addEventListener("keydown", handleEscapeKey);
-      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset";
+      // Menü kapandığında body scroll'u normal hale getir
+      document.body.style.overflow = "";
     }
 
     return () => {
       document.removeEventListener("keydown", handleEscapeKey);
-      document.body.style.overflow = "unset";
+      // Cleanup: body scroll'u sıfırla
+      document.body.style.overflow = "";
     };
   }, [showMobileMenu]);
+
+  // Route değiştiğinde mobil menüyü kapat ve body scroll'u garanti olarak sıfırla
+  useEffect(() => {
+    // Menü açık kalsa bile route değişiminde kapat
+    setShowMobileMenu(false);
+    // Body overflow ve olası modal sınıfı temizliği
+    document.body.style.overflow = "";
+    document.body.classList.remove("modal-open");
+  }, [location.pathname]);
 
   return (
     <>
@@ -582,20 +592,25 @@ const Navbar = ({ user, onLogout }) => {
         show={showMobileMenu}
         onHide={closeMobileMenu}
         placement="start"
+        backdrop={false}
+        scroll={true}
         className="mobile-menu"
       >
         <Offcanvas.Header closeButton className="mobile-menu-header">
           <Offcanvas.Title>
-            <div className="user-avatar-simple">
-              {userAvatar ? (
-                <img
-                  src={userAvatar}
-                  alt="User Avatar"
-                  className="avatar-img"
-                />
-              ) : (
-                <div className="avatar-placeholder-simple">👤</div>
-              )}
+            <div className="mobile-header-user">
+              <div className="user-avatar-simple">
+                {userAvatar ? (
+                  <img
+                    src={userAvatar}
+                    alt="User Avatar"
+                    className="avatar-img"
+                  />
+                ) : (
+                  <div className="avatar-placeholder-simple">👤</div>
+                )}
+              </div>
+              <span className="user-name">{user?.name}</span>
             </div>
           </Offcanvas.Title>
         </Offcanvas.Header>

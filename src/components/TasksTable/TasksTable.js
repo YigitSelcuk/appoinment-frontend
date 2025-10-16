@@ -77,11 +77,13 @@ const TasksTable = () => {
         status: statusFilter === "Hepsi" ? "" : statusFilter,
       };
       
-      // debug logs removed
+      console.log("Filtreleme parametreleri:", params);
+      console.log("Aktif statusFilter:", statusFilter);
       
       const response = await getTasks(accessToken, params);
       
-      // debug logs removed
+      console.log("Backend'den gelen response:", response);
+      console.log("StatusCounts:", response.statusCounts);
 
       if (response.success) {
         setTasks(response.data);

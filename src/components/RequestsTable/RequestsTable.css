@@ -16,7 +16,7 @@
   /* Overflow'u hidden yaparak içeriğin taşmasını engelle */
   overflow: hidden;
   box-shadow: 0px 60px 120px rgba(38, 51, 77, 0.05);
-  min-height: 800px;
+  min-height: 880px;
   /* Max-height kaldırıldı ki pagination görünsün */
   position: relative;
   z-index: 1;
@@ -431,6 +431,11 @@
   .requests-table tbody td {
     padding: 6px 4px;
   }
+    .requests-table-container {
+
+  min-height: 770px !important;
+
+}
   
   .action-btn {
     width: 24px;
@@ -1182,4 +1187,12 @@
 
 .header-clear-btn:active {
   transform: scale(0.95);
+}
+
+@media (max-height: 695.20px) {
+.requests-table-container {
+
+  min-height: 790px;
+
+}
 }

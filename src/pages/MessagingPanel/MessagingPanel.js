@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Row, Col, Alert, Dropdown } from 'react-bootstrap';
+import { Container, Row, Col, Dropdown } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
 import Calendar from '../../components/Calendar/Calendar';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
+import { useSimpleToast } from '../../contexts/SimpleToastContext';
 import chatService from '../../services/chatService';
 import { getAvatarUrl } from '../../services/profileService';
 import './MessagingPanel.css';
@@ -12,6 +13,7 @@ import './ContactsPanel.css';
 const MessagingPanel = () => {
   const { user, logout, accessToken } = useAuth();
   const { socket, isConnected, onMessage, onChatListUpdate, joinRoom, leaveRoom } = useSocket();
+  const { showSuccess, showError, showWarning, showInfo } = useSimpleToast();
   const [searchParams] = useSearchParams();
   
   const [chatRooms, setChatRooms] = useState([]);
@@ -20,7 +22,6 @@ const MessagingPanel = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [availableUsers, setAvailableUsers] = useState([]);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -71,6 +72,7 @@ const MessagingPanel = () => {
       }
     } catch (error) {
       console.error('Kullanıcıları yüklerken hata:', error);
+      showError('Kullanıcılar yüklenirken bir hata oluştu');
     }
   };
 
@@ -81,9 +83,9 @@ const MessagingPanel = () => {
       
       // Kullanıcının kendi kendisiyle chat oluşturmasını engelle
       if (targetUser.id === user.id) {
-        setError('Kendinizle sohbet oluşturamazsınız');
-        return;
-      }
+      showError('Kendinizle sohbet oluşturamazsınız');
+      return;
+    }
       
       // Direct chat oluştur veya mevcut olanı getir
       const response = await chatService.createOrGetDirectChat(accessToken, targetUser.id);
@@ -95,7 +97,7 @@ const MessagingPanel = () => {
         // room_id kontrolü
         if (!roomData || !roomData.room_id) {
           console.error('Backend\'den geçersiz room_id geldi:', roomData);
-          setError('Sohbet odası oluşturulamadı');
+          showError('Sohbet odası oluşturulamadı');
           return;
         }
         
@@ -124,7 +126,7 @@ const MessagingPanel = () => {
       
     } catch (error) {
       console.error('Yeni chat başlatırken hata:', error);
-      setError('Yeni sohbet başlatılamadı: ' + error.message);
+      showError('Yeni sohbet başlatılamadı: ' + error.message);
     }
   };
 
@@ -176,6 +178,7 @@ const MessagingPanel = () => {
       }
     } catch (error) {
       console.error('Chat sabitleme hatası:', error);
+      showError('Chat sabitleme işlemi başarısız oldu');
     }
   };
 
@@ -271,7 +274,7 @@ const MessagingPanel = () => {
       }
     } catch (error) {
       console.error('Chat odalarını yüklerken hata:', error);
-      setError('Chat odaları yüklenirken bir hata oluştu');
+      showError('Chat odaları yüklenirken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -310,7 +313,7 @@ const MessagingPanel = () => {
       }
     } catch (error) {
       console.error('Mesajları yüklerken hata:', error);
-      setError('Mesajlar yüklenirken bir hata oluştu');
+      showError('Mesajlar yüklenirken bir hata oluştu');
       setMessages([]);
     } finally {
       setLoadingMessages(false);
@@ -352,11 +355,11 @@ const MessagingPanel = () => {
         
       } else {
         console.error('Mesaj gönderme başarısız:', response);
-        setError('Mesaj gönderilemedi');
+        showError('Mesaj gönderilemedi');
       }
     } catch (error) {
       console.error('Mesaj gönderme hatası:', error);
-      setError('Mesaj gönderilemedi: ' + error.message);
+      showError('Mesaj gönderilemedi: ' + error.message);
     }
   };
 
@@ -388,11 +391,11 @@ const MessagingPanel = () => {
         }, 100);
         
       } else {
-        alert('Dosya gönderilemedi: ' + response.message);
+        showError('Dosya gönderilemedi: ' + response.message);
       }
     } catch (error) {
       console.error('Dosya yükleme hatası:', error);
-      alert('Dosya gönderilemedi: ' + error.message);
+      showError('Dosya gönderilemedi: ' + error.message);
     } finally {
       setUploading(false);
       // File input'u temizle
@@ -427,11 +430,11 @@ const MessagingPanel = () => {
         console.log('Chat başarıyla silindi');
       } else {
         console.error('Chat silme hatası:', response.message);
-        alert('Chat silinemedi: ' + response.message);
+        showError('Chat silinemedi: ' + response.message);
       }
     } catch (error) {
       console.error('Chat silme hatası:', error);
-      alert('Chat silinemedi. Lütfen tekrar deneyin.');
+      showError('Chat silinemedi. Lütfen tekrar deneyin.');
     }
   };
 
@@ -471,7 +474,7 @@ const MessagingPanel = () => {
     setDragOver(false);
 
     if (!selectedRoom || !isConnected) {
-      alert('Dosya göndermek için bir sohbet odası seçin');
+      showWarning('Dosya göndermek için bir sohbet odası seçin');
       return;
     }
 
@@ -496,7 +499,7 @@ const MessagingPanel = () => {
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      alert('Desteklenmeyen dosya türü. Lütfen resim, PDF, Excel, Word, PowerPoint, metin veya arşiv dosyası seçin.');
+      showWarning('Desteklenmeyen dosya türü. Lütfen resim, PDF, Excel, Word, PowerPoint, metin veya arşiv dosyası seçin.');
       return;
     }
 
@@ -509,7 +512,7 @@ const MessagingPanel = () => {
       // Room ID kontrolü
       if (!room || !room.id) {
         console.error('Geçersiz room objesi:', room);
-        setError('Geçersiz sohbet odası');
+        showError('Geçersiz sohbet odası');
         return;
       }
 
@@ -557,7 +560,7 @@ const MessagingPanel = () => {
       
     } catch (error) {
       console.error('Oda seçerken hata:', error);
-      setError('Sohbet açılamadı');
+      showError('Sohbet açılamadı');
       setLoadingMessages(false);
     }
   };
@@ -579,8 +582,9 @@ const MessagingPanel = () => {
     }
     
     // MySQL datetime formatı: "2024-01-15 14:30:00"
-    // Bu zaten Türkiye saati olarak kaydedildi, direkt kullan
-    const date = new Date(timestamp);
+    // Backend'den gelen saat zaten Türkiye saati (UTC+3) olarak kaydedildi
+    // String'i direkt parse et, timezone dönüşümü yapma
+    const date = new Date(timestamp.replace(' ', 'T')); // MySQL formatını ISO formatına çevir
     
     if (isNaN(date.getTime())) {
       return '';
@@ -659,6 +663,7 @@ const MessagingPanel = () => {
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error('Dosya indirirken hata:', error);
+      showWarning('Dosya indirilemedi, yeni sekmede açılıyor');
       // Fallback: Yeni sekmede aç
       window.open(fileUrl, '_blank');
     }
@@ -956,12 +961,6 @@ const MessagingPanel = () => {
   return (
     <div className="messaging-panel-page">
       <div className="messaging-container">
-        {error && (
-          <Alert variant="danger" dismissible onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
-        
         {/* Sol Panel - Takvim */}
         <div className="left-panel">
           <Calendar />
