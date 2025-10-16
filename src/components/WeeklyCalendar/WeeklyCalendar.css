@@ -1632,6 +1632,8 @@
   transition: all 0.2s ease !important;
   border-width: 2px !important;
   border-style: solid !important;
+  margin: 0px 5px 0px 5px  !important;
+  
 }
 
 .rbc-event:hover {
