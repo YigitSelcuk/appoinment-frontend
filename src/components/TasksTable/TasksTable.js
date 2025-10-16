@@ -47,8 +47,8 @@ const TasksTable = () => {
     'Hepsi': 0,
     'Beklemede': 0,
     'Devam Ediyor': 0,
-    'Tamamlandı': 0,
-    'İptal Edildi': 0
+    'Tamamlandi': 0,
+    'Iptal Edildi': 0
   });
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
 
@@ -70,12 +70,18 @@ const TasksTable = () => {
     
     try {
       setLoading(true);
-      const response = await getTasks(accessToken, {
+      const params = {
         page: currentPage,
         limit: tasksPerPage,
         search: debouncedSearchTerm,
         status: statusFilter === "Hepsi" ? "" : statusFilter,
-      });
+      };
+      
+      // debug logs removed
+      
+      const response = await getTasks(accessToken, params);
+      
+      // debug logs removed
 
       if (response.success) {
         setTasks(response.data);
@@ -109,6 +115,8 @@ const TasksTable = () => {
     setStatusFilter(status);
     setCurrentPage(1);
   };
+
+  // debug function removed
   // Checkbox işlemleri
   const handleSelectAll = (e) => {
     const isChecked = e.target.checked;
@@ -272,6 +280,8 @@ const TasksTable = () => {
         </div>
 
         <div className="header-right">
+          
+          
           {selectedTasks.length > 0 && (
             <button
               className="header-btn bulk-delete-btn"

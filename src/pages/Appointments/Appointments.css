@@ -9,7 +9,7 @@
 
 .appointments-container {
   display: flex;
-  height: calc(100vh - 80px); /* Navbar yüksekliği çıkarıldı */
+  height: calc(100vh - 20px); /* Navbar yüksekliği çıkarıldı */
   min-height: 800px;
   gap: 12px; /* Boşluğu artırdım */
   padding: 8px 0px 8px 20px; /* Sağ padding kaldırıldı */
@@ -910,15 +910,15 @@
 @media (max-height: 695.20px) {
   /* Konteyner ve paneller eşit yüksekliği paylaşsın */
   .appointments-container {
-    height: calc(100vh - 10px) !important;
+    height: calc(100vh + 140px) !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important; /* Tasks sayfası ile uyumlu */
   }
 
   .left-panel {
     height: 100% !important;
     min-height: 0 !important;
-    overflow-y: auto !important;
+    overflow: hidden !important; /* Scroll sadece today-section'da olsun */
   }
 
   .weekly-calendar-section {
@@ -958,24 +958,56 @@
     min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow-y: auto !important;
+    max-height: 100% !important;
+    overflow: hidden !important; /* Dış kapsayıcı scroll yapmasın */
   }
 
   .appointments-page .calendar-grid {
     flex: 0 0 auto !important;
-    min-height: 260px !important;
-    overflow-y: auto !important;
+    min-height: 300px !important; /* Tasks sayfası ile eşle */
+    overflow: visible !important; /* Grid scroll yapmasın */
   }
 
   .appointments-page .today-section {
     flex: 1 1 auto !important;
-    min-height: 260px !important;
-    overflow-y: auto !important;
+    min-height: 370px !important; /* Tasks sayfası ile eşle */
+    height: auto !important; /* Calendar.css’teki 400px sabit yüksekliği geçersiz kıl */
+    overflow: hidden !important; /* Native scrollbar tamamen gizle */
+  }
+
+  /* İçerik scroll’unu today-section’a taşı - iç kapsayıcılar scroll yapmasın */
+  .appointments-page .today-events {
+    flex: 1 1 auto !important;
+    overflow: visible !important; /* Scroll bu katmanda değil */
+  }
+
+  .appointments-page .today-events-scroll-container {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important; /* Scroll burada kalsın */
+    overflow-x: hidden !important;
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE/Edge */
+  }
+
+  .appointments-page .today-events-scroll-container::-webkit-scrollbar {
+    display: none !important; /* Chrome/Safari/Opera */
   }
 
   /* Başlık alanı fazla yer kaplamasın */
   .main-header {
     min-height: unset !important;
     padding: 8px 12px !important;
+  }
+
+  /* İç içeriklerin rahat kaydırılması için */
+  .appointments-page .today-events {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+  }
+
+  .appointments-page .today-events-scroll-container {
+    height: 100% !important;
+    max-height: none !important;
   }
 }

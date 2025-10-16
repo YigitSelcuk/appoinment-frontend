@@ -212,7 +212,7 @@
   align-items: center !important;
   gap: 6px !important;
   transition: all 0.2s ease !important;
-  min-width: 100px !important;
+  min-width: 90px !important;
   height: 45px !important;
   width: auto !important;
   margin-right: 10px !important;
@@ -1807,10 +1807,12 @@ body.modal-open {
 .status-btn.active {
   background: #f8f9fa;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
 }
 
 .status-btn.active .status-number {
   color: #000;
+  font-weight: 700;
 }
 
 .status-btn.active .status-name {
@@ -1818,12 +1820,16 @@ body.modal-open {
   font-weight: 600;
 }
 
+.status-btn.active .status-line {
+  height: 6px;
+}
+
 /* Görev Ekle Butonu Stilleri */
 .add-task-btn {
   background: white;
   border: 2px solid #12B423;
   border-radius: 10px;
-  padding: 8px 16px;
+  padding: 8px 8px;
   color: #12B423;
   font-size: 13px;
   font-weight: 600;
@@ -1839,7 +1845,7 @@ body.modal-open {
 .add-task-btn:hover {
   background: #f8fff9;
   border-color: #0EA91C;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(18, 180, 35, 0.25);
   color: #0EA91C;
 }

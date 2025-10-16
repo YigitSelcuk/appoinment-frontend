@@ -344,7 +344,7 @@
   font-size: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-top: -10px;
+  margin-top: 1px;
 }
 
 .group-dropdown-btn {
@@ -439,7 +439,7 @@
   display: flex;
   gap: 15px;
   width: 100%;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .cancel-btn,

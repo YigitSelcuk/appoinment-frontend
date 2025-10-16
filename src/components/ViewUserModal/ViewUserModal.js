@@ -79,156 +79,184 @@ const ViewUserModal = ({ show, onHide, user }) => {
     <>
       <Modal show={show} onHide={onHide} centered size="lg" className="view-user-modal">
         <div className="modal-header">
-          <div className="header-content">
-            <div className="header-left">
-             
-              <div className="header-info">
-                <h4 className="modal-title">{user.name}</h4>
-                <div className="user-meta">
-                  <span className="role-badge" style={{ backgroundColor: user.color || '#4E0DCC' }}>
-                    {getRoleDisplayName(user.role)}
-                  </span>
-                  {user.department && (
-                    <span className="department-badge">
-                      {user.department}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <button className="close-btn" onClick={onHide}>
-              <FaTimes />
-            </button>
-          </div>
+          <h4 className="modal-title">Kullanıcı Detayları</h4>
+          <button className="close-btn" onClick={onHide}>
+            <FaTimes />
+          </button>
         </div>
 
         <div className="modal-body">
-          <div className="info-card">
-            <div className="info-grid">
-              <div className="info-item">
-                <div className="item-header">
-                  <span className="info-label">Ad Soyad</span>
-                </div>
-                <div className="info-value">{user.name || 'Belirtilmemiş'}</div>
-              </div>
-
-              <div className="info-item">
-                <div className="item-header">
-                  <span className="info-label">E-posta</span>
-                </div>
-                <div className="info-value email-address">
-                  <i className="fas fa-envelope me-2"></i>
-                  {user.email || "Belirtilmemiş"}
+          <div className="unified-info-card">
+            {/* Kişisel Bilgiler */}
+            <div className="info-section">
+              <div className="section-header">
+                <div className="title-group">
+                  <FaUser className="section-icon" />
+                  <div className="section-texts">
+                    <h5 className="section-title">Kişisel Bilgiler</h5>
+                    <span className="section-subtitle">Profil ve iletişim bilgileri</span>
+                  </div>
                 </div>
               </div>
-
-              <div className="info-item">
-                <div className="item-header">
-                  <span className="info-label">Telefon</span>
-                </div>
-                <div className="info-value phone-number">
-                  <i className="fas fa-phone me-2"></i>
-                  {formatPhone(user.phone)}
-                </div>
-              </div>
-
-              <div className="info-item">
-                <div className="item-header">
-                  <span className="info-label">Rol</span>
-                </div>
-                <div className="info-value">
-                  <span className="role-indicator" style={{ backgroundColor: user.color || '#4E0DCC' }}>
-                    {getRoleDisplayName(user.role)}
-                  </span>
-                </div>
-              </div>
-
-              {user.department && (
+              <div className="info-grid-row">
                 <div className="info-item">
                   <div className="item-header">
-                    <span className="info-label">Departman</span>
+                    <span className="item-label">Ad Soyad</span>
                   </div>
-                  <div className="info-value">{user.department}</div>
+                  <div className="item-value">{user.name || 'Belirtilmemiş'}</div>
                 </div>
-              )}
-
-              <div className="info-item">
-                <div className="item-header">
-                  <span className="info-label">Kayıt Tarihi</span>
+                <div className="info-item">
+                  <div className="item-header">
+                    <span className="item-label">E-posta</span>
+                  </div>
+                  <div className="item-value email-address">
+                    {user.email || 'Belirtilmemiş'}
+                  </div>
                 </div>
-                <div className="info-value date-value">{formatDate(user.created_at)}</div>
+                <div className="info-item">
+                  <div className="item-header">
+                    <span className="item-label">Telefon</span>
+                  </div>
+                  <div className="item-value phone-number">{formatPhone(user.phone)}</div>
+                </div>
+                {user.address && (
+                  <div className="info-item full-width">
+                    <div className="item-header">
+                      <span className="item-label">Adres</span>
+                    </div>
+                    <div className="item-value location-value">{user.address}</div>
+                  </div>
+                )}
               </div>
-
-              <div className="info-item">
-                <div className="item-header">
-                  <span className="info-label">Son Giriş</span>
-                </div>
-                <div className="info-value last-seen-value">{formatLastSeen(user.last_seen)}</div>
-              </div>
-
-              {user.permissions && (
-                <div className="info-item" style={{gridColumn: '1 / -1'}}>
-                  <div className="item-header">
-                    <span className="info-label">Yetkiler</span>
-                  </div>
-                  <div className="permissions-container">
-                    {Array.isArray(user.permissions) ? (
-                      user.permissions.length > 0 ? (
-                        user.permissions.map((permission, index) => (
-                          <span key={index} className="permission-badge">
-                            {permission}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="no-permissions">Yetki tanımlanmamış</span>
-                      )
-                    ) : typeof user.permissions === 'object' && user.permissions !== null ? (
-                      Object.entries(user.permissions).filter(([key, value]) => value).length > 0 ? (
-                        Object.entries(user.permissions).map(([key, value]) => (
-                          value && (
-                            <span key={key} className="permission-badge">
-                              {key.replace(/_/g, ' ').toUpperCase()}
-                            </span>
-                          )
-                        ))
-                      ) : (
-                        <span className="no-permissions">Yetki tanımlanmamış</span>
-                      )
-                    ) : user.permissions ? (
-                      <span className="permission-badge">{String(user.permissions)}</span>
-                    ) : (
-                      <span className="no-permissions">Yetki tanımlanmamış</span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {user.address && (
-                <div className="info-item" style={{gridColumn: '1 / -1'}}>
-                  <div className="item-header">
-                    <span className="info-label">Adres</span>
-                  </div>
-                  <div className="info-value location-value">
-                    <i className="fas fa-home me-2"></i>
-                    {user.address}
-                  </div>
-                </div>
-              )}
-
-              {user.bio && (
-                <div className="info-item" style={{gridColumn: '1 / -1'}}>
-                  <div className="item-header">
-                    <span className="info-label">Biyografi</span>
-                  </div>
-                  <div className="bio-container">
-                    {user.bio}
-                  </div>
-                </div>
-              )}
             </div>
+
+            {/* Hesap Bilgileri */}
+            <div className="info-section">
+              <div className="section-header">
+                <div className="title-group">
+                  <FaUser className="section-icon" />
+                  <div className="section-texts">
+                    <h5 className="section-title">Hesap Bilgileri</h5>
+                    <span className="section-subtitle">Rol, departman ve zamanlar</span>
+                  </div>
+                </div>
+              </div>
+              <div className="info-grid-row">
+                <div className="info-item">
+                  <div className="item-header">
+                    <span className="item-label">Rol</span>
+                  </div>
+                  <div className="item-value">
+                    <span className="role-indicator" style={{ backgroundColor: user.color || '#4E0DCC', color: 'white' }}>
+                      {getRoleDisplayName(user.role)}
+                    </span>
+                  </div>
+                </div>
+                {user.department && (
+                  <div className="info-item">
+                    <div className="item-header">
+                      <span className="item-label">Departman</span>
+                    </div>
+                    <div className="item-value">{user.department}</div>
+                  </div>
+                )}
+                <div className="info-item">
+                  <div className="item-header">
+                    <span className="item-label">Kayıt Tarihi</span>
+                  </div>
+                  <div className="item-value date-value">{formatDate(user.created_at)}</div>
+                </div>
+                <div className="info-item">
+                  <div className="item-header">
+                    <span className="item-label">Son Giriş</span>
+                  </div>
+                  <div className="item-value last-seen-value">{formatLastSeen(user.last_seen)}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Yetkiler */}
+            {user.permissions && (
+              <div className="info-section">
+                <div className="section-header">
+                  <div className="title-group">
+                    <FaUser className="section-icon" />
+                    <div className="section-texts">
+                      <h5 className="section-title">Yetkiler</h5>
+                      <span className="section-subtitle">Tanımlı izinler</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="info-grid-row">
+                  <div className="info-item full-width">
+                    <div className="item-header">
+                      <span className="item-label">Yetki Listesi</span>
+                    </div>
+                    <div className="permissions-container">
+                      {Array.isArray(user.permissions) ? (
+                        user.permissions.length > 0 ? (
+                          user.permissions.map((permission, index) => (
+                            <span key={index} className="permission-badge">
+                              {permission}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="no-permissions">Yetki tanımlanmamış</span>
+                        )
+                      ) : typeof user.permissions === 'object' && user.permissions !== null ? (
+                        Object.entries(user.permissions).filter(([key, value]) => value).length > 0 ? (
+                          Object.entries(user.permissions).map(([key, value]) => (
+                            value && (
+                              <span key={key} className="permission-badge">
+                                {key.replace(/_/g, ' ').toUpperCase()}
+                              </span>
+                            )
+                          ))
+                        ) : (
+                          <span className="no-permissions">Yetki tanımlanmamış</span>
+                        )
+                      ) : user.permissions ? (
+                        <span className="permission-badge">{String(user.permissions)}</span>
+                      ) : (
+                        <span className="no-permissions">Yetki tanımlanmamış</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Biyografi */}
+            {user.bio && (
+              <div className="info-section">
+                <div className="section-header">
+                  <div className="title-group">
+                    <FaUser className="section-icon" />
+                    <div className="section-texts">
+                      <h5 className="section-title">Biyografi</h5>
+                      <span className="section-subtitle">Serbest metin</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="info-grid-row">
+                  <div className="info-item full-width">
+                    <div className="item-header">
+                      <span className="item-label">Biyografi</span>
+                    </div>
+                    <div className="notes-container">
+                      <div className="notes-text">{user.bio}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
+        <div className="modal-footer">
+          <div className="footer-info"></div>
+          <Button className="close-button" onClick={onHide}>Kapat</Button>
+        </div>
       </Modal>
 
       {/* Image Enlargement Modal */}

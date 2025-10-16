@@ -326,8 +326,8 @@ const AddTaskModal = ({ show, onHide, onTaskAdded }) => {
                 >
                   <option value="Beklemede">Beklemede</option>
                   <option value="Devam Ediyor">Devam Ediyor</option>
-                  <option value="Tamamlandı">Tamamlandı</option>
-                  <option value="İptal Edildi">İptal Edildi</option>
+                  <option value="Tamamlandi">Tamamlandı</option>
+                  <option value="Iptal Edildi">İptal Edildi</option>
                 </Form.Select>
               </Form.Group>
             </Col>
@@ -339,9 +339,9 @@ const AddTaskModal = ({ show, onHide, onTaskAdded }) => {
                   value={formData.priority}
                   onChange={handleInputChange}
                 >
-                  <option value="Düşük">Düşük</option>
+                  <option value="Dusuk">Düşük</option>
                   <option value="Normal">Normal</option>
-                  <option value="Yüksek">Yüksek</option>
+                  <option value="Yuksek">Yüksek</option>
                   <option value="Kritik">Kritik</option>
                 </Form.Select>
               </Form.Group>

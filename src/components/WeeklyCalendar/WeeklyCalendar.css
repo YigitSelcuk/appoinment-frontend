@@ -1127,6 +1127,19 @@
   }
 }
 
+/* 1560px ve üzeri: Sağ kontroller sabit sağda hizalansın */
+@media (min-width: 1560px) {
+  .calendar-header .header-controls {
+    justify-content: flex-start; /* space-between yerine sabit hizalama */
+  }
+  .calendar-header .center-controls {
+    flex: 1; /* ortayı esnet, sağ blok sabit kalsın */
+  }
+  .calendar-header .right-controls {
+    margin-left: auto; /* sağ kenara sabitle */
+  }
+}
+
 @media (max-width: 992px) {
   .calendar-header {
     flex-direction: column;

@@ -742,20 +742,7 @@ const Calendar = memo(({
           {/* Custom scroll buttons - only show when 4+ appointments */}
           {shouldShowScrollButtons && (
             <div className="custom-scroll-buttons">
-              <button 
-                className="scroll-button" 
-                onClick={scrollUp}
-                title="Yukarı kaydır"
-              >
-                ▲
-              </button>
-              <button 
-                className="scroll-button" 
-                onClick={scrollDown}
-                title="Aşağı kaydır"
-              >
-                ▼
-              </button>
+            
             </div>
           )}
         </div>

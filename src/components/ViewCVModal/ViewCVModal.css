@@ -1,294 +1,295 @@
-/* ViewCVModal - Sade ve Modern Tasarım */
+/* ViewCVModal - Görev Detayları ile aynı profesyonel tasarım */
 .view-cv-modal {
-  --primary-color: #2563eb;
+  --primary-color: #1e40af;
+  --secondary-color: #3b82f6;
+  --accent-color: #60a5fa;
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
   --border-color: #e5e7eb;
-  --background-white: #ffffff;
-  --background-gray: #f9fafb;
-  --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  --radius: 8px;
+  --background-primary: #ffffff;
+  --background-secondary: #f9fafb;
+  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-heavy: 0 20px 25px rgba(0, 0, 0, 0.1);
 }
 
 .view-cv-modal .modal-dialog {
-  max-width: 800px;
+  max-width: 900px;
   margin: 2rem auto;
+  padding: 0;
 }
 
 .view-cv-modal .modal-content {
   border: none;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  background: var(--background-white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-heavy), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  background: var(--background-primary);
+  overflow: hidden;
 }
 
 /* Modal Header */
 .view-cv-modal .modal-header {
-  background: #4E0DCC;
-  border-bottom: 1px solid var(--border-color);
-  padding: 1.5rem 2rem;
-  border-radius: var(--radius) var(--radius) 0 0;
+  background: #3C02AA;
+  color: white;
+  padding: 1.25rem 2rem;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
 .view-cv-modal .modal-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--background-white);
   margin: 0;
+  color: white;
 }
 
-.view-cv-modal .btn-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0;
-  width: 24px;
-  height: 24px;
+.view-cv-modal .close-btn {
+  color: white;
+  width: 3rem;
+  height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.view-cv-modal .btn-close:hover {
-  color: var(--text-primary);
+  font-size: 1.1rem;
+  cursor: pointer;
 }
 
 /* Modal Body */
 .view-cv-modal .modal-body {
+  padding: 0;
+  background: var(--background-secondary);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.view-cv-modal .unified-info-card {
+  background: var(--background-primary);
+  margin: 0;
+  border-radius: 0;
+}
+
+.view-cv-modal .info-section {
   padding: 2rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--background-primary);
 }
 
-/* Info Section */
-.info-section {
-  margin-bottom: 2rem;
+.view-cv-modal .info-section:last-child {
+  border-bottom: none;
 }
 
-.info-section:last-child {
-  margin-bottom: 0;
-}
-
-.section-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--primary-color);
-}
-
-/* Info Grid */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.info-item {
+.view-cv-modal .section-header {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.info-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.info-value {
-  font-size: 1rem;
-  color: var(--text-primary);
-  font-weight: 400;
-  word-break: break-word;
-}
-
-.info-value.empty {
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-/* Status Badge */
-.status-badge {
-  display: inline-flex;
   align-items: center;
-  padding: 0.375rem 0.75rem;
-  background: var(--primary-color);
-  color: white;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  width: fit-content;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--accent-color);
 }
 
-/* File Link */
-.file-link {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-  transition: color 0.2s ease;
-}
-
-.file-link:hover {
-  color: #1d4ed8;
-  text-decoration: underline;
-}
-
-/* Profile Image */
-.profile-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--border-color);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .view-cv-modal .modal-dialog {
-    margin: 10px;
-    max-width: calc(100% - 20px);
-  }
-  
-  .modal-header {
-    padding: 15px;
-  }
-  
-  .modal-title {
-    font-size: 1.1rem;
-  }
-  
-  .modal-body {
-    padding: 15px;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .info-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-  
-  .info-label {
-    font-size: 0.85rem;
-  }
-  
-  .info-value {
-    font-size: 0.9rem;
-  }
-  
-  .section-title {
-    font-size: 1rem;
-  }
-  
-  .profile-image {
-    width: 60px;
-    height: 60px;
-  }
-}
-
-@media (max-width: 480px) {
-  .view-cv-modal .modal-dialog {
-    margin: 5px;
-    max-width: calc(100% - 10px);
-  }
-  
-  .modal-header {
-    padding: 12px;
-  }
-  
-  .modal-body {
-    padding: 12px;
-  }
-  
-  .info-section {
-    margin-bottom: 20px;
-  }
-  
-  .section-title {
-    font-size: 0.95rem;
-    margin-bottom: 12px;
-  }
-  
-  .info-label {
-    font-size: 0.8rem;
-  }
-  
-  .info-value {
-    font-size: 0.85rem;
-  }
-}
-
-/* Notes Section */
-.notes-section {
-  background: var(--background-gray);
-  padding: 1.5rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-color);
-}
-
-.notes-content {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: var(--text-primary);
-  white-space: pre-wrap;
-}
-
-/* Loading and Error States */
-.loading-container,
-.error-container {
+.view-cv-modal .section-icon {
+  width: 2rem;
+  height: 2rem;
+  background: var(--secondary-color);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3rem;
-  text-align: center;
+  color: white;
+  font-size: 0.875rem;
 }
 
-.error-message {
-  color: #dc2626;
-  font-size: 1rem;
+.view-cv-modal .section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.view-cv-modal .info-grid-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.view-cv-modal .info-item {
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.view-cv-modal .info-item:hover {
+  border-color: var(--secondary-color);
+  box-shadow: var(--shadow-medium);
+}
+
+.view-cv-modal .info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.view-cv-modal .item-header {
+  margin-bottom: 0.5rem;
+}
+
+.view-cv-modal .item-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.view-cv-modal .item-value {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.view-cv-modal .email-address {
+  color: var(--secondary-color);
+  text-decoration: none;
+}
+
+.view-cv-modal .email-address:hover {
+  text-decoration: underline;
+}
+
+.view-cv-modal .date-value {
+  font-family: 'Courier New', monospace;
+  background: var(--background-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.view-cv-modal .notes-container {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.view-cv-modal .notes-text {
+  color: #1e293b;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Modal Footer */
+.view-cv-modal .modal-footer {
+  background: var(--background-primary);
+  border-top: 1px solid var(--border-color);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.view-cv-modal .close-button {
+  background: #3C02AA !important;
+  border: none !important;
+  color: white !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.view-cv-modal .close-button:hover {
+  background: var(--primary-color) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--shadow-medium) !important;
+}
+
+/* Scrollbar */
+.view-cv-modal .modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.view-cv-modal .modal-body::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+  border-radius: 3px;
+}
+
+.view-cv-modal .modal-body::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.view-cv-modal .modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-color);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .view-cv-modal .modal-dialog {
-    margin: 1rem;
-    max-width: calc(100% - 2rem);
+    max-width: 95%;
+    margin: 0.5rem;
   }
-
-  .view-cv-modal .modal-header,
-  .view-cv-modal .modal-body {
+  
+  .view-cv-modal .modal-header {
     padding: 1.5rem;
   }
-
-  .info-grid {
+  
+  .view-cv-modal .modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+  }
+  
+  .view-cv-modal .modal-footer {
+    padding: 1rem 1.5rem;
+  }
+  
+  .view-cv-modal .info-grid-row {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-
-  .view-cv-modal .modal-title {
-    font-size: 1.125rem;
-  }
 }
 
-@media (max-width: 480px) {
-  .view-cv-modal .modal-header,
-  .view-cv-modal .modal-body {
-    padding: 1rem;
+@media (max-width: 576px) {
+  .view-cv-modal .modal-dialog {
+    margin: 1vh auto;
+    height: 98vh;
   }
 
-  .info-section {
-    margin-bottom: 1.5rem;
+  .view-cv-modal .unified-info-card {
+    margin: 10px 15px;
+  }
+
+  .view-cv-modal .info-section {
+    padding: 10px 15px;
+  }
+
+  .view-cv-modal .modal-footer {
+    padding: 12px 15px;
+  }
+
+  .view-cv-modal .close-button {
+    width: 100% !important;
+    justify-content: center !important;
   }
 }

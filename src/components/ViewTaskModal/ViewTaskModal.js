@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Button, ProgressBar } from 'react-bootstrap';
-import { FaUser, FaCalendarAlt, FaClock, FaCheckCircle, FaExclamationCircle, FaTasks, FaTimes } from 'react-icons/fa';
+import { FaUser, FaCalendarAlt, FaClock, FaCheckCircle, FaExclamationCircle, FaTasks, FaTimes, FaBriefcase } from 'react-icons/fa';
 import './ViewTaskModal.css';
 
 const ViewTaskModal = ({ show, onHide, task }) => {
@@ -13,9 +13,9 @@ const ViewTaskModal = ({ show, onHide, task }) => {
         return '#FFA500';
       case 'Devam Ediyor':
         return '#4E0DCC';
-      case 'Tamamlandı':
+      case 'Tamamlandi':
         return '#10B981';
-      case 'İptal Edildi':
+      case 'Iptal Edildi':
         return '#EF4444';
       default:
         return '#6B7280';
@@ -27,11 +27,11 @@ const ViewTaskModal = ({ show, onHide, task }) => {
     switch (priority) {
       case 'Kritik':
         return '#EF4444';
-      case 'Yüksek':
+      case 'Yuksek':
         return '#F59E0B';
       case 'Normal':
         return '#10B981';
-      case 'Düşük':
+      case 'Dusuk':
         return '#6B7280';
       default:
         return '#6B7280';
@@ -56,12 +56,13 @@ const ViewTaskModal = ({ show, onHide, task }) => {
       </div>
       <div className="modal-body">
         <div className="unified-info-card">
-          {/* Görev Bilgileri */}
-          <div className="info-section">
-           
-            
-            {/* Tamamlanma Durumu */}
-            {task.completion_percentage !== undefined && (
+          {/* Tamamlanma Bilgisi */}
+          {task.completion_percentage !== undefined && (
+            <div className="info-section">
+              <div className="section-header">
+                <div className="section-icon"><FaCheckCircle /></div>
+                <h5 className="section-title">Tamamlanma Bilgisi</h5>
+              </div>
               <div className="info-grid-row">
                 <div className="info-item full-width">
                   <div className="item-header">
@@ -80,9 +81,15 @@ const ViewTaskModal = ({ show, onHide, task }) => {
                   </div>
                 </div>
               </div>
-            )}
-            
-            {/* Atanan Kişi ve Tarih Bilgileri */}
+            </div>
+          )}
+
+          {/* Görev Bilgileri */}
+          <div className="info-section">
+            <div className="section-header">
+              <div className="section-icon"><FaTasks /></div>
+              <h5 className="section-title">Görev Bilgileri</h5>
+            </div>
             <div className="info-grid-row">
               <div className="info-item">
                 <div className="item-header">
@@ -161,9 +168,15 @@ const ViewTaskModal = ({ show, onHide, task }) => {
                 </div>
               </div>
             </div>
-            
-            {/* Açıklama ve Notlar */}
-            {(task.description || task.notes) && (
+          </div>
+
+          {/* Notlar */}
+          {(task.description || task.notes) && (
+            <div className="info-section">
+              <div className="section-header">
+                <div className="section-icon"><FaBriefcase /></div>
+                <h5 className="section-title">Notlar</h5>
+              </div>
               <div className="info-grid-row">
                 {task.description && (
                   <div className="info-item full-width">
@@ -186,8 +199,8 @@ const ViewTaskModal = ({ show, onHide, task }) => {
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="modal-footer">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal } from 'react-bootstrap';
-import { FaTimes, FaFileAlt } from 'react-icons/fa';
+import { Modal, Button } from 'react-bootstrap';
+import { FaTimes, FaUser, FaBriefcase } from 'react-icons/fa';
 import { getProfileImageUrl } from '../../services/cvsService';
 import './ViewCVModal.css';
 
@@ -35,88 +35,131 @@ const ViewCVModal = ({ show, onHide, cv }) => {
   if (!cv) return null;
 
   return (
-    <Modal show={show} onHide={handleClose} size="lg" className="view-cv-modal">
+    <Modal show={show} onHide={handleClose} centered size="lg" className="view-cv-modal">
       <div className="modal-header">
         <h4 className="modal-title">CV Detayları</h4>
-        <button className="btn-close" onClick={handleClose}>
+        <button className="close-btn" onClick={handleClose}>
           <FaTimes />
         </button>
       </div>
-
       <div className="modal-body">
-        {/* Kişisel Bilgiler */}
-        <div className="info-section">
-          <h5 className="section-title">Kişisel Bilgiler</h5>
-          <div className="info-grid">
-            <div className="info-item">
-              <span className="info-label">Ad Soyad</span>
-              <span className="info-value">{cv.adi && cv.soyadi ? `${cv.adi} ${cv.soyadi}` : '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">TC Kimlik No</span>
-              <span className="info-value">{cv.tc_kimlik_no || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Email</span>
-              <span className="info-value">{cv.email || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Telefon</span>
-              <span className="info-value">{cv.telefon || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">İlçe</span>
-              <span className="info-value">{cv.ilce || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Mahalle</span>
-              <span className="info-value">{cv.mahalle || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Adres</span>
-              <span className="info-value">{cv.adres || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Kayıt Tarihi</span>
-              <span className="info-value">{formatDate(cv.kayit_tarihi)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Mesleki Bilgiler */}
-        <div className="info-section">
-          <h5 className="section-title">Mesleki Bilgiler</h5>
-          <div className="info-grid">
-            <div className="info-item">
-              <span className="info-label">Meslek</span>
-              <span className="info-value">{cv.meslek || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Talep Edilen İş</span>
-              <span className="info-value">{cv.talep_edilen_is || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Durum</span>
-              <span className="status-badge">{cv.durum || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Referans</span>
-              <span className="info-value">{cv.referans || '-'}</span>
-            </div>
-          </div>
-        </div>
-
-  
-
-        {/* Notlar */}
-        {cv.notlar && (
+        <div className="unified-info-card">
+          {/* Kişisel Bilgiler */}
           <div className="info-section">
-            <h5 className="section-title">Notlar</h5>
-            <div className="notes-section">
-              <div className="notes-content">{cv.notlar}</div>
+            <div className="section-header">
+              <div className="section-icon"><FaUser /></div>
+              <h5 className="section-title">Kişisel Bilgiler</h5>
+            </div>
+            <div className="info-grid-row">
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">Ad Soyad</span>
+                </div>
+                <div className="item-value">{cv.adi && cv.soyadi ? `${cv.adi} ${cv.soyadi}` : '-'}</div>
+              </div>
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">TC Kimlik No</span>
+                </div>
+                <div className="item-value">{cv.tc_kimlik_no || '-'}</div>
+              </div>
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">Email</span>
+                </div>
+                <div className="item-value email-address">{cv.email || '-'}</div>
+              </div>
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">Telefon</span>
+                </div>
+                <div className="item-value">{cv.telefon || '-'}</div>
+              </div>
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">İlçe</span>
+                </div>
+                <div className="item-value">{cv.ilce || '-'}</div>
+              </div>
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">Mahalle</span>
+                </div>
+                <div className="item-value">{cv.mahalle || '-'}</div>
+              </div>
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">Adres</span>
+                </div>
+                <div className="item-value">{cv.adres || '-'}</div>
+              </div>
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">Kayıt Tarihi</span>
+                </div>
+                <div className="item-value date-value">{formatDate(cv.kayit_tarihi)}</div>
+              </div>
             </div>
           </div>
-        )}
+
+          {/* Mesleki Bilgiler */}
+          <div className="info-section">
+            <div className="section-header">
+              <div className="section-icon"><FaBriefcase /></div>
+              <h5 className="section-title">Mesleki Bilgiler</h5>
+            </div>
+            <div className="info-grid-row">
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">Meslek</span>
+                </div>
+                <div className="item-value">{cv.meslek || '-'}</div>
+              </div>
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">Talep Edilen İş</span>
+                </div>
+                <div className="item-value">{cv.talep_edilen_is || '-'}</div>
+              </div>
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">Durum</span>
+                </div>
+                <div className="item-value">{cv.durum || '-'}</div>
+              </div>
+              <div className="info-item">
+                <div className="item-header">
+                  <span className="item-label">Referans</span>
+                </div>
+                <div className="item-value">{cv.referans || '-'}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Notlar */}
+          {cv.notlar && (
+            <div className="info-section">
+              <div className="section-header">
+                <div className="section-icon"><FaBriefcase /></div>
+                <h5 className="section-title">Notlar</h5>
+              </div>
+              <div className="info-grid-row">
+                <div className="info-item full-width">
+                  <div className="item-header">
+                    <span className="item-label">Notlar</span>
+                  </div>
+                  <div className="notes-container">
+                    <div className="notes-text">{cv.notlar}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="modal-footer">
+        <div className="footer-info"></div>
+        <Button className="close-button" onClick={handleClose}>Kapat</Button>
       </div>
     </Modal>
   );
