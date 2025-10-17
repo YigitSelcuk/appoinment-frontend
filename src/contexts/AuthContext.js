@@ -19,11 +19,15 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [accessToken, setAccessToken] = useState(null); // Sadece memory'de tutulacak
   const [tokenRenewalTimer, setTokenRenewalTimer] = useState(null);
+  const [authCheckCompleted, setAuthCheckCompleted] = useState(false); // Sonsuz döngüyü önlemek için
 
   // Uygulama başladığında oturum kontrolü yap
   useEffect(() => {
-    checkAuthStatus();
-  }, []);
+    if (!authCheckCompleted) {
+      console.log('🔍 AuthContext: İlk auth kontrolü başlatılıyor...');
+      checkAuthStatus();
+    }
+  }, [authCheckCompleted]);
 
   // Axios interceptor'ları kur
   useEffect(() => {
@@ -125,35 +129,43 @@ export const AuthProvider = ({ children }) => {
   // Token yenileme fonksiyonu
   const refreshAccessToken = async () => {
     try {
+      console.log('🔄 AuthContext: Refresh token isteği gönderiliyor...');
       const response = await axios.post(`${(process.env.REACT_APP_API_URL || 'http://localhost:5000/api').trim()}/auth/refresh-token`, {}, {
         withCredentials: true
       });
       
       if (response.data.success) {
         const newToken = response.data.accessToken;
+        console.log('✅ AuthContext: Yeni access token alındı');
         setAccessToken(newToken);
         // Eski servisler için uyumluluk: token'ı localStorage'a da yaz
         try { localStorage.setItem('token', newToken); } catch (_) {}
         return newToken;
       }
+      console.log('❌ AuthContext: Refresh token başarısız - response.data.success false');
       return null;
     } catch (error) {
       // Refresh token yoksa veya geçersizse sessizce başarısız ol
+      console.log('❌ AuthContext: Refresh token hatası:', error.response?.status, error.response?.data?.message);
       return null;
     }
   };
 
   const checkAuthStatus = async () => {
     try {
+      console.log('🔍 AuthContext: checkAuthStatus başlatıldı');
+      
       // Önce localStorage'dan token kontrol et
       let storedToken = null;
       try {
         storedToken = localStorage.getItem('token');
+        console.log('🔍 AuthContext: localStorage token:', storedToken ? 'var' : 'yok');
       } catch (_) {}
 
       // Eğer localStorage'da token varsa, önce onu kullanmayı dene
       if (storedToken) {
         try {
+          console.log('🔍 AuthContext: Stored token ile /me isteği gönderiliyor...');
           // Stored token ile kullanıcı bilgilerini almaya çalış
           const meResponse = await axios.get(`${(process.env.REACT_APP_API_URL || 'http://localhost:5000/api').trim()}/users/me`, {
             withCredentials: true,
@@ -162,33 +174,40 @@ export const AuthProvider = ({ children }) => {
           const me = meResponse.data;
           if (me?.success && me.data) {
             // Stored token geçerli, state'i güncelle
+            console.log('✅ AuthContext: Stored token geçerli, kullanıcı giriş yapmış');
             setAccessToken(storedToken);
             setUser(me.data);
             setIsAuthenticated(true);
+            setAuthCheckCompleted(true);
             setLoading(false);
             return;
           }
         } catch (e) {
           // Stored token geçersiz, localStorage'dan temizle ve refresh token dene
+          console.log('❌ AuthContext: Stored token geçersiz, localStorage temizleniyor');
           try { localStorage.removeItem('token'); } catch (_) {}
         }
       }
 
       // Stored token yoksa veya geçersizse, refresh token ile yeni access token almaya çalış
+      console.log('🔄 AuthContext: Refresh token deneniyor...');
       const newToken = await refreshAccessToken();
       
       if (!newToken) {
         // Token yoksa sadece state'i temizle, logout çağırma
+        console.log('❌ AuthContext: Refresh token başarısız, kullanıcı giriş yapmamış');
         setAccessToken(null);
         setUser(null);
         setIsAuthenticated(false);
         try { localStorage.removeItem('token'); } catch (_) {}
+        setAuthCheckCompleted(true);
         setLoading(false);
         return;
       }
 
       // Yeni token ile kullanıcı bilgilerini al
       try {
+        console.log('🔍 AuthContext: Yeni token ile /me isteği gönderiliyor...');
         // Interceptor kurulmadan önce de Authorization başlığını elle ekleyelim
         const meResponse = await axios.get(`${(process.env.REACT_APP_API_URL || 'http://localhost:5000/api').trim()}/users/me`, {
           withCredentials: true,
@@ -196,10 +215,12 @@ export const AuthProvider = ({ children }) => {
         });
         const me = meResponse.data;
         if (me?.success && me.data) {
+          console.log('✅ AuthContext: Yeni token ile kullanıcı bilgileri alındı');
           setUser(me.data);
           setIsAuthenticated(true);
         } else {
           // Kullanıcı bilgileri alınamazsa sadece state'i temizle
+          console.log('❌ AuthContext: Kullanıcı bilgileri alınamadı');
           setAccessToken(null);
           setUser(null);
           setIsAuthenticated(false);
@@ -207,6 +228,7 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (e) {
         // Hata durumunda sadece state'i temizle (sessizce)
+        console.log('❌ AuthContext: /me isteği hatası:', e.response?.status);
         setAccessToken(null);
         setUser(null);
         setIsAuthenticated(false);
@@ -214,17 +236,21 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       // Hata durumunda sadece state'i temizle (sessizce)
+      console.log('❌ AuthContext: checkAuthStatus genel hatası:', error.message);
       setAccessToken(null);
       setUser(null);
       setIsAuthenticated(false);
       try { localStorage.removeItem('token'); } catch (_) {}
     } finally {
+      setAuthCheckCompleted(true);
       setLoading(false);
+      console.log('🏁 AuthContext: checkAuthStatus tamamlandı');
     }
   };
 
   const login = async (email, password) => {
     try {
+      console.log('🔐 AuthContext: Login isteği gönderiliyor...');
       const response = await axios.post(`${(process.env.REACT_APP_API_URL || 'http://localhost:5000/api').trim()}/auth/login`, 
         { email, password }, 
         {
@@ -237,14 +263,17 @@ export const AuthProvider = ({ children }) => {
       
       if (response.data.success) {
         // Access token'ı sadece memory'de tut, refresh token HttpOnly cookie'de
+        console.log('✅ AuthContext: Login başarılı');
         setAccessToken(response.data.accessToken);
         try { localStorage.setItem('token', response.data.accessToken); } catch (_) {}
         setUser(response.data.user);
         setIsAuthenticated(true);
+        setAuthCheckCompleted(true);
         
         return { success: true };
       }
     } catch (error) {
+      console.log('❌ AuthContext: Login hatası:', error.response?.data?.message);
       return { 
         success: false, 
         error: error.response?.data?.message || 'Giriş yapılırken bir hata oluştu',
@@ -255,6 +284,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      console.log('🚪 AuthContext: Logout isteği gönderiliyor...');
       await axios.post(`${(process.env.REACT_APP_API_URL || 'http://localhost:5000/api').trim()}/auth/logout`, {}, {
         withCredentials: true,
         headers: {
@@ -262,7 +292,7 @@ export const AuthProvider = ({ children }) => {
         }
       });
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ AuthContext: Logout error:', error);
     } finally {
       // Token renewal timer'ını temizle
       if (tokenRenewalTimer) {
@@ -271,9 +301,11 @@ export const AuthProvider = ({ children }) => {
       }
       
       // Memory'deki verileri temizle
+      console.log('🧹 AuthContext: State temizleniyor...');
       setAccessToken(null);
       setUser(null);
       setIsAuthenticated(false);
+      setAuthCheckCompleted(false); // Logout sonrası tekrar auth check yapılabilsin
       try { localStorage.removeItem('token'); } catch (_) {}
       
       // Google Calendar oturumunu da temizle
@@ -281,7 +313,7 @@ export const AuthProvider = ({ children }) => {
       try { localStorage.removeItem('googleCalendarEnabled'); } catch (_) {}
       
       // Sayfa yenilenmesi yerine sadece state'i temizle
-      // window.location.reload(); // Bu satır sonsuz döngüye neden oluyor
+      // window.location.reload(); // Bu satır sonsuz döngüye neden oluyor - KALDIRILDI
     }
   };
 

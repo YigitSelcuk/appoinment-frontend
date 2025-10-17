@@ -16,6 +16,12 @@ const Login = () => {
   const [validationErrors, setValidationErrors] = useState({});
 
   const handleChange = (e) => {
+    console.log('🔥 INPUT DEBUG: handleChange çalıştı!', {
+      name: e.target.name,
+      value: e.target.value,
+      timestamp: new Date().toISOString()
+    });
+    
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -29,6 +35,23 @@ const Login = () => {
         [name]: ''
       });
     }
+  };
+
+  // Debug için input focus ve click event'lerini ekle
+  const handleInputFocus = (e) => {
+    console.log('🎯 INPUT FOCUS DEBUG:', {
+      name: e.target.name,
+      value: e.target.value,
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  const handleInputClick = (e) => {
+    console.log('👆 INPUT CLICK DEBUG:', {
+      name: e.target.name,
+      value: e.target.value,
+      timestamp: new Date().toISOString()
+    });
   };
 
   // Frontend validation
@@ -116,6 +139,8 @@ const Login = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  onFocus={handleInputFocus}
+                  onClick={handleInputClick}
                   className={`form-input ${validationErrors.email ? 'error' : ''}`}
                   placeholder="ornek@belediye.gov.tr"
                   required
@@ -133,6 +158,8 @@ const Login = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
+                  onFocus={handleInputFocus}
+                  onClick={handleInputClick}
                   className={`form-input ${validationErrors.password ? 'error' : ''}`}
                   placeholder="Güvenli şifrenizi giriniz"
                   required
