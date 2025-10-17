@@ -484,15 +484,7 @@ const Calendar = memo(({
   return (
     <div className="calendar-widget">
       {/* Header */}
-      <div className="calendar-header">
-        <div className="calendar-title">
-          <svg width="33" height="37" viewBox="0 0 33 37" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fillRule="evenodd" clipRule="evenodd" d="M29.3333 4.36634H27.5V2.59967C27.5 1.62801 26.675 0.833008 25.6667 0.833008C24.6583 0.833008 23.8333 1.62801 23.8333 2.59967V4.36634H9.16667V2.59967C9.16667 1.62801 8.34167 0.833008 7.33333 0.833008C6.325 0.833008 5.5 1.62801 5.5 2.59967V4.36634H3.66667C1.63167 4.36634 0.0183333 5.95634 0.0183333 7.89967L0 32.633C0 34.5763 1.63167 36.1663 3.66667 36.1663H29.3333C31.35 36.1663 33 34.5763 33 32.633V7.89967C33 5.95634 31.35 4.36634 29.3333 4.36634ZM29.3333 30.8663C29.3333 31.838 28.5083 32.633 27.5 32.633H5.5C4.49167 32.633 3.66667 31.838 3.66667 30.8663V13.1997H29.3333V30.8663ZM7.33333 16.733H11V20.2663H7.33333V16.733ZM14.6667 16.733H18.3333V20.2663H14.6667V16.733ZM22 16.733H25.6667V20.2663H22V16.733Z" fill="#8454DD"/>
-          </svg>
-          <span>TAKVİM</span>
-        </div>
-      </div>
-
+ 
       {/* Month Navigation */}
       <div className="month-navigation">
         <button className="nav-button" onClick={handlePrevMonth}>
